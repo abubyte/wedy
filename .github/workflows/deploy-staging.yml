@@ -1,0 +1,29 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging server
+      run: |
+        echo "🚀 Deploying to staging server..."
+        # Add your deployment script here
+        # Example: ssh to server and pull latest changes
+        
+    - name: Health check
+      run: |
+        echo "🔍 Running health check..."
+        # Add health check commands
+        
+    - name: Notify team
+      run: |
+        echo "📢 Staging deployment completed successfully!"

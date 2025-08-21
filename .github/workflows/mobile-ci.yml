@@ -1,0 +1,94 @@
+name: Mobile CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'mobile/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+        channel: 'stable'
+
+    - name: Get dependencies
+      working-directory: ./mobile
+      run: flutter pub get
+
+    - name: Verify formatting
+      working-directory: ./mobile
+      run: dart format --output=none --set-exit-if-changed lib/
+
+    - name: Analyze project source
+      working-directory: ./mobile
+      run: flutter analyze
+
+    - name: Run tests
+      working-directory: ./mobile
+      run: flutter test --coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./mobile/coverage/lcov.info
+        flags: mobile
+        name: mobile-coverage
+
+  build-android:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+        channel: 'stable'
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+
+    - name: Get dependencies
+      working-directory: ./mobile
+      run: flutter pub get
+
+    - name: Build Client APK
+      working-directory: ./mobile
+      run: flutter build apk --target lib/apps/client/main.dart --release
+
+    - name: Build Merchant APK
+      working-directory: ./mobile
+      run: flutter build apk --target lib/apps/merchant/main.dart --release
+
+    - name: Upload Client APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: wedy-client-apk
+        path: mobile/build/app/outputs/flutter-apk/app-release.apk
+
+    - name: Upload Merchant APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: wedy-merchant-apk
+        path: mobile/build/app/outputs/flutter-apk/app-release.apk
