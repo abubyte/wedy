@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: wedy-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./infra/nginx/ssl:/etc/nginx/ssl
+      - static_files:/var/www/static
+    networks:
+      - wedy-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: wedy-postgres-prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/backup:/backup
+    networks:
+      - wedy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: wedy-redis-prod
+    volumes:
+      - redis_data:/data
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - wedy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  # Backend API (Production)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: wedy-backend-prod
+    environment:
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - SMS_API_KEY=${SMS_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
+      - PAYME_MERCHANT_ID=${PAYME_MERCHANT_ID}
+      - PAYME_SECRET_KEY=${PAYME_SECRET_KEY}
+      - CLICK_MERCHANT_ID=${CLICK_MERCHANT_ID}
+      - CLICK_SECRET_KEY=${CLICK_SECRET_KEY}
+      - UZUMBANK_MERCHANT_ID=${UZUMBANK_MERCHANT_ID}
+      - UZUMBANK_SECRET_KEY=${UZUMBANK_SECRET_KEY}
+    volumes:
+      - static_files:/app/static
+      - ./logs:/app/logs
+    networks:
+      - wedy-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker (Background Tasks)
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: wedy-celery-worker-prod
+    environment:
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - wedy-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: celery -A app.core.celery worker --loglevel=info
+
+  # Celery Beat (Scheduled Tasks)
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: wedy-celery-beat-prod
+    environment:
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ./logs:/app/logs
+      - celery_beat_data:/app/celerybeat-schedule
+    networks:
+      - wedy-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: celery -A app.core.celery beat --loglevel=info --pidfile=/tmp/celerybeat.pid
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_files:
+    driver: local
+  celery_beat_data:
+    driver: local
+
+networks:
+  wedy-network:
+    driver: bridge

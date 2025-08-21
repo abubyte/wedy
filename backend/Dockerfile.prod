@@ -1,0 +1,74 @@
+FROM python:3.11-slim as builder
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV POETRY_NO_INTERACTION=1
+ENV POETRY_VENV_IN_PROJECT=1
+ENV POETRY_CACHE_DIR=/opt/poetry-cache
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install poetry
+
+# Set work directory
+WORKDIR /app
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock ./
+
+# Install dependencies
+RUN poetry config virtualenvs.create false \
+    && poetry install --only=main \
+    && rm -rf $POETRY_CACHE_DIR
+
+# Production stage
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r wedy && useradd -r -g wedy wedy
+
+# Set work directory
+WORKDIR /app
+
+# Copy dependencies from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy project
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/static \
+    && chown -R wedy:wedy /app
+
+# Make scripts executable
+RUN chmod +x scripts/*.py
+
+# Switch to non-root user
+USER wedy
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Production command
+CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]

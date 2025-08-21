@@ -1,0 +1,270 @@
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# ===== BACKEND (Python/FastAPI) =====
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+.env
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Alembic
+backend/alembic/versions/*
+!backend/alembic/versions/.gitkeep
+
+# Backend uploads and data
+backend/uploads/
+backend/static/
+*.db
+*.sqlite3
+
+# ===== MOBILE (Flutter) =====
+
+# Miscellaneous
+*.class
+*.lock
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code related
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+linked_*.ds
+unlinked.ds
+unlinked_spec.ds
+
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+
+# iOS related
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*sync/
+**/ios/**/.sconsign.dblite
+**/ios/**/.tags*
+**/ios/**/.vagrant/
+**/ios/**/DerivedData/
+**/ios/**/Icon?
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/profile
+**/ios/**/xcuserdata
+**/ios/.generated/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# ===== DOCKER =====
+
+# Docker files
+docker-compose.override.yml
+.dockerignore
+
+# ===== INFRASTRUCTURE =====
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+
+# Kubernetes
+kubeconfig
+
+# SSL Certificates
+*.crt
+*.key
+*.pem
+*.p12
+
+# ===== DOCUMENTATION =====
+
+# Generated documentation
+docs/_build/
+docs/build/
+
+# ===== DEPLOYMENT =====
+
+# Deployment artifacts
+deploy/
+releases/
+*.tar.gz
+*.zip
+
+# ===== MONITORING =====
+
+# Monitoring data
+monitoring/data/
+grafana/data/
+prometheus/data/
+
+# ===== PROJECT SPECIFIC =====
+
+# Test data
+test-data/
+sample-data/
+
+# Backup files
+backup/
+*.backup
+
+# Local development overrides
+docker-compose.local.yml
+local-config/
+
+# Production secrets
+secrets/
+certificates/
+
+# Analytics and metrics
+analytics/
+metrics/
+
+# Cache directories
+.cache/
+.npm/
+.yarn/
+
+# Node modules (if any JS tools are used)
+node_modules/
+
+# ===== KEEP CERTAIN FILES =====
+!.gitkeep
+!.dockerignore
+!.env.example
