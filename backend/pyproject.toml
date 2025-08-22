@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Wedy Platform Backend API"
 authors = ["Abdurakhmon Davronov abdurakhmon278@gmail.com"]
 readme = "README.md"
+packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -22,6 +23,8 @@ httpx = "^0.25.2"
 python-dotenv = "^1.0.0"
 celery = "^5.3.4"
 pillow = "^10.1.0"
+pydantic-settings = "^2.10.1"
+asyncpg = "^0.30.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

@@ -18,6 +18,16 @@ async def seed_sample_data():
     
     async with AsyncSessionLocal() as db:
         try:
+            # Check if data already exists
+            from sqlalchemy import select
+            existing_categories = await db.execute(select(ServiceCategory))
+            existing_tariffs = await db.execute(select(TariffPlan))
+            existing_users = await db.execute(select(User))
+            
+            if existing_categories.first() or existing_tariffs.first() or existing_users.first():
+                print("✅ Sample data already exists, skipping seeding...")
+                return
+            
             # Create service categories
             categories = [
                 ServiceCategory(

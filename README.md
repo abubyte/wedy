@@ -32,9 +32,6 @@ cd wedy
 ```bash
 # Start PostgreSQL and Redis with Docker
 docker-compose up -d
-
-# Or use the setup script
-./scripts/setup/dev-setup.sh
 ```
 
 3. **Backend Setup**
@@ -52,6 +49,9 @@ poetry run uvicorn app.main:app --reload
 4. **Mobile Setup**
 ```bash
 cd mobile
+cp .env.example .env
+# Edit .env with your configuration
+
 flutter pub get
 flutter run --target lib/apps/client/main.dart    # Client app
 flutter run --target lib/apps/merchant/main.dart  # Merchant app
@@ -112,36 +112,38 @@ graph TB
 - **`backend/`** - FastAPI backend application
 - **`mobile/`** - Flutter mobile applications (shared codebase)
 - **`docs/`** - Documentation and guides
-- **`scripts/`** - Development and deployment scripts
+- **`backend/scripts/`** - Database initialization and utility scripts
 - **`infra/`** - Infrastructure and configuration files
 
 ### Development Workflow
 
 1. **Feature Development**
-   - Create feature branch from `develop`
+   - Create feature branch from `main`
    - Implement backend APIs first
    - Then implement mobile UI
    - Write tests for all changes
 
 2. **Code Quality**
-   - **Backend**: Black, Flake8, MyPy, Pytest
-   - **Mobile**: Dart formatter, Analyzer, Widget tests
+   - **Backend**: `poetry run black .`, `poetry run flake8 .`, `poetry run mypy .`
+   - **Mobile**: `dart format .`, `flutter analyze`
 
 3. **Testing**
-   - Unit tests for business logic
+   - **Backend**: `poetry run pytest`
+   - **Mobile**: `flutter test`
    - Integration tests for APIs
    - Widget tests for UI components
-   - E2E tests for critical flows
 
 ### Environment Setup
 
 ```bash
 # Development environment
-cp .env.example .env
+cd backend && cp .env.example .env
+cd ../mobile && cp .env.example .env
+# Edit both .env files with your configuration
+
 docker-compose up -d
 
 # Production environment  
-cp .env.example .env.prod
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
@@ -160,11 +162,13 @@ flutter run --debug
 
 ### Production Deployment
 ```bash
-# Backend
-./scripts/deploy/backend-deploy.sh
+# Backend (using Docker)
+docker-compose -f docker-compose.prod.yml up -d
 
-# Mobile (app stores)
-./scripts/deploy/mobile-deploy.sh
+# Mobile (build for app stores)
+cd mobile
+flutter build apk --release    # Android
+flutter build ios --release    # iOS
 ```
 
 ## 📊 Current Status
