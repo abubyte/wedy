@@ -56,7 +56,26 @@ class FileUploadError(WedyException):
     pass
 
 
+class ForbiddenError(WedyException):
+    """Raised when action is forbidden due to business rules."""
+    pass
+
+
+class PaymentRequiredError(WedyException):
+    """Raised when payment/subscription is required."""
+    pass
+
+
+class SubscriptionExpiredError(WedyException):
+    """Raised when subscription has expired."""
+    pass
+
+
 # HTTP Exception Classes for FastAPI
+class HTTPPaymentRequired(HTTPException):
+    """402 Payment Required"""
+    def __init__(self, detail: str = "Payment required"):
+        super().__init__(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=detail)
 class HTTPBadRequest(HTTPException):
     """400 Bad Request"""
     def __init__(self, detail: str = "Bad request"):
@@ -129,6 +148,9 @@ EXCEPTION_MAPPING = {
     TariffLimitError: HTTPForbidden,
     SMSError: HTTPInternalServerError,
     FileUploadError: HTTPBadRequest,
+    ForbiddenError: HTTPForbidden,
+    PaymentRequiredError: HTTPPaymentRequired,
+    SubscriptionExpiredError: HTTPPaymentRequired,
 }
 
 
