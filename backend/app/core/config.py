@@ -79,9 +79,15 @@ class Settings(BaseSettings):
 
     CLICK_MERCHANT_ID: str = ""
     CLICK_SECRET_KEY: str = ""
+    CLICK_API_URL: str = "https://api.click.uz/v2/merchant"
+    CLICK_SERVICE_ID: str = ""
 
     UZUMBANK_MERCHANT_ID: str = ""
     UZUMBANK_SECRET_KEY: str = ""
+    UZUMBANK_API_URL: str = "https://api.uzumbank.uz"
+    
+    # Base URL for payment callbacks
+    BASE_URL: str = "http://localhost:8000"
 
     # =========================
     # Application Constants
@@ -95,6 +101,7 @@ class Settings(BaseSettings):
     DEFAULT_PAGE_SIZE: int = 20
     MAX_PAGE_SIZE: int = 100
     FEATURED_SERVICE_PRICE_PER_DAY: int = 5000
+    PHONE_NUMBER_LENGTH: int = 9  # Uzbekistan phone number length without country code
 
     # =========================
     # Default Regions
