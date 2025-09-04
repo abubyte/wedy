@@ -63,7 +63,7 @@ class AuthService:
             raise ValidationError("Maximum OTP attempts exceeded. Please try again later.")
         
         # Generate OTP
-        otp_code = self._generate_otp()
+        otp_code = self._generate_otp() if not settings.DEBUG else '123456'
         
         # Store OTP in Redis with expiration
         otp_key = f"otp:{normalized_phone}"
@@ -146,7 +146,7 @@ class AuthService:
         phone_number: str, 
         name: str, 
         user_type: UserType,
-        business_category: Optional[str] = None
+        # business_category: Optional[str] = None #REMOVE_CATEGORY_FROM_REGISTRATION
     ) -> TokenResponse:
         """
         Complete user registration after OTP verification.
@@ -175,21 +175,21 @@ class AuthService:
         if existing_user:
             raise ConflictError("User already exists")
         
-        # For merchants, validate business category
-        if user_type == UserType.MERCHANT:
-            if not business_category:
-                raise ValidationError("Business category is required for merchants")
+        # For merchants, validate business category #REMOVE_CATEGORY_FROM_REGISTRATION
+        # if user_type == UserType.MERCHANT:
+        #     if not business_category:
+        #         raise ValidationError("Business category is required for merchants")
             
-            # Check if category exists
-            category_statement = select(ServiceCategory).where(
-                ServiceCategory.name == business_category,
-                ServiceCategory.is_active == True
-            )
-            category_result = await self.db.exec(category_statement)
-            category = category_result.first()
+        #     # Check if category exists
+        #     category_statement = select(ServiceCategory).where(
+        #         ServiceCategory.name == business_category,
+        #         ServiceCategory.is_active == True
+        #     )
+        #     category_result = await self.db.exec(category_statement)
+        #     category = category_result.first()
             
-            if not category:
-                raise ValidationError("Invalid business category")
+        #     if not category:
+        #         raise ValidationError("Invalid business category")
         
         # Create user
         user = User(
