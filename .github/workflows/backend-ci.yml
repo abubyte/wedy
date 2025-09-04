@@ -87,8 +87,8 @@ jobs:
     - name: Run tests
       working-directory: ./backend
       env:
-        DATABASE_URL: postgresql+asyncpg://test:testpass@localhost:5432/wedy_test
-        REDIS_URL: redis://localhost:6379/0
+        DATABASE_URL: postgresql+asyncpg://test:testpass@api.abubyte.uz:5432/wedy_test
+        REDIS_URL: redis://api.abubyte.uz:6379/0
         SECRET_KEY: test-secret-key-for-ci
         SMS_API_KEY: test-sms-key
         AWS_ACCESS_KEY_ID: test-aws-key

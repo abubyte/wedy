@@ -97,11 +97,11 @@ class CompleteRegistrationRequest(BaseModel):
         ..., 
         description="Type of user account"
     )
-    business_category: Optional[str] = Field(
-        None, 
-        description="Business category (required for merchants)",
-        example="Photography"
-    )
+    # business_category: Optional[str] = Field( #REMOVE_CATEGORY_FROM_REGISTRATION
+    #     None, 
+    #     description="Business category (required for merchants)",
+    #     example="Photography"
+    # )
     
     @validator('phone_number')
     def validate_phone_number(cls, v):
@@ -116,14 +116,14 @@ class CompleteRegistrationRequest(BaseModel):
             raise ValueError('Name must be at least 2 characters long')
         return v
     
-    @validator('business_category')
-    def validate_business_category(cls, v, values):
-        user_type = values.get('user_type')
-        if user_type == UserType.MERCHANT and not v:
-            raise ValueError('Business category is required for merchants')
-        if user_type != UserType.MERCHANT and v:
-            raise ValueError('Business category is only allowed for merchants')
-        return v
+    # @validator('business_category') #REMOVE_CATEGORY_FROM_REGISTRATION
+    # def validate_business_category(cls, v, values):
+    #     user_type = values.get('user_type')
+    #     if user_type == UserType.MERCHANT and not v:
+    #         raise ValueError('Business category is required for merchants')
+    #     if user_type != UserType.MERCHANT and v:
+    #         raise ValueError('Business category is only allowed for merchants')
+    #     return v
 
 
 class RefreshTokenRequest(BaseModel):

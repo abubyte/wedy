@@ -18,7 +18,7 @@ class S3ImageManager:
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             region_name=settings.AWS_REGION
         )
-        self.bucket_name = settings.AWS_S3_BUCKET_NAME
+        self.bucket_name = settings.AWS_BUCKET_NAME
     
     def generate_presigned_upload_url(
         self,

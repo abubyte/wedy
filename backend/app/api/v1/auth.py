@@ -78,7 +78,7 @@ async def complete_registration(
         phone_number=request.phone_number,
         name=request.name,
         user_type=request.user_type,
-        business_category=request.business_category
+        # business_category=request.business_category #REMOVE_CATEGORY_FROM_REGISTRATION
     )
     return result
 
@@ -101,21 +101,3 @@ async def refresh_token(
     auth_service = AuthService(db)
     result = await auth_service.refresh_token(request.refresh_token)
     return result
-
-
-@router.post("/logout")
-async def logout(
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Logout current user.
-    
-    Args:
-        current_user: Current authenticated user
-        
-    Returns:
-        dict: Success message
-    """
-    # In a stateless JWT system, logout is handled client-side
-    # The client should remove the tokens from storage
-    return {"message": "Logged out successfully"}

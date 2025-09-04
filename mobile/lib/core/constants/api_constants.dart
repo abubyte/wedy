@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'http://api.abubyte.uz';
   static const String apiVersion = '/api/v1';
 
   // Auth endpoints

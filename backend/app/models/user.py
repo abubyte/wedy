@@ -67,15 +67,21 @@ class Merchant(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="users.id", unique=True)
     
     # Business information
-    business_name: str = Field(max_length=255, description="Business/company name")
+    # business_name: str = Field(max_length=255, description="Business/company name") #REMOVE_CATEGORY_FROM_REGISTRATION
+    business_name: Optional[str] = Field(max_length=255, description="Business/company name")
     description: Optional[str] = Field(default=None, description="Business description")
     cover_image_url: Optional[str] = Field(
         default=None, 
         description="AWS S3 URL for cover image"
     )
     
-    # Location
-    location_region: str = Field(
+    # Location #REMOVE_CATEGORY_FROM_REGISTRATION
+    # location_region: str = Field(
+    #     max_length=100, 
+    #     index=True,
+    #     description="Uzbekistan region"
+    # )
+    location_region: Optional[str] = Field(
         max_length=100, 
         index=True,
         description="Uzbekistan region"
