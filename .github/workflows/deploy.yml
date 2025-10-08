@@ -19,7 +19,7 @@ jobs:
 
       - name: Deploy and rebuild containers
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
             cd /root/wedy
 
             echo "Stopping old containers..."
