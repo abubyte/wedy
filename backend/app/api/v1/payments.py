@@ -26,7 +26,7 @@ def get_payment_service(
     return PaymentService(
         session=session,
         payment_providers=payment_providers,
-        sms_service=None  # SMS service would be injected here
+        sms_service=None  # SMS service would be injected here # TODO
     )
 
 

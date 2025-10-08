@@ -48,7 +48,7 @@ async def get_current_user(
     
     # Get user from database
     statement = select(User).where(User.id == user_uuid, User.is_active == True)
-    result = await db.exec(statement)
+    result = await db.execute(statement)
     user = result.first()
     
     if not user:
@@ -117,7 +117,7 @@ async def get_current_merchant(
         HTTPForbidden: If merchant profile not found
     """
     statement = select(Merchant).where(Merchant.user_id == current_user.id)
-    result = await db.exec(statement)
+    result = await db.execute(statement)
     merchant = result.first()
     
     if not merchant:
@@ -148,7 +148,7 @@ async def get_current_active_merchant(
         MerchantSubscription.merchant_id == merchant.id,
         MerchantSubscription.status == SubscriptionStatus.ACTIVE
     )
-    result = await db.exec(statement)
+    result = await db.execute(statement)
     subscription = result.first()
     
     if not subscription:

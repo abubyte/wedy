@@ -116,7 +116,7 @@ class AuthService:
         
         # Check if user exists
         statement = select(User).where(User.phone_number == normalized_phone)
-        result = await self.db.exec(statement)
+        result = await self.db.executeute(statement)
         user = result.first()
         
         if user:
@@ -169,7 +169,7 @@ class AuthService:
         
         # Check if user already exists
         statement = select(User).where(User.phone_number == normalized_phone)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         existing_user = result.first()
         
         if existing_user:
@@ -185,7 +185,7 @@ class AuthService:
         #         ServiceCategory.name == business_category,
         #         ServiceCategory.is_active == True
         #     )
-        #     category_result = await self.db.exec(category_statement)
+        #     category_result = await self.db.execute(category_statement)
         #     category = category_result.first()
             
         #     if not category:
@@ -253,7 +253,7 @@ class AuthService:
         
         # Verify user exists and is active
         statement = select(User).where(User.id == user_uuid, User.is_active == True)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         user = result.first()
         
         if not user:

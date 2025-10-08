@@ -25,15 +25,15 @@ async def wait_for_database():
             await conn.execute('SELECT 1')
             await conn.close()
             
-            print("✅ Database is ready!")
+            print("Database is ready!")
             return True
             
         except Exception as e:
-            print(f"⏳ Waiting for database... (attempt {attempt + 1}/{max_retries})")
+            print(f"Waiting for database... (attempt {attempt + 1}/{max_retries})")
             print(f"   Error: {e}")
             
             if attempt == max_retries - 1:
-                print("❌ Database failed to become ready")
+                print("Database failed to become ready")
                 return False
                 
             time.sleep(retry_interval)

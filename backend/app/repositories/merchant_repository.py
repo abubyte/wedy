@@ -42,7 +42,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             Merchant profile or None
         """
         statement = select(Merchant).where(Merchant.user_id == user_id)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.first()
     
     async def get_merchant_with_user(self, merchant_id: UUID) -> Optional[Tuple[Merchant, User]]:
@@ -60,7 +60,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             .join(User, Merchant.user_id == User.id)
             .where(Merchant.id == merchant_id)
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         row = result.first()
         return row if row else None
     
@@ -88,7 +88,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
             .order_by(MerchantSubscription.end_date.desc())
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         row = result.first()
         return row if row else None
     
@@ -112,7 +112,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
             .order_by(MerchantContact.display_order, MerchantContact.created_at)
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def count_contacts_by_type(self, merchant_id: UUID, contact_type: ContactType) -> int:
@@ -136,7 +136,7 @@ class MerchantRepository(BaseRepository[Merchant]):
                 )
             )
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.one()
     
     async def get_merchant_services(self, merchant_id: UUID) -> List[Tuple[Service, ServiceCategory]]:
@@ -155,7 +155,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             .where(Service.merchant_id == merchant_id)
             .order_by(Service.created_at.desc())
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def count_merchant_services(self, merchant_id: UUID) -> int:
@@ -177,7 +177,7 @@ class MerchantRepository(BaseRepository[Merchant]):
                 )
             )
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.one()
     
     async def get_merchant_gallery_images(self, merchant_id: UUID) -> List[Image]:
@@ -201,7 +201,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
             .order_by(Image.display_order, Image.created_at)
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def count_gallery_images(self, merchant_id: UUID) -> int:
@@ -224,7 +224,7 @@ class MerchantRepository(BaseRepository[Merchant]):
                 )
             )
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.one()
     
     async def count_service_images(self, service_id: UUID) -> int:
@@ -247,7 +247,7 @@ class MerchantRepository(BaseRepository[Merchant]):
                 )
             )
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.one()
     
     async def get_service_analytics(self, merchant_id: UUID) -> List[Tuple[Service, int, Optional[DailyServiceMetrics]]]:
@@ -281,7 +281,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             .group_by(Service.id, DailyServiceMetrics.id)
             .order_by(Service.created_at.desc())
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def get_featured_services(self, merchant_id: UUID) -> List[Tuple[FeaturedService, Service]]:
@@ -300,7 +300,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             .where(FeaturedService.merchant_id == merchant_id)
             .order_by(FeaturedService.created_at.desc())
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def count_active_featured_services(self, merchant_id: UUID) -> int:
@@ -326,7 +326,7 @@ class MerchantRepository(BaseRepository[Merchant]):
                 )
             )
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.one()
     
     async def create_contact(self, contact: MerchantContact) -> MerchantContact:
@@ -370,7 +370,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             True if deleted, False if not found
         """
         statement = select(MerchantContact).where(MerchantContact.id == contact_id)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         contact = result.first()
         
         if contact:
@@ -416,7 +416,7 @@ class MerchantRepository(BaseRepository[Merchant]):
                 )
             )
         )
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         image = result.first()
         
         if image:
@@ -438,7 +438,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             True if updated, False if merchant not found
         """
         statement = select(Merchant).where(Merchant.id == merchant_id)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         merchant = result.first()
         
         if merchant:

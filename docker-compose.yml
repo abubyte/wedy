@@ -1,124 +1,32 @@
-version: '3.8'
-
-services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: wedy-postgres-dev
-    environment:
-      POSTGRES_DB: wedy_dev
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: devpass
-      POSTGRES_HOST_AUTH_METHOD: trust
+version: '3.8' 
+services: 
+  postgres: 
+    image: postgres:15 
+    environment: 
+      POSTGRES_DB: wedy_dev 
+      POSTGRES_USER: dev 
+      POSTGRES_PASSWORD: devpass 
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - wedy-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d wedy_dev"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: wedy-redis-dev
+      - "5432:5432" 
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data 
+   
+  redis: 
+    image: redis:7-alpine 
     ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - wedy-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    command: redis-server --appendonly yes
-
-  # Backend API (Development)
+      - "6379:6379" 
+   
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-    container_name: wedy-backend-dev
-    environment:
-      - DEBUG=true
+    build: ./backend 
+    ports:
+      - "8000:8000" 
+    depends_on: 
+      - postgres 
+      - redis 
+    environment: 
       - DATABASE_URL=postgresql+asyncpg://dev:devpass@postgres:5432/wedy_dev
-      - REDIS_URL=redis://redis:6379/0
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - backend_cache:/app/.cache
-    networks:
-      - wedy-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    command: >
-      sh -c "
-        echo 'Waiting for database...' &&
-        python scripts/wait_for_db.py &&
-        echo 'Initializing database...' &&
-        python scripts/init_db.py &&
-        echo 'Seeding sample data...' &&
-        python scripts/seed_data.py &&
-        echo 'Starting server...' &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-      "
-
-  # pgAdmin (Database Administration)
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: wedy-pgadmin-dev
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@wedy.uz
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - wedy-network
-    depends_on:
-      - postgres
-    restart: unless-stopped
-
-  # Redis Commander (Redis Administration)
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: wedy-redis-commander-dev
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    ports:
-      - "8081:8081"
-    networks:
-      - wedy-network
-    depends_on:
-      - redis
-    restart: unless-stopped
-
-volumes:
+      - REDIS_URL=redis://redis:6379/0 
+    volumes: 
+      - ./backend:/app 
+volumes: 
   postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-  pgadmin_data:
-    driver: local
-  backend_cache:
-    driver: local
-
-networks:
-  wedy-network:
-    driver: bridge

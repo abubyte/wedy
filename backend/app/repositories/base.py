@@ -26,7 +26,7 @@ class BaseRepository(Generic[T]):
             Model instance or None if not found
         """
         statement = select(self.model_class).where(self.model_class.id == id)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.first()
     
     async def get_all(self, offset: int = 0, limit: int = 100) -> List[T]:
@@ -41,7 +41,7 @@ class BaseRepository(Generic[T]):
             List of model instances
         """
         statement = select(self.model_class).offset(offset).limit(limit)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def count(self) -> int:
@@ -52,7 +52,7 @@ class BaseRepository(Generic[T]):
             Total count of records
         """
         statement = select(func.count(self.model_class.id))
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.one()
     
     async def create(self, obj: T) -> T:
@@ -113,6 +113,6 @@ class BaseRepository(Generic[T]):
             True if exists, False otherwise
         """
         statement = select(func.count(self.model_class.id)).where(self.model_class.id == id)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         count = result.one()
         return count > 0
