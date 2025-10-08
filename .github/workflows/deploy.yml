@@ -1,8 +1,8 @@
-name: Deploy Backend to Linux Server
+name: Deploy to Server
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   deploy:
@@ -13,38 +13,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Create project directory on server
+      - name: Deploy and rebuild containers
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} "mkdir -p /root/wedy"
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /root/wedy
 
-      - name: Copy files to server
-        run: |
-          rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            ./ \
-            root@${{ secrets.SSH_HOST }}:/root/wedy
+            echo "Stopping old containers..."
+            docker compose down
 
-      - name: Deploy using Docker Compose
-        run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
-          cd /root/wedy
+            echo "Pulling new images..."
+            docker compose pull
 
-          echo "Stopping old containers..."
-          docker compose down
+            echo "Rebuilding backend image..."
+            docker compose build --no-cache backend
 
-          echo "Pulling new base images..."
-          docker compose pull
+            echo "Starting all services..."
+            docker compose up -d
 
-          echo "Rebuilding backend image..."
-          docker compose build --no-cache
-
-          echo "Starting services..."
-          docker compose up -d
-
-          echo "Cleaning up unused data..."
-          docker system prune -f
+            echo "Pruning old resources..."
+            docker system prune -f
           EOF
