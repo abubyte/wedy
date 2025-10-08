@@ -17,9 +17,9 @@ async def init_database():
     
     try:
         await create_db_and_tables()
-        print("✅ Database tables created successfully!")
+        print("Database tables created successfully!")
     except Exception as e:
-        print(f"❌ Error creating database tables: {e}")
+        print(f"Error creating database tables: {e}")
         raise
 
 

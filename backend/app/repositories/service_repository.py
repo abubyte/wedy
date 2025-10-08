@@ -49,7 +49,7 @@ class ServiceRepository(BaseRepository[Service]):
             .order_by(ServiceCategory.display_order, ServiceCategory.name)
         )
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return [(category, count) for category, count in result.all()]
     
     async def search_services(
@@ -127,7 +127,7 @@ class ServiceRepository(BaseRepository[Service]):
         count_statement = select(func.count()).select_from(
             base_query.subquery()
         )
-        count_result = await self.db.exec(count_statement)
+        count_result = await self.db.execute(count_statement)
         total_count = count_result.one()
         
         # Apply sorting
@@ -151,7 +151,7 @@ class ServiceRepository(BaseRepository[Service]):
         base_query = base_query.offset(offset).limit(limit)
         
         # Execute query
-        result = await self.db.exec(base_query)
+        result = await self.db.execute(base_query)
         services = result.all()
         
         return services, total_count
@@ -191,7 +191,7 @@ class ServiceRepository(BaseRepository[Service]):
         if limit:
             statement = statement.limit(limit)
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def get_service_with_details(self, service_id: UUID) -> Optional[Service]:
@@ -214,7 +214,7 @@ class ServiceRepository(BaseRepository[Service]):
             )
         )
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         service = result.first()
         
         if service:
@@ -245,7 +245,7 @@ class ServiceRepository(BaseRepository[Service]):
             .order_by(Image.display_order, Image.created_at)
         )
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.all()
     
     async def get_merchant_by_service(self, service_id: UUID) -> Optional[Merchant]:
@@ -264,7 +264,7 @@ class ServiceRepository(BaseRepository[Service]):
             .where(Service.id == service_id)
         )
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.first()
     
     async def get_category_by_service(self, service_id: UUID) -> Optional[ServiceCategory]:
@@ -283,7 +283,7 @@ class ServiceRepository(BaseRepository[Service]):
             .where(Service.id == service_id)
         )
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.first()
     
     async def is_service_featured(self, service_id: UUID) -> Tuple[bool, Optional[datetime]]:
@@ -311,7 +311,7 @@ class ServiceRepository(BaseRepository[Service]):
             .order_by(FeaturedService.end_date.desc())
         )
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         end_date = result.first()
         
         return (end_date is not None, end_date)
@@ -326,7 +326,7 @@ class ServiceRepository(BaseRepository[Service]):
         statement = text(
             "UPDATE services SET view_count = view_count + 1 WHERE id = :service_id"
         )
-        await self.db.exec(statement, {"service_id": str(service_id)})
+        await self.db.execute(statement, {"service_id": str(service_id)})
         await self.db.commit()
     
     async def record_user_interaction(
@@ -352,7 +352,7 @@ class ServiceRepository(BaseRepository[Service]):
                     UserInteraction.interaction_type == interaction_type
                 )
             )
-            existing_result = await self.db.exec(existing_statement)
+            existing_result = await self.db.execute(existing_statement)
             if existing_result.first():
                 return  # Already exists, don't duplicate
         
@@ -385,7 +385,7 @@ class ServiceRepository(BaseRepository[Service]):
         statement = text(
             f"UPDATE services SET {counter_field} = {counter_field} + 1 WHERE id = :service_id"
         )
-        await self.db.exec(statement, {"service_id": str(service_id)})
+        await self.db.execute(statement, {"service_id": str(service_id)})
         await self.db.commit()
     
     async def get_services_by_category(
@@ -412,7 +412,7 @@ class ServiceRepository(BaseRepository[Service]):
         
         # Count query
         count_statement = select(func.count(Service.id)).where(base_conditions)
-        count_result = await self.db.exec(count_statement)
+        count_result = await self.db.execute(count_statement)
         total_count = count_result.one()
         
         # Services query
@@ -424,7 +424,7 @@ class ServiceRepository(BaseRepository[Service]):
             .limit(limit)
         )
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         services = result.all()
         
         return services, total_count

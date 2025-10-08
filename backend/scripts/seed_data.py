@@ -20,9 +20,9 @@ async def seed_sample_data():
         try:
             # Check if data already exists
             from sqlalchemy import select
-            existing_categories = await db.execute(select(ServiceCategory))
-            existing_tariffs = await db.execute(select(TariffPlan))
-            existing_users = await db.execute(select(User))
+            existing_categories = await db.executeute(select(ServiceCategory))
+            existing_tariffs = await db.executeute(select(TariffPlan))
+            existing_users = await db.executeute(select(User))
             
             if existing_categories.first() or existing_tariffs.first() or existing_users.first():
                 print("✅ Sample data already exists, skipping seeding...")

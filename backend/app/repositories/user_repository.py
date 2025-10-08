@@ -25,7 +25,7 @@ class UserRepository(BaseRepository[User]):
             User instance or None if not found
         """
         statement = select(User).where(User.phone_number == phone_number)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.first()
     
     async def get_merchant_by_user_id(self, user_id: UUID) -> Optional[Merchant]:
@@ -39,7 +39,7 @@ class UserRepository(BaseRepository[User]):
             Merchant instance or None if not found
         """
         statement = select(Merchant).where(Merchant.user_id == user_id)
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.first()
     
     async def is_phone_number_taken(self, phone_number: str, exclude_user_id: Optional[UUID] = None) -> bool:
@@ -58,5 +58,5 @@ class UserRepository(BaseRepository[User]):
         if exclude_user_id:
             statement = statement.where(User.id != exclude_user_id)
         
-        result = await self.db.exec(statement)
+        result = await self.db.execute(statement)
         return result.first() is not None
