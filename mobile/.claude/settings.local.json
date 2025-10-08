@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(D:\\dev\\projs\\01.wedy\\wedy/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\backend/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\backend\\app\\core/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\backend/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\backend/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\backend/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\backend\\app/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\.github\\workflows/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\.github\\workflows/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\.github\\workflows/**)",
+      "Read(D:\\dev\\projs\\01.wedy\\wedy\\backend/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

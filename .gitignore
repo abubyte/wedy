@@ -268,11 +268,9 @@ node_modules/
 !.gitkeep
 !.dockerignore
 !.env.example
+!poetry.lock
 
-CLAUDE.md
 development_instructions.md
 git_setup_checklist.md
 github_workflow.md
 Wedy System Design.pdf
-.gitignore
-.claude/
