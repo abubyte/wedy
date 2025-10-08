@@ -17,23 +17,43 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy and rebuild containers
+      - name: Deploy application
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
+            set -e  # Exit on any error
+            
             cd /root/wedy
 
-            echo "Stopping old containers..."
-            docker compose down
+            echo "==> Pulling latest code..."
+            git pull origin main
 
-            echo "Pulling new images..."
-            docker compose pull
+            echo "==> Pulling base images..."
+            docker compose pull postgres redis
 
-            echo "Rebuilding backend image..."
-            docker compose build --no-cache backend
+            echo "==> Building backend image..."
+            docker compose build backend
 
-            echo "Starting all services..."
+            echo "==> Starting services..."
             docker compose up -d
 
-            echo "Pruning old resources..."
-            docker system prune -f
+            echo "==> Waiting for services to be healthy..."
+            sleep 5
+            
+            # Check if backend is responding
+            if curl -f http://localhost:8000/health || curl -f http://localhost:8000/docs; then
+              echo "==> Backend is healthy!"
+            else
+              echo "==> Backend health check failed!"
+              docker compose logs backend
+              exit 1
+            fi
+
+            echo "==> Cleaning up old resources..."
+            docker image prune -f
+            
+            echo "==> Deployment successful!"
           EOF
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "Deployment failed! Check logs above."
