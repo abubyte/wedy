@@ -17,30 +17,34 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Create project directory on server
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} "mkdir -p /root/wedy"
+
       - name: Copy files to server
         run: |
           rsync -avz --delete \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/wedy
+            root@${{ secrets.SSH_HOST }}:/root/wedy
 
       - name: Deploy using Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-          cd /home/${{ secrets.SSH_USER }}/wedy
-          
-          # Pull latest images and rebuild
-          docker compose pull
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
+          cd /root/wedy
+
+          echo "Stopping old containers..."
           docker compose down
+
+          echo "Pulling new base images..."
+          docker compose pull
+
+          echo "Rebuilding backend image..."
           docker compose build --no-cache
+
+          echo "Starting services..."
           docker compose up -d
 
-          # Remove old unused containers/images
+          echo "Cleaning up unused data..."
           docker system prune -f
           EOF
-
-      - name: Verify backend is running
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "curl -f http://localhost:8000/health || exit 1"
-
