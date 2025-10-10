@@ -22,11 +22,21 @@ class Settings(BaseSettings):
 
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v):
-        if isinstance(v, str) and v.startswith("["):
-            import json
-            return json.loads(v)
         if isinstance(v, str):
-            return [i.strip() for i in v.split(",")]
+            s = v.strip()
+            if s.startswith("[") and s.endswith("]"):
+                import json
+                try:
+                    return json.loads(s)
+                except Exception:
+                    inner = s[1:-1].strip()
+                    if not inner:
+                        return []
+                    items = [i.strip().strip('\'\"') for i in inner.split(",")]
+                    return [it for it in items if it]
+
+            return [i.strip() for i in s.split(",") if i.strip()]
+
         return v
 
     # Database
