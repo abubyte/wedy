@@ -31,7 +31,84 @@ jobs:
             --exclude '__pycache__' \
             --exclude '*.pyc' \
             --exclude '.env' \
+            --exclude 'backend/.env' \
             ./ root@${{ secrets.SSH_HOST }}:/root/wedy/
+
+      - name: Create production .env file
+        run: |
+          # Use an EOF block to execute commands on the remote server
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
+            
+            # 1. Start the .env file, creating it empty.
+            cat > /root/wedy/backend/.env << 'ENVFILE_EMPTY'
+          ENVFILE_EMPTY
+            
+            # 2. Append conditional variables (all previous constants are now secrets).
+
+            # Application
+            ${{ secrets.DEBUG && format('echo "DEBUG={0}" >> /root/wedy/backend/.env', secrets.DEBUG) || '' }}
+            ${{ secrets.APP_NAME && format('echo "APP_NAME=\"{0}\"" >> /root/wedy/backend/.env', secrets.APP_NAME) || '' }}
+            ${{ secrets.APP_VERSION && format('echo "APP_VERSION={0}" >> /root/wedy/backend/.env', secrets.APP_VERSION) || '' }}
+            ${{ secrets.API_V1_STR && format('echo "API_V1_STR={0}" >> /root/wedy/backend/.env', secrets.API_V1_STR) || '' }}
+            ${{ secrets.BASE_URL && format('echo "BASE_URL={0}" >> /root/wedy/backend/.env', secrets.BASE_URL) || '' }}
+
+            # Application Constants
+            ${{ secrets.OTP_EXPIRE_MINUTES && format('echo "OTP_EXPIRE_MINUTES={0}" >> /root/wedy/backend/.env', secrets.OTP_EXPIRE_MINUTES) || '' }}
+            ${{ secrets.OTP_MAX_ATTEMPTS && format('echo "OTP_MAX_ATTEMPTS={0}" >> /root/wedy/backend/.env', secrets.OTP_MAX_ATTEMPTS) || '' }}
+            ${{ secrets.PHONE_NUMBER_LENGTH && format('echo "PHONE_NUMBER_LENGTH={0}" >> /root/wedy/backend/.env', secrets.PHONE_NUMBER_LENGTH) || '' }}
+
+            # CORS (Handling array/string value)
+            ${{ secrets.CORS_ORIGINS && format('echo "CORS_ORIGINS={0}" >> /root/wedy/backend/.env', secrets.CORS_ORIGINS) || '' }}
+
+            # PostgreSQL
+            ${{ secrets.POSTGRES_DB && format('echo "POSTGRES_DB={0}" >> /root/wedy/backend/.env', secrets.POSTGRES_DB) || '' }}
+            ${{ secrets.POSTGRES_USER && format('echo "POSTGRES_USER={0}" >> /root/wedy/backend/.env', secrets.POSTGRES_USER) || '' }}
+            ${{ secrets.POSTGRES_PASSWORD && format('echo "POSTGRES_PASSWORD={0}" >> /root/wedy/backend/.env', secrets.POSTGRES_PASSWORD) || '' }}
+
+            # Database
+            # Conditional DATABASE_URL (writes only if all three components are present)
+            ${{ secrets.POSTGRES_USER && secrets.POSTGRES_PASSWORD && secrets.POSTGRES_DB && format('echo "DATABASE_URL=postgresql+asyncpg://{0}:{1}@postgres:5432/{2}" >> /root/wedy/backend/.env', secrets.POSTGRES_USER, secrets.POSTGRES_PASSWORD, secrets.POSTGRES_DB) || '' }}
+            ${{ secrets.REDIS_URL && format('echo "REDIS_URL={0}" >> /root/wedy/backend/.env', secrets.REDIS_URL) || '' }}
+
+            # Security
+            ${{ secrets.SECRET_KEY && format('echo "SECRET_KEY={0}" >> /root/wedy/backend/.env', secrets.SECRET_KEY) || '' }}
+            ${{ secrets.ALGORITHM && format('echo "ALGORITHM={0}" >> /root/wedy/backend/.env', secrets.ALGORITHM) || '' }}
+            ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES && format('echo "ACCESS_TOKEN_EXPIRE_MINUTES={0}" >> /root/wedy/backend/.env', secrets.ACCESS_TOKEN_EXPIRE_MINUTES) || '' }}
+            ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS && format('echo "REFRESH_TOKEN_EXPIRE_DAYS={0}" >> /root/wedy/backend/.env', secrets.REFRESH_TOKEN_EXPIRE_DAYS) || '' }}
+
+            # Eskiz
+            ${{ secrets.ESKIZ_BASE_URL && format('echo "ESKIZ_BASE_URL={0}" >> /root/wedy/backend/.env', secrets.ESKIZ_BASE_URL) || '' }}
+            ${{ secrets.ESKIZ_EMAIL && format('echo "ESKIZ_EMAIL={0}" >> /root/wedy/backend/.env', secrets.ESKIZ_EMAIL) || '' }}
+            ${{ secrets.ESKIZ_PASSWORD && format('echo "ESKIZ_PASSWORD={0}" >> /root/wedy/backend/.env', secrets.ESKIZ_PASSWORD) || '' }}
+
+            # AWS S3
+            ${{ secrets.AWS_ACCESS_KEY_ID && format('echo "AWS_ACCESS_KEY_ID={0}" >> /root/wedy/backend/.env', secrets.AWS_ACCESS_KEY_ID) || '' }}
+            ${{ secrets.AWS_SECRET_ACCESS_KEY && format('echo "AWS_SECRET_ACCESS_KEY={0}" >> /root/wedy/backend/.env', secrets.AWS_SECRET_ACCESS_KEY) || '' }}
+            ${{ secrets.AWS_BUCKET_NAME && format('echo "AWS_BUCKET_NAME={0}" >> /root/wedy/backend/.env', secrets.AWS_BUCKET_NAME) || '' }}
+            ${{ secrets.AWS_REGION && format('echo "AWS_REGION={0}" >> /root/wedy/backend/.env', secrets.AWS_REGION) || '' }}
+
+            # Payment providers: Payme
+            ${{ secrets.PAYME_SECRET_KEY && format('echo "PAYME_SECRET_KEY={0}" >> /root/wedy/backend/.env', secrets.PAYME_SECRET_KEY) || '' }}
+            ${{ secrets.PAYME_MERCHANT_ID && format('echo "PAYME_MERCHANT_ID={0}" >> /root/wedy/backend/.env', secrets.PAYME_MERCHANT_ID) || '' }}
+            ${{ secrets.PAYME_API_URL && format('echo "PAYME_API_URL={0}" >> /root/wedy/backend/.env', secrets.PAYME_API_URL) || '' }}
+            ${{ secrets.PAYME_TEST_API_URL && format('echo "PAYME_TEST_API_URL={0}" >> /root/wedy/backend/.env', secrets.PAYME_TEST_API_URL) || '' }}
+
+            # Payment providers: Click
+            ${{ secrets.CLICK_SECRET_KEY && format('echo "CLICK_SECRET_KEY={0}" >> /root/wedy/backend/.env', secrets.CLICK_SECRET_KEY) || '' }}
+            ${{ secrets.CLICK_MERCHANT_ID && format('echo "CLICK_MERCHANT_ID={0}" >> /root/wedy/backend/.env', secrets.CLICK_MERCHANT_ID) || '' }}
+            ${{ secrets.CLICK_API_URL && format('echo "CLICK_API_URL={0}" >> /root/wedy/backend/.env', secrets.CLICK_API_URL) || '' }}
+            ${{ secrets.CLICK_TEST_API_URL && format('echo "CLICK_TEST_API_URL={0}" >> /root/wedy/backend/.env', secrets.CLICK_TEST_API_URL) || '' }}
+
+            # Payment providers: Uzum Bank
+            ${{ secrets.UZUMBANK_SECRET_KEY && format('echo "UZUMBANK_SECRET_KEY={0}" >> /root/wedy/backend/.env', secrets.UZUMBANK_SECRET_KEY) || '' }}
+            ${{ secrets.UZUMBANK_MERCHANT_ID && format('echo "UZUMBANK_MERCHANT_ID={0}" >> /root/wedy/backend/.env', secrets.UZUMBANK_MERCHANT_ID) || '' }}
+            ${{ secrets.UZUMBANK_API_URL && format('echo "UZUMBANK_API_URL={0}" >> /root/wedy/backend/.env', secrets.UZUMBANK_API_URL) || '' }}
+            ${{ secrets.UZUMBANK_TEST_API_URL && format('echo "UZUMBANK_TEST_API_URL={0}" >> /root/wedy/backend/.env', secrets.UZUMBANK_TEST_API_URL) || '' }}
+            
+            # 3. Finalize
+            chmod 600 /root/wedy/backend/.env
+            echo "✓ Production .env created successfully"
+          EOF
 
       - name: Build and start services
         run: |
@@ -50,23 +127,39 @@ jobs:
             docker compose up -d
 
             echo "==> Waiting for services to be healthy..."
-            sleep 5
+            sleep 10
+            
+            # Check service status
+            docker compose ps
             
             # Check if backend is responding
-            if curl -f http://localhost:8000/health || curl -f http://localhost:8000/docs; then
-              echo "==> Backend is healthy!"
-            else
-              echo "==> Backend health check failed!"
-              docker compose logs backend
-              exit 1
-            fi
+            for i in {1..30}; do
+              if curl -f http://localhost:8000/health 2>/dev/null || curl -f http://localhost:8000/docs 2>/dev/null; then
+                echo "==> Backend is healthy!"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "==> Backend health check failed after 30 attempts!"
+                echo "==> Checking logs..."
+                docker compose logs --tail=50 backend
+                exit 1
+              fi
+              echo "==> Waiting for backend... (attempt $i/30)"
+              sleep 2
+            done
 
             echo "==> Cleaning up old resources..."
             docker image prune -f
             
             echo "==> Deployment successful!"
+            echo "==> Services status:"
+            docker compose ps
           EOF
 
       - name: Notify on failure
         if: failure()
-        run: echo "Deployment failed! Check logs above."
+        run: echo "❌ Deployment failed! Check logs above."
+
+      - name: Notify on success
+        if: success()
+        run: echo "✅ Deployment successful!"
