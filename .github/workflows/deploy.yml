@@ -34,6 +34,19 @@ jobs:
             --exclude 'backend/.env' \
             ./ root@${{ secrets.SSH_HOST }}:/root/wedy/
 
+      - name: Create .env file for docker
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} "
+            cat > /root/wedy/.env <<EOF
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            REDIS_URL=${{ secrets.REDIS_URL }}
+            EOF
+            chmod 600 /root/wedy/.env
+            echo '✓ Docker .env created successfully'
+          "
+
       - name: Create production .env file
         run: |
           # Use an EOF block to execute commands on the remote server

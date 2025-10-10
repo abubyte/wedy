@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    DATABASE_POOL_SIZE: int = 10
+    DATABASE_MAX_OVERFLOW: int = 20
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # Security
