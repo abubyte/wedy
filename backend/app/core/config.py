@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:8000"] #
 
+    # Documentation
+    ENABLE_DOCS: bool = True
+
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v):
         if isinstance(v, str):

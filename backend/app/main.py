@@ -42,8 +42,9 @@ app = FastAPI(
     version=settings.APP_VERSION,
     description="Wedy Platform API for Uzbekistan",
     lifespan=lifespan,
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
+    # Enable docs when in DEBUG or when explicitly allowed via ENABLE_DOCS
+    docs_url="/docs" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
+    redoc_url="/redoc" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
 )
 
 # Add CORS middleware
