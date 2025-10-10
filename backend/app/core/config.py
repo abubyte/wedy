@@ -58,13 +58,13 @@ class Settings(BaseSettings):
     PAYME_API_URL: str = "https://checkout.paycom.uz"
     PAYME_TEST_API_URL: str = "https://test.paycom.uz"
 
-    CLICK_SECRET_KEY: str
-    CLICK_MERCHANT_ID: str
+    # CLICK_SECRET_KEY: str
+    # CLICK_MERCHANT_ID: str
     CLICK_API_URL: str = "https://api.click.uz/v2/merchant"
     CLICK_TEST_API_URL: str = "https://api.click.uz/v2/merchant"
 
-    UZUMBANK_SECRET_KEY: str
-    UZUMBANK_MERCHANT_ID: str
+    # UZUMBANK_SECRET_KEY: str
+    # UZUMBANK_MERCHANT_ID: str
     UZUMBANK_API_URL: str = "https://api.uzumbank.uz"
     UZUMBANK_TEST_API_URL: str = "https://api.uzumbank.uz"
 
