@@ -71,7 +71,7 @@ jobs:
             ${{ secrets.PHONE_NUMBER_LENGTH && format('echo "PHONE_NUMBER_LENGTH={0}" >> /root/wedy/backend/.env', secrets.PHONE_NUMBER_LENGTH) || '' }}
 
             # CORS (Handling array/string value)
-            ${{ secrets.CORS_ORIGINS && format('echo "CORS_ORIGINS={0}" >> /root/wedy/backend/.env', secrets.CORS_ORIGINS) || '' }}
+            ${{ secrets.CORS_ORIGINS && format('echo "CORS_ORIGINS=\"{0}\"" >> /root/wedy/backend/.env', secrets.CORS_ORIGINS) || '' }}
 
             # PostgreSQL
             ${{ secrets.POSTGRES_DB && format('echo "POSTGRES_DB={0}" >> /root/wedy/backend/.env', secrets.POSTGRES_DB) || '' }}
