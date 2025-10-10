@@ -42,7 +42,7 @@ jobs:
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             REDIS_URL=${{ secrets.REDIS_URL }}
-      EOF
+          EOF
             chmod 600 /root/wedy/.env
             echo '✓ Docker .env created successfully'
           "
