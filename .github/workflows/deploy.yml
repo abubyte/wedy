@@ -65,6 +65,9 @@ jobs:
             ${{ secrets.API_V1_STR && format('echo "API_V1_STR={0}" >> /root/wedy/backend/.env', secrets.API_V1_STR) || '' }}
             ${{ secrets.BASE_URL && format('echo "BASE_URL={0}" >> /root/wedy/backend/.env', secrets.BASE_URL) || '' }}
 
+            # Enable docs in production when explicitly set (true/false)
+            ${{ secrets.ENABLE_DOCS && format('echo "ENABLE_DOCS={0}" >> /root/wedy/backend/.env', secrets.ENABLE_DOCS) || '' }}
+
             # Application Constants
             ${{ secrets.OTP_EXPIRE_MINUTES && format('echo "OTP_EXPIRE_MINUTES={0}" >> /root/wedy/backend/.env', secrets.OTP_EXPIRE_MINUTES) || '' }}
             ${{ secrets.OTP_MAX_ATTEMPTS && format('echo "OTP_MAX_ATTEMPTS={0}" >> /root/wedy/backend/.env', secrets.OTP_MAX_ATTEMPTS) || '' }}
