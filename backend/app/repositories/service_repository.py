@@ -50,7 +50,8 @@ class ServiceRepository(BaseRepository[Service]):
         )
         
         result = await self.db.execute(statement)
-        return [(category, count) for category, count in result.all()]
+        rows = result.all()
+        return [(r[0], r[1]) for r in rows]
     
     async def search_services(
         self,
@@ -128,7 +129,7 @@ class ServiceRepository(BaseRepository[Service]):
             base_query.subquery()
         )
         count_result = await self.db.execute(count_statement)
-        total_count = count_result.one()
+        total_count = count_result.scalar_one()
         
         # Apply sorting
         if filters.sort_by == "price":
@@ -152,8 +153,8 @@ class ServiceRepository(BaseRepository[Service]):
         
         # Execute query
         result = await self.db.execute(base_query)
-        services = result.all()
-        
+        services = result.scalars().all()
+
         return services, total_count
     
     async def get_featured_services(
@@ -190,9 +191,9 @@ class ServiceRepository(BaseRepository[Service]):
         
         if limit:
             statement = statement.limit(limit)
-        
+
         result = await self.db.execute(statement)
-        return result.all()
+        return result.scalars().all()
     
     async def get_service_with_details(self, service_id: UUID) -> Optional[Service]:
         """
@@ -215,12 +216,13 @@ class ServiceRepository(BaseRepository[Service]):
         )
         
         result = await self.db.execute(statement)
-        service = result.first()
-        
+        # scalar_one_or_none returns the model instance or None
+        service = result.scalar_one_or_none()
+
         if service:
             # Increment view count
             await self.increment_view_count(service_id)
-        
+
         return service
     
     async def get_service_images(self, service_id: UUID) -> List[Image]:
@@ -246,7 +248,8 @@ class ServiceRepository(BaseRepository[Service]):
         )
         
         result = await self.db.execute(statement)
-        return result.all()
+        # We expect a list of Image model instances
+        return result.scalars().all()
     
     async def get_merchant_by_service(self, service_id: UUID) -> Optional[Merchant]:
         """
@@ -265,7 +268,7 @@ class ServiceRepository(BaseRepository[Service]):
         )
         
         result = await self.db.execute(statement)
-        return result.first()
+        return result.scalar_one_or_none()
     
     async def get_category_by_service(self, service_id: UUID) -> Optional[ServiceCategory]:
         """
@@ -284,7 +287,7 @@ class ServiceRepository(BaseRepository[Service]):
         )
         
         result = await self.db.execute(statement)
-        return result.first()
+        return result.scalar_one_or_none()
     
     async def is_service_featured(self, service_id: UUID) -> Tuple[bool, Optional[datetime]]:
         """
@@ -312,8 +315,9 @@ class ServiceRepository(BaseRepository[Service]):
         )
         
         result = await self.db.execute(statement)
-        end_date = result.first()
-        
+        # We selected a single column (end_date) so use scalar_one_or_none
+        end_date = result.scalar_one_or_none()
+
         return (end_date is not None, end_date)
     
     async def increment_view_count(self, service_id: UUID) -> None:
@@ -353,7 +357,7 @@ class ServiceRepository(BaseRepository[Service]):
                 )
             )
             existing_result = await self.db.execute(existing_statement)
-            if existing_result.first():
+            if existing_result.scalars().first():
                 return  # Already exists, don't duplicate
         
         # Create new interaction
@@ -413,8 +417,8 @@ class ServiceRepository(BaseRepository[Service]):
         # Count query
         count_statement = select(func.count(Service.id)).where(base_conditions)
         count_result = await self.db.execute(count_statement)
-        total_count = count_result.one()
-        
+        total_count = count_result.scalar_one()
+
         # Services query
         statement = (
             select(Service)
@@ -425,6 +429,6 @@ class ServiceRepository(BaseRepository[Service]):
         )
         
         result = await self.db.execute(statement)
-        services = result.all()
-        
+        services = result.scalars().all()
+
         return services, total_count

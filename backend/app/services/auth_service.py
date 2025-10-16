@@ -116,8 +116,8 @@ class AuthService:
         
         # Check if user exists
         statement = select(User).where(User.phone_number == normalized_phone)
-        result = await self.db.executeute(statement)
-        user = result.first()
+        result = await self.db.execute(statement)
+        user = result.scalar_one_or_none()
         
         if user:
             # Existing user - return tokens
@@ -170,7 +170,7 @@ class AuthService:
         # Check if user already exists
         statement = select(User).where(User.phone_number == normalized_phone)
         result = await self.db.execute(statement)
-        existing_user = result.first()
+        existing_user = result.scalar_one_or_none()
         
         if existing_user:
             raise ConflictError("User already exists")
@@ -254,7 +254,7 @@ class AuthService:
         # Verify user exists and is active
         statement = select(User).where(User.id == user_uuid, User.is_active == True)
         result = await self.db.execute(statement)
-        user = result.first()
+        user = result.scalar_one_or_none()
         
         if not user:
             raise AuthenticationError("User not found or inactive")

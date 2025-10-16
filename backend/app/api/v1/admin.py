@@ -5,7 +5,7 @@ router = APIRouter()
 @router.get("/categories")
 async def get_categories():
     """Get all categories (admin)."""
-    return {"message": "Admin categories endpoint - TODO"} // TODO
+    return {"message": "Admin categories endpoint - TODO"} # TODO
 
 @router.post("/categories")
 async def create_category():

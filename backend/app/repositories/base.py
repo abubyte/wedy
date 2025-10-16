@@ -27,7 +27,8 @@ class BaseRepository(Generic[T]):
         """
         statement = select(self.model_class).where(self.model_class.id == id)
         result = await self.db.execute(statement)
-        return result.first()
+        # Return mapped model instance or None
+        return result.scalar_one_or_none()
     
     async def get_all(self, offset: int = 0, limit: int = 100) -> List[T]:
         """
@@ -42,7 +43,8 @@ class BaseRepository(Generic[T]):
         """
         statement = select(self.model_class).offset(offset).limit(limit)
         result = await self.db.execute(statement)
-        return result.all()
+        # Return list of mapped model instances
+        return result.scalars().all()
     
     async def count(self) -> int:
         """
@@ -53,7 +55,8 @@ class BaseRepository(Generic[T]):
         """
         statement = select(func.count(self.model_class.id))
         result = await self.db.execute(statement)
-        return result.one()
+        # Return scalar count
+        return result.scalar_one()
     
     async def create(self, obj: T) -> T:
         """
@@ -114,5 +117,5 @@ class BaseRepository(Generic[T]):
         """
         statement = select(func.count(self.model_class.id)).where(self.model_class.id == id)
         result = await self.db.execute(statement)
-        count = result.one()
+        count = result.scalar_one()
         return count > 0

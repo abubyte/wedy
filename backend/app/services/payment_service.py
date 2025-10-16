@@ -43,7 +43,7 @@ class PaymentService:
         """Get all active tariff plans."""
         statement = select(TariffPlan).where(TariffPlan.is_active == True)
         result = self.session.exec(statement)
-        return list(result.all())
+        return list(result.scalars().all())
     
     def _calculate_subscription_price(self, base_price: float, duration_months: int) -> float:
         """Calculate subscription price with duration discounts."""
@@ -144,9 +144,10 @@ class PaymentService:
         """Create a featured service payment."""
         try:
             # Verify service belongs to user's merchant
-            merchant = self.session.exec(
+            result = self.session.exec(
                 select(Merchant).where(Merchant.user_id == user_id)
-            ).first()
+            )
+            merchant = result.scalars().first()
             if not merchant:
                 raise PaymentError("User is not a merchant")
             
@@ -215,10 +216,11 @@ class PaymentService:
                 raise PaymentError("Transaction ID not found in webhook data")
             
             # Find payment by transaction ID
-            payment = self.session.exec(
+            result = self.session.exec(
                 select(Payment).where(Payment.transaction_id == transaction_id)
-            ).first()
-            
+            )
+            payment = result.scalars().first()
+
             if not payment:
                 raise PaymentError(f"Payment not found for transaction ID: {transaction_id}")
             
@@ -281,10 +283,11 @@ class PaymentService:
         duration_months = webhook_data.get('duration_months', 1)  # Default to 1 month
         
         # Find merchant
-        merchant = self.session.exec(
+        result = self.session.exec(
             select(Merchant).where(Merchant.user_id == payment.user_id)
-        ).first()
-        
+        )
+        merchant = result.scalars().first()
+
         if not merchant:
             raise PaymentError("Merchant not found for payment")
         
@@ -295,7 +298,7 @@ class PaymentService:
         else:
             # Fallback: find plan by reverse calculating from amount
             # This is a simplified approach - in production, store plan ID in payment
-            plans = self.session.exec(select(TariffPlan).where(TariffPlan.is_active == True)).all()
+            plans = self.session.exec(select(TariffPlan).where(TariffPlan.is_active == True)).scalars().all()
             plan = None
             for p in plans:
                 if abs(self._calculate_subscription_price(p.price_per_month, duration_months) - payment.amount) < 1.0:
@@ -358,7 +361,7 @@ class PaymentService:
                 MerchantSubscription.merchant_id == merchant_id,
                 MerchantSubscription.status == SubscriptionStatus.ACTIVE
             )
-        ).all()
+        ).scalars().all()
         
         for sub in existing_subscriptions:
             sub.status = SubscriptionStatus.CANCELLED
@@ -379,22 +382,24 @@ class PaymentService:
     async def get_merchant_subscription(self, user_id: UUID) -> Optional[SubscriptionResponse]:
         """Get merchant's current subscription."""
         # Find merchant
-        merchant = self.session.exec(
+        result = self.session.exec(
             select(Merchant).where(Merchant.user_id == user_id)
-        ).first()
-        
+        )
+        merchant = result.scalars().first()
+
         if not merchant:
             return None
         
         # Find active subscription
-        subscription = self.session.exec(
+        result = self.session.exec(
             select(MerchantSubscription)
             .join(TariffPlan)
             .where(
                 MerchantSubscription.merchant_id == merchant.id,
                 MerchantSubscription.status == SubscriptionStatus.ACTIVE
             )
-        ).first()
+        )
+        subscription = result.scalars().first()
         
         if not subscription:
             return None
@@ -441,7 +446,7 @@ class PaymentService:
                 MerchantSubscription.status == SubscriptionStatus.ACTIVE,
                 MerchantSubscription.end_date < date.today()
             )
-        ).all()
+        ).scalars().all()
         
         count = 0
         for subscription in expired_subscriptions:

@@ -20,7 +20,7 @@ class PaymentRepository:
     def get_active_tariff_plans(self) -> List[TariffPlan]:
         """Get all active tariff plans."""
         statement = select(TariffPlan).where(TariffPlan.is_active == True)
-        return list(self.session.exec(statement).all())
+        return list(self.session.exec(statement).scalars().all())
     
     def get_tariff_plan_by_id(self, plan_id: UUID) -> Optional[TariffPlan]:
         """Get tariff plan by ID."""
@@ -55,7 +55,8 @@ class PaymentRepository:
     def get_payment_by_transaction_id(self, transaction_id: str) -> Optional[Payment]:
         """Get payment by transaction ID."""
         statement = select(Payment).where(Payment.transaction_id == transaction_id)
-        return self.session.exec(statement).first()
+        result = self.session.exec(statement)
+        return result.scalars().first()
     
     def get_payments_by_user_id(
         self, 
@@ -72,7 +73,7 @@ class PaymentRepository:
         if status:
             statement = statement.where(Payment.status == status)
         
-        return list(self.session.exec(statement).all())
+        return list(self.session.exec(statement).scalars().all())
     
     def update_payment_status(
         self, 
@@ -103,7 +104,7 @@ class PaymentRepository:
             Payment.status == PaymentStatus.PENDING,
             Payment.created_at < cutoff_time
         )
-        return list(self.session.exec(statement).all())
+        return list(self.session.exec(statement).scalars().all())
     
     # MerchantSubscription operations
     def create_subscription(self, subscription: MerchantSubscription) -> MerchantSubscription:
@@ -119,7 +120,8 @@ class PaymentRepository:
             MerchantSubscription.merchant_id == merchant_id,
             MerchantSubscription.status == SubscriptionStatus.ACTIVE
         )
-        return self.session.exec(statement).first()
+        result = self.session.exec(statement)
+        return result.scalars().first()
     
     def get_merchant_subscriptions(
         self, 
@@ -134,7 +136,7 @@ class PaymentRepository:
         if status:
             statement = statement.where(MerchantSubscription.status == status)
         
-        return list(self.session.exec(statement).all())
+        return list(self.session.exec(statement).scalars().all())
     
     def expire_subscriptions_by_date(self, end_date: date) -> int:
         """Expire subscriptions that have passed the given date."""
@@ -143,16 +145,16 @@ class PaymentRepository:
             MerchantSubscription.end_date < end_date
         )
         
-        subscriptions = self.session.exec(statement).all()
+        subscriptions = self.session.exec(statement).scalars().all()
         count = 0
-        
+
         for subscription in subscriptions:
             subscription.status = SubscriptionStatus.EXPIRED
             count += 1
-        
+
         if count > 0:
             self.session.commit()
-        
+
         return count
     
     def get_expiring_subscriptions(self, days_ahead: int = 7) -> List[MerchantSubscription]:
@@ -163,7 +165,7 @@ class PaymentRepository:
             MerchantSubscription.end_date <= expiry_date,
             MerchantSubscription.end_date >= date.today()
         )
-        return list(self.session.exec(statement).all())
+        return list(self.session.exec(statement).scalars().all())
     
     def cancel_subscription(self, subscription_id: UUID) -> Optional[MerchantSubscription]:
         """Cancel a subscription."""
@@ -192,14 +194,14 @@ class PaymentRepository:
         
         if payment_type:
             statement = statement.where(Payment.payment_type == payment_type)
-        
-        payments = self.session.exec(statement).all()
+
+        payments = self.session.exec(statement).scalars().all()
         return sum(payment.amount for payment in payments)
     
     def get_payment_stats(self) -> dict:
         """Get payment statistics."""
-        total_payments = self.session.exec(select(Payment)).all()
-        
+        total_payments = self.session.exec(select(Payment)).scalars().all()
+
         stats = {
             "total_payments": len(total_payments),
             "completed_payments": len([p for p in total_payments if p.status == PaymentStatus.COMPLETED]),
@@ -209,18 +211,18 @@ class PaymentRepository:
             "tariff_payments": len([p for p in total_payments if p.payment_type == PaymentType.TARIFF_SUBSCRIPTION]),
             "featured_payments": len([p for p in total_payments if p.payment_type == PaymentType.FEATURED_SERVICE])
         }
-        
+
         return stats
     
     def get_subscription_stats(self) -> dict:
         """Get subscription statistics."""
-        all_subscriptions = self.session.exec(select(MerchantSubscription)).all()
-        
+        all_subscriptions = self.session.exec(select(MerchantSubscription)).scalars().all()
+
         stats = {
             "total_subscriptions": len(all_subscriptions),
             "active_subscriptions": len([s for s in all_subscriptions if s.status == SubscriptionStatus.ACTIVE]),
             "expired_subscriptions": len([s for s in all_subscriptions if s.status == SubscriptionStatus.EXPIRED]),
             "cancelled_subscriptions": len([s for s in all_subscriptions if s.status == SubscriptionStatus.CANCELLED])
         }
-        
+
         return stats

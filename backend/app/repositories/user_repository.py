@@ -26,7 +26,7 @@ class UserRepository(BaseRepository[User]):
         """
         statement = select(User).where(User.phone_number == phone_number)
         result = await self.db.execute(statement)
-        return result.first()
+        return result.scalar_one_or_none()
     
     async def get_merchant_by_user_id(self, user_id: UUID) -> Optional[Merchant]:
         """
@@ -40,7 +40,7 @@ class UserRepository(BaseRepository[User]):
         """
         statement = select(Merchant).where(Merchant.user_id == user_id)
         result = await self.db.execute(statement)
-        return result.first()
+        return result.scalar_one_or_none()
     
     async def is_phone_number_taken(self, phone_number: str, exclude_user_id: Optional[UUID] = None) -> bool:
         """
@@ -59,4 +59,4 @@ class UserRepository(BaseRepository[User]):
             statement = statement.where(User.id != exclude_user_id)
         
         result = await self.db.execute(statement)
-        return result.first() is not None
+        return result.scalar_one_or_none() is not None

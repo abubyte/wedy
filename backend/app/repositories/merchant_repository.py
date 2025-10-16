@@ -43,7 +43,7 @@ class MerchantRepository(BaseRepository[Merchant]):
         """
         statement = select(Merchant).where(Merchant.user_id == user_id)
         result = await self.db.execute(statement)
-        return result.first()
+        return result.scalar_one_or_none()
     
     async def get_merchant_with_user(self, merchant_id: UUID) -> Optional[Tuple[Merchant, User]]:
         """
@@ -62,7 +62,7 @@ class MerchantRepository(BaseRepository[Merchant]):
         )
         result = await self.db.execute(statement)
         row = result.first()
-        return row if row else None
+        return (row[0], row[1]) if row else None
     
     async def get_active_subscription(self, merchant_id: UUID) -> Optional[Tuple[MerchantSubscription, TariffPlan]]:
         """
@@ -90,7 +90,7 @@ class MerchantRepository(BaseRepository[Merchant]):
         )
         result = await self.db.execute(statement)
         row = result.first()
-        return row if row else None
+        return (row[0], row[1]) if row else None
     
     async def get_merchant_contacts(self, merchant_id: UUID) -> List[MerchantContact]:
         """
@@ -113,7 +113,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             .order_by(MerchantContact.display_order, MerchantContact.created_at)
         )
         result = await self.db.execute(statement)
-        return result.all()
+        return result.scalars().all()
     
     async def count_contacts_by_type(self, merchant_id: UUID, contact_type: ContactType) -> int:
         """
@@ -137,7 +137,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
         )
         result = await self.db.execute(statement)
-        return result.one()
+        return result.scalar_one()
     
     async def get_merchant_services(self, merchant_id: UUID) -> List[Tuple[Service, ServiceCategory]]:
         """
@@ -156,7 +156,8 @@ class MerchantRepository(BaseRepository[Merchant]):
             .order_by(Service.created_at.desc())
         )
         result = await self.db.execute(statement)
-        return result.all()
+        rows = result.all()
+        return [(r[0], r[1]) for r in rows]
     
     async def count_merchant_services(self, merchant_id: UUID) -> int:
         """
@@ -178,7 +179,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
         )
         result = await self.db.execute(statement)
-        return result.one()
+        return result.scalar_one()
     
     async def get_merchant_gallery_images(self, merchant_id: UUID) -> List[Image]:
         """
@@ -202,7 +203,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             .order_by(Image.display_order, Image.created_at)
         )
         result = await self.db.execute(statement)
-        return result.all()
+        return result.scalars().all()
     
     async def count_gallery_images(self, merchant_id: UUID) -> int:
         """
@@ -225,7 +226,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
         )
         result = await self.db.execute(statement)
-        return result.one()
+        return result.scalar_one()
     
     async def count_service_images(self, service_id: UUID) -> int:
         """
@@ -248,7 +249,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
         )
         result = await self.db.execute(statement)
-        return result.one()
+        return result.scalar_one()
     
     async def get_service_analytics(self, merchant_id: UUID) -> List[Tuple[Service, int, Optional[DailyServiceMetrics]]]:
         """
@@ -282,7 +283,8 @@ class MerchantRepository(BaseRepository[Merchant]):
             .order_by(Service.created_at.desc())
         )
         result = await self.db.execute(statement)
-        return result.all()
+        rows = result.all()
+        return [(r[0], r[1], r[2]) for r in rows]
     
     async def get_featured_services(self, merchant_id: UUID) -> List[Tuple[FeaturedService, Service]]:
         """
@@ -301,7 +303,8 @@ class MerchantRepository(BaseRepository[Merchant]):
             .order_by(FeaturedService.created_at.desc())
         )
         result = await self.db.execute(statement)
-        return result.all()
+        rows = result.all()
+        return [(r[0], r[1]) for r in rows]
     
     async def count_active_featured_services(self, merchant_id: UUID) -> int:
         """
@@ -327,7 +330,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
         )
         result = await self.db.execute(statement)
-        return result.one()
+        return result.scalar_one()
     
     async def create_contact(self, contact: MerchantContact) -> MerchantContact:
         """
@@ -371,8 +374,8 @@ class MerchantRepository(BaseRepository[Merchant]):
         """
         statement = select(MerchantContact).where(MerchantContact.id == contact_id)
         result = await self.db.execute(statement)
-        contact = result.first()
-        
+        contact = result.scalar_one_or_none()
+
         if contact:
             contact.is_active = False
             self.db.add(contact)
@@ -417,8 +420,8 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
         )
         result = await self.db.execute(statement)
-        image = result.first()
-        
+        image = result.scalar_one_or_none()
+
         if image:
             image.is_active = False
             self.db.add(image)
@@ -439,8 +442,8 @@ class MerchantRepository(BaseRepository[Merchant]):
         """
         statement = select(Merchant).where(Merchant.id == merchant_id)
         result = await self.db.execute(statement)
-        merchant = result.first()
-        
+        merchant = result.scalar_one_or_none()
+
         if merchant:
             merchant.cover_image_url = s3_url
             self.db.add(merchant)
