@@ -1,5 +1,6 @@
 import httpx
 import logging
+import asyncio
 from typing import Optional
 
 from app.core.config import settings
@@ -75,57 +76,79 @@ class SMSService:
             logger.info(f"OTP for {phone_number}: {otp_code}")
             return True
         
+        # Retry transient provider errors a few times before giving up
+        MAX_RETRIES = 3
+        RETRY_DELAY = 2  # seconds
+
         try:
             # Get authentication token
             token = await self._get_auth_token()
-            
+
             # Prepare SMS data
             sms_url = f"{self.base_url}/message/sms/send"
-            
+
             # Add country code for Uzbekistan
             full_phone = f"998{phone_number}"
-            
+
             sms_data = {
                 "mobile_phone": full_phone,
                 "message": f"Wedy mobil ilovasi uchun tasdiqlash kodi: {otp_code}", # TODO: REMOVE 'MOBIL'
                 "from": "4546"
             }
-            
+
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json"
             }
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    sms_url, 
-                    json=sms_data, 
-                    headers=headers,
-                    timeout=30.0
-                )
-                
+
+            attempt = 0
+            while attempt < MAX_RETRIES:
+                attempt += 1
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        sms_url, 
+                        json=sms_data, 
+                        headers=headers,
+                        timeout=30.0
+                    )
+
+                # Success path
                 if response.status_code == 200:
                     data = response.json()
-                    
-                    # Check if SMS was sent successfully
                     if data.get("status") == "success":
                         logger.info(f"OTP sent successfully to {phone_number}")
                         return True
+
+                    # Provider returned a non-success status; check for transient message
+                    error_msg = data.get("message", "Unknown error")
+                    if "waiting for sms provider" in error_msg.lower() or "waiting" in error_msg.lower():
+                        logger.warning(f"Transient SMS provider response (attempt {attempt}/{MAX_RETRIES}): {error_msg}")
+                        if attempt < MAX_RETRIES:
+                            await asyncio.sleep(RETRY_DELAY)
+                            continue
+                        else:
+                            logger.error(f"SMS sending failed after retries: {error_msg}")
+                            raise SMSError(f"Failed to send SMS after retries: {error_msg}")
                     else:
-                        error_msg = data.get("message", "Unknown error")
                         logger.error(f"SMS sending failed: {error_msg}")
                         raise SMSError(f"Failed to send SMS: {error_msg}")
-                
+
                 elif response.status_code == 401:
-                    # Token expired, clear it and retry once
+                    # Token expired, clear it and retry once (reset attempt counter)
                     self._token = None
-                    logger.warning("SMS token expired, retrying...")
-                    return await self.send_otp(phone_number, otp_code)
-                
+                    logger.warning("SMS token expired, refreshing token and retrying...")
+                    token = await self._get_auth_token()
+                    headers["Authorization"] = f"Bearer {token}"
+                    # do not increment attempt here; continue to retry with new token
+                    continue
+
                 else:
                     logger.error(f"SMS API error: {response.status_code} - {response.text}")
                     raise SMSError(f"SMS service error: {response.status_code}")
-        
+
+            # If loop exits without returning, raise a generic error
+            raise SMSError("SMS service temporarily unavailable")
+
         except httpx.RequestError as e:
             logger.error(f"SMS service request error: {e}")
             raise SMSError("Failed to connect to SMS service")
@@ -155,56 +178,75 @@ class SMSService:
             logger.info(f"SMS to {phone_number}: {message}")
             return True
         
+        # Retry transient provider errors a few times before giving up
+        MAX_RETRIES = 3
+        RETRY_DELAY = 2  # seconds
+
         try:
             # Get authentication token
             token = await self._get_auth_token()
-            
+
             # Prepare SMS data
             sms_url = f"{self.base_url}/message/sms/send"
-            
+
             # Add country code for Uzbekistan
             full_phone = f"998{phone_number}"
-            
+
             sms_data = {
                 "mobile_phone": full_phone,
                 "message": message,
                 "from": "4546"
             }
-            
+
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/json"
             }
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    sms_url, 
-                    json=sms_data, 
-                    headers=headers,
-                    timeout=30.0
-                )
-                
+
+            attempt = 0
+            while attempt < MAX_RETRIES:
+                attempt += 1
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        sms_url, 
+                        json=sms_data, 
+                        headers=headers,
+                        timeout=30.0
+                    )
+
                 if response.status_code == 200:
                     data = response.json()
-                    
                     if data.get("status") == "success":
                         logger.info(f"Notification sent successfully to {phone_number}")
                         return True
+
+                    error_msg = data.get("message", "Unknown error")
+                    if "waiting for sms provider" in error_msg.lower() or "waiting" in error_msg.lower():
+                        logger.warning(f"Transient SMS provider response (attempt {attempt}/{MAX_RETRIES}): {error_msg}")
+                        if attempt < MAX_RETRIES:
+                            await asyncio.sleep(RETRY_DELAY)
+                            continue
+                        else:
+                            logger.error(f"Notification failed after retries: {error_msg}")
+                            raise SMSError(f"Failed to send SMS after retries: {error_msg}")
                     else:
-                        error_msg = data.get("message", "Unknown error")
                         logger.error(f"SMS sending failed: {error_msg}")
                         raise SMSError(f"Failed to send SMS: {error_msg}")
-                
+
                 elif response.status_code == 401:
                     # Token expired, clear it and retry once
                     self._token = None
-                    logger.warning("SMS token expired, retrying...")
-                    return await self.send_notification(phone_number, message)
-                
+                    logger.warning("SMS token expired, refreshing token and retrying...")
+                    token = await self._get_auth_token()
+                    headers["Authorization"] = f"Bearer {token}"
+                    continue
+
                 else:
                     logger.error(f"SMS API error: {response.status_code} - {response.text}")
                     raise SMSError(f"SMS service error: {response.status_code}")
-        
+
+            raise SMSError("SMS service temporarily unavailable")
+
         except httpx.RequestError as e:
             logger.error(f"SMS service request error: {e}")
             raise SMSError("Failed to connect to SMS service")
