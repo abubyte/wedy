@@ -41,7 +41,6 @@ jobs:
             POSTGRES_DB=${{ secrets.POSTGRES_DB }}
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            REDIS_URL=${{ secrets.REDIS_URL }}
           EOF
             chmod 600 /root/wedy/.env
             echo '✓ Docker .env created successfully'
@@ -83,7 +82,7 @@ jobs:
 
             # Database
             # Conditional DATABASE_URL (writes only if all three components are present)
-            ${{ secrets.POSTGRES_USER && secrets.POSTGRES_PASSWORD && secrets.POSTGRES_DB && format('echo "DATABASE_URL=postgresql+asyncpg://{0}:{1}@postgres:5432/{2}" >> /root/wedy/backend/.env', secrets.POSTGRES_USER, secrets.POSTGRES_PASSWORD, secrets.POSTGRES_DB) || '' }}
+            ${{ secrets.POSTGRES_USER && secrets.POSTGRES_PASSWORD && secrets.POSTGRES_DB && format('echo "DATABASE_URL=postgresql+asyncpg://{0}:{1}@host.docker.internal:5432/{2}" >> /root/wedy/backend/.env', secrets.POSTGRES_USER, secrets.POSTGRES_PASSWORD, secrets.POSTGRES_DB) || '' }}
             ${{ secrets.REDIS_URL && format('echo "REDIS_URL={0}" >> /root/wedy/backend/.env', secrets.REDIS_URL) || '' }}
 
             # Security
