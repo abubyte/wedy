@@ -179,6 +179,53 @@ class S3ImageManager:
         if content_length < min_size:
             raise ValueError(f"File size {content_length} is below minimum of {min_size} bytes")
 
+    def upload_fileobj(
+        self,
+        fileobj,
+        file_name: str,
+        content_type: str,
+        image_type: str,
+        related_id: str
+    ) -> str:
+        """
+        Upload a file-like object directly to S3 and return its public URL.
+
+        Args:
+            fileobj: File-like object positioned at start
+            file_name: Original file name (used to derive extension)
+            content_type: MIME type
+            image_type: logical image folder/type
+            related_id: related entity id
+
+        Returns:
+            s3_url (str)
+        """
+        # Generate unique S3 key similar to presigned URL generation
+        file_extension = mimetypes.guess_extension(content_type) or '.jpg'
+        unique_id = str(uuid.uuid4())
+        s3_key = f"{image_type}/{related_id}/{unique_id}{file_extension}"
+
+        try:
+            # Ensure fileobj is at start
+            try:
+                fileobj.seek(0)
+            except Exception:
+                pass
+
+            # Use upload_fileobj for streaming upload
+            self.s3_client.upload_fileobj(
+                Fileobj=fileobj,
+                Bucket=self.bucket_name,
+                Key=s3_key,
+                ExtraArgs={'ContentType': content_type}
+            )
+
+            s3_url = f"https://{self.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/{s3_key}"
+            return s3_url
+
+        except ClientError as e:
+            raise Exception(f"Failed to upload file to S3: {str(e)}")
+
 
 # Global instance
 s3_image_manager = S3ImageManager()
