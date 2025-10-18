@@ -111,7 +111,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 
 # Health check endpoint
-@app.get("/health")
+@app.get("/health", include_in_schema=False)
 async def health_check():
     """Health check endpoint."""
     return {
@@ -123,7 +123,7 @@ async def health_check():
 
 
 # Root endpoint
-@app.get("/")
+@app.get("/", include_in_schema=False)
 async def root():
     """Root endpoint with API information."""
     return {
