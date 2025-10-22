@@ -125,7 +125,7 @@ jobs:
             echo "✓ Production .env created successfully"
           EOF
 
-            - name: Create SSL certificate files
+      - name: Create SSL certificate files
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
             echo "==> Creating SSL directories..."
