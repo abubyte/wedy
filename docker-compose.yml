@@ -77,8 +77,7 @@ services:
       - ./infra/nginx/ssl/default/cert.pem:/etc/nginx/ssl/default/cert.pem:ro
       - ./infra/nginx/ssl/default/key.pem:/etc/nginx/ssl/default/key.pem:ro
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     logging:
       driver: "json-file"
       options:
