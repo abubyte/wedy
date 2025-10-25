@@ -133,22 +133,22 @@ jobs:
             mkdir -p /root/wedy/infra/nginx/ssl/default
 
             echo "==> Writing API certificate files..."
-            cat > /root/wedy/infra/nginx/ssl/api.abubyte.uz/privkey.pem <<'CERT_PRIV'
-            ${{ secrets.SSL_PRIVKEY }}
-            CERT_PRIV
+            cat > /root/wedy/infra/nginx/ssl/api.abubyte.uz/privkey.pem << 'CERT_PRIV'
+          ${{ secrets.SSL_PRIVKEY }}
+          CERT_PRIV
 
-            cat > /root/wedy/infra/nginx/ssl/api.abubyte.uz/fullchain.pem <<'CERT_FULL'
-            ${{ secrets.SSL_FULLCHAIN }}
-            CERT_FULL
+            cat > /root/wedy/infra/nginx/ssl/api.abubyte.uz/fullchain.pem << 'CERT_FULL'
+          ${{ secrets.SSL_FULLCHAIN }}
+          CERT_FULL
 
             echo "==> Writing default fallback certificate files..."
-            cat > /root/wedy/infra/nginx/ssl/default/key.pem <<'CERT_DKEY'
-            ${{ secrets.DEFAULT_KEY }}
-            CERT_DKEY
+            cat > /root/wedy/infra/nginx/ssl/default/key.pem << 'CERT_DKEY'
+          ${{ secrets.DEFAULT_KEY }}
+          CERT_DKEY
 
-            cat > /root/wedy/infra/nginx/ssl/default/cert.pem <<'CERT_DCERT'
-            ${{ secrets.DEFAULT_CERT }}
-            CERT_DCERT
+            cat > /root/wedy/infra/nginx/ssl/default/cert.pem << 'CERT_DCERT'
+          ${{ secrets.DEFAULT_CERT }}
+          CERT_DCERT
 
             chmod 600 /root/wedy/infra/nginx/ssl/api.abubyte.uz/*.pem
             chmod 600 /root/wedy/infra/nginx/ssl/default/*.pem
