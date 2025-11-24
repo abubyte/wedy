@@ -1,0 +1,8 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/merchant_icon.png"
+  min_sdk_android: 21
+  # android_adaptive_icon:
+  #   foreground_image: "assets/icons/merchant_icon.png"
+  #   background_color: "#ffffff"

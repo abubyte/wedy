@@ -1,0 +1,33 @@
+# Note: pubspec.yaml version is synced with client app version (for iOS compatibility)
+# iOS uses FLUTTER_BUILD_NAME and FLUTTER_BUILD_NUMBER from pubspec.yaml
+
+# Client App Versions
+client:
+  version: "1.0.0"
+  build_number: 1
+  
+  # Environment-specific build number offsets
+  # This allows dev/staging to have different build numbers than prod
+  build_offsets:
+    dev: 0      # Dev builds: build_number + 0
+    staging: 10000  # Staging builds: build_number + 10000
+    prod: 0     # Prod builds: build_number + 0
+
+# Merchant App Versions
+merchant:
+  version: "1.0.0"
+  build_number: 1
+  
+  build_offsets:
+    dev: 0
+    staging: 10000
+    prod: 0
+
+# Auto-increment settings
+auto_increment:
+  # When bumping version, should build number reset to 1?
+  reset_build_on_version_bump: false
+  
+  # Which part to auto-increment on build
+  # Options: "build" (increment build number), "patch" (increment patch version)
+  increment_strategy: "build"
