@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_dimensions.dart';
-import '../../../core/theme/app_text_styles.dart';
+import '../../core/constants/app_dimensions.dart';
+import '../../core/theme/app_text_styles.dart';
 
 class WedyPrimaryButton extends StatelessWidget {
   const WedyPrimaryButton({
@@ -26,10 +26,7 @@ class WedyPrimaryButton extends StatelessWidget {
     final child = _buildContent(context);
 
     if (expanded) {
-      return SizedBox(
-        width: double.infinity,
-        child: child,
-      );
+      return SizedBox(width: double.infinity, child: child);
     }
 
     return child;
@@ -39,7 +36,8 @@ class WedyPrimaryButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: loading ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        padding: padding ??
+        padding:
+            padding ??
             const EdgeInsets.symmetric(
               horizontal: AppDimensions.spacingL,
               vertical: AppDimensions.spacingSM,
@@ -57,22 +55,14 @@ class WedyPrimaryButton extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation(Colors.white),
                 ),
               )
-            : _Label(
-                key: const ValueKey('label'),
-                label: label,
-                icon: icon,
-              ),
+            : _Label(key: const ValueKey('label'), label: label, icon: icon),
       ),
     );
   }
 }
 
 class _Label extends StatelessWidget {
-  const _Label({
-    super.key,
-    required this.label,
-    this.icon,
-  });
+  const _Label({super.key, required this.label, this.icon});
 
   final String label;
   final Widget? icon;
@@ -93,10 +83,7 @@ class _Label extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        IconTheme(
-          data: IconTheme.of(context).copyWith(size: 20),
-          child: icon!,
-        ),
+        IconTheme(data: IconTheme.of(context).copyWith(size: 20), child: icon!),
         const SizedBox(width: AppDimensions.spacingS),
         text,
       ],

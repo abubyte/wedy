@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:wedy/core/constants/app_dimensions.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_dimensions.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../buttons/primary_button.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
+import 'primary_button.dart';
 
 class WedyEmptyState extends StatelessWidget {
   const WedyEmptyState({
