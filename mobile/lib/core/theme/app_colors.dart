@@ -5,8 +5,8 @@ sealed class AppColors {
 
   // Brand.
   static const primary = Color(0xFF5A8EF4);
-  static const primaryDark = Color(0xFF3E6AF0);
-  static const primaryLight = Color(0xFF9EC1FF);
+  static const primaryDark = Color(0xFF2563EB);
+  static const primaryLight = Color(0xFFD3E3FD);
 
   // Semantic.
   static const success = Color(0xFF22C55E);
@@ -15,10 +15,10 @@ sealed class AppColors {
   static const info = Color(0xFF0EA5E9);
 
   // Neutrals.
-  static const background = Color(0xFFF2F5FB);
+  static const background = Color(0xFFF1F5FB);
   static const surface = Color(0xFFFFFFFF);
   static const surfaceMuted = Color(0xFFF7F9FC);
-  static const border = Color(0xFFE2E8F0);
+  static const border = Color(0xFFE0E0E0);
   static const borderStrong = Color(0xFFCBD5F5);
 
   // Text.

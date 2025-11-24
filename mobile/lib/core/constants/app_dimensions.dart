@@ -14,6 +14,7 @@ sealed class AppDimensions {
   static const double radiusS = 12;
   static const double radiusM = 16;
   static const double radiusL = 24;
+  static const double radiusXL = 40;
   static const double radiusPill = 100;
 
   // Elevation

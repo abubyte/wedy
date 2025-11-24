@@ -1,7 +1,7 @@
 class UzbekistanData {
   static const String countryCode = '+998';
   static const String currency = 'UZS';
-  static const String currencySymbol = 'сўм';
+  static const String currencySymbol = 'so\'m';
   static const String timezone = 'Asia/Tashkent';
 
   static const List<String> regions = [
