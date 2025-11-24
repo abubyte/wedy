@@ -17,9 +17,7 @@ class WedyMerchantApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MultiBlocProvider(
-          providers: [
-            BlocProvider(create: (_) => PlaceholderBloc()),
-          ],
+          providers: [BlocProvider(create: (_) => PlaceholderBloc())],
           child: MaterialApp.router(
             title: AppConfig.instance.appName,
             theme: AppTheme.lightTheme,
