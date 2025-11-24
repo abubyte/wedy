@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:wedy/core/config/app_config.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../shared/navigation/app_router.dart';
@@ -16,13 +17,11 @@ class WedyClientApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MultiBlocProvider(
-          providers: [
-            // Add your BLoCs here
-          ],
+          providers: [BlocProvider(create: (_) => PlaceholderBloc())],
           child: MaterialApp.router(
-            title: 'Wedy - Find Wedding Services',
+            title: AppConfig.instance.appName,
             theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
+            // darkTheme: AppTheme.darkTheme,
             routerConfig: AppRouter.clientRouter,
             debugShowCheckedModeBanner: false,
           ),
@@ -30,4 +29,8 @@ class WedyClientApp extends StatelessWidget {
       },
     );
   }
+}
+
+class PlaceholderBloc extends Bloc<int, int> {
+  PlaceholderBloc() : super(0);
 }
