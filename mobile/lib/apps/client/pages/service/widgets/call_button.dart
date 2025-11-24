@@ -7,10 +7,7 @@ class CallButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 80,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.spacingL,
-        vertical: AppDimensions.spacingS,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL, vertical: AppDimensions.spacingS),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         boxShadow: [BoxShadow(color: Color(0xFF5B758F), blurRadius: 15.7)],
@@ -56,11 +53,7 @@ class CallButton extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Icon(
-                      IconsaxPlusLinear.call_calling,
-                      size: 24,
-                      color: Colors.white,
-                    ),
+                    const Icon(IconsaxPlusLinear.call_calling, size: 24, color: Colors.white),
                     const SizedBox(width: AppDimensions.spacingS),
                     Text(
                       'Qo\'ng\'iroq',

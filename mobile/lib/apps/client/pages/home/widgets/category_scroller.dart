@@ -1,7 +1,7 @@
 part of '../home_page.dart';
 
-class _ClientCategoryScroller extends StatelessWidget {
-  const _ClientCategoryScroller({required this.categories});
+class _CategoryScroller extends StatelessWidget {
+  const _CategoryScroller({required this.categories});
 
   final List<_ClientCategory> categories;
 
@@ -15,7 +15,7 @@ class _ClientCategoryScroller extends StatelessWidget {
         itemBuilder: (context, index) {
           final category = categories[index];
           return GestureDetector(
-            onTap: () => context.push(RouteNames.items, extra: category),
+            onTap: () => context.pushNamed(RouteNames.items, extra: category),
             child: Column(
               children: [
                 Container(
@@ -31,11 +31,8 @@ class _ClientCategoryScroller extends StatelessWidget {
                       height: 60,
                       width: 60,
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        category.icon,
-                        color: category.iconColor,
-                        size: 28,
-                      ),
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(category.icon, color: category.iconColor, size: 28),
                     ),
                   ),
                 ),
@@ -45,8 +42,7 @@ class _ClientCategoryScroller extends StatelessWidget {
             ),
           );
         },
-        separatorBuilder: (_, _) =>
-            const SizedBox(width: AppDimensions.spacingM),
+        separatorBuilder: (_, _) => const SizedBox(width: AppDimensions.spacingM),
         itemCount: categories.length,
       ),
     );

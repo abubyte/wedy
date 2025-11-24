@@ -4,7 +4,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wedy/apps/client/widgets/section_header.dart';
 import 'package:wedy/core/theme/app_colors.dart';
-import 'package:wedy/core/theme/app_dimensions.dart';
+import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
 import 'package:wedy/core/utils/maps_utils.dart';
 
@@ -52,9 +52,7 @@ class _ClientServicePageState extends State<ClientServicePage> {
             children: [
               // Header
               const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingL,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                 child: ServiceHeaderButtons(),
               ),
               const SizedBox(height: AppDimensions.spacingL),
@@ -65,22 +63,14 @@ class _ClientServicePageState extends State<ClientServicePage> {
 
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingL,
-                ),
-                child: Text(
-                  'Sam Decor uz Dekoratsiya',
-                  style: AppTextStyles.headline2,
-                  maxLines: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                child: Text('Sam Decor uz Dekoratsiya', style: AppTextStyles.headline2, maxLines: 3),
               ),
               const SizedBox(height: AppDimensions.spacingXS),
 
               // Username
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingL,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                 child: Text(
                   '@sam_decor_uz',
                   style: AppTextStyles.bodySmall.copyWith(
@@ -94,9 +84,7 @@ class _ClientServicePageState extends State<ClientServicePage> {
 
               // Region & Category
               const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingL,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                 child: ServiceMetaTile(),
               ),
               const SizedBox(height: AppDimensions.spacingL),
@@ -106,12 +94,7 @@ class _ClientServicePageState extends State<ClientServicePage> {
               const SizedBox(height: AppDimensions.spacingL),
 
               // Gallery Items
-              const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingL,
-                ),
-                child: SectionHeader(title: 'Galareya', hasAction: false),
-              ),
+              const ClientSectionHeader(title: 'Galareya', hasAction: false, applyPadding: true),
               const SizedBox(height: AppDimensions.spacingS),
               const ServiceGalleryItems(),
               const SizedBox(height: AppDimensions.spacingM),
@@ -121,12 +104,8 @@ class _ClientServicePageState extends State<ClientServicePage> {
               const SizedBox(height: AppDimensions.spacingL),
 
               // Statistics
-              const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingL,
-                ),
-                child: SectionHeader(title: 'Statistika', hasAction: false),
-              ),
+              const ClientSectionHeader(title: 'Statistika', hasAction: false, applyPadding: true),
+
               const SizedBox(height: AppDimensions.spacingL),
               const ServiceStatisticsCard(),
               const SizedBox(height: AppDimensions.spacingL),
@@ -166,12 +145,7 @@ class _ClientServicePageState extends State<ClientServicePage> {
               const SizedBox(height: AppDimensions.spacingL),
 
               // Reviews
-              const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingL,
-                ),
-                child: SectionHeader(title: 'Fikrlar'),
-              ),
+              const ClientSectionHeader(title: 'Fikrlar', applyPadding: true),
               const SizedBox(height: AppDimensions.spacingSM),
               const ServiceReviews(),
               const SizedBox(height: AppDimensions.spacingL),

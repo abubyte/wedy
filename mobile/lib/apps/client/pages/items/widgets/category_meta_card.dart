@@ -1,12 +1,18 @@
-part of '../home_page.dart';
+part of '../items_page.dart';
 
-class _HotOffersBanner extends StatelessWidget {
+class _CategoryMetaCard extends StatelessWidget {
+  const _CategoryMetaCard();
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        context.pushNamed(RouteNames.hotOffers);
-      },
+    return Container(
+      width: double.infinity,
+      height: 75,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: .5),
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingS),
         decoration: BoxDecoration(
@@ -16,7 +22,7 @@ class _HotOffersBanner extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          border: Border.all(color: AppColors.border, width: .5),
+          border: Border.all(color: const Color(0xFFE0E0E0), width: .5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,9 +50,7 @@ class _HotOffersBanner extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
                       border: Border.all(color: AppColors.primaryDark, width: .5),
                     ),
-                    child: const Center(
-                      child: Icon(IconsaxPlusLinear.arrow_right_3, color: AppColors.textInverse, size: 12),
-                    ),
+                    child: const Center(child: Icon(IconsaxPlusLinear.lamp_on, color: AppColors.textInverse, size: 12)),
                   ),
                 ],
               ),
@@ -63,43 +67,6 @@ class _HotOffersBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppDimensions.spacingS),
-
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppDimensions.spacingS),
-              child: SizedBox(
-                height: 211,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.zero,
-                  itemCount: _hotOffers.length,
-                  separatorBuilder: (context, index) {
-                    return const SizedBox(width: AppDimensions.spacingS);
-                  },
-                  itemBuilder: (context, index) {
-                    final offer = _hotOffers[index];
-                    return Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          left: index == 0 ? AppDimensions.spacingS : 0,
-                          right: index == _hotOffers.length - 1 ? AppDimensions.spacingS : 0,
-                        ),
-                        child: AspectRatio(
-                          aspectRatio: .7,
-                          child: ClientServiceCard(
-                            imageUrl: offer.imageUrl,
-                            title: offer.title,
-                            price: offer.price,
-                            location: offer.location,
-                            category: offer.category,
-                            rating: offer.rating,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
           ],
         ),
       ),

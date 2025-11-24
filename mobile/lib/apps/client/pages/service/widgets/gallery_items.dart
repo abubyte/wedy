@@ -20,14 +20,10 @@ class ServiceGalleryItems extends StatelessWidget {
           height: 300,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-            image: const DecorationImage(
-              image: NetworkImage('https://picsum.photos/300/300'),
-              fit: BoxFit.cover,
-            ),
+            image: const DecorationImage(image: NetworkImage('https://picsum.photos/300/300'), fit: BoxFit.cover),
           ),
         ),
-        separatorBuilder: (_, _) =>
-            const SizedBox(width: AppDimensions.spacingS),
+        separatorBuilder: (_, _) => const SizedBox(width: AppDimensions.spacingS),
       ),
     );
   }

@@ -11,14 +11,11 @@ class ServiceDescription extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: .5),
+        border: Border.all(color: AppColors.border, width: .5),
       ),
       child: Text(
         'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        style: AppTextStyles.bodyRegular.copyWith(
-          fontSize: 12,
-          color: const Color(0xFF9CA3AF),
-        ),
+        style: AppTextStyles.bodyRegular.copyWith(fontSize: 12, color: const Color(0xFF9CA3AF)),
       ),
     );
   }

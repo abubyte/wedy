@@ -27,10 +27,7 @@ class ServiceContactTabs extends StatelessWidget {
           GestureDetector(
             onTap: onPhoneTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacingM,
-                vertical: AppDimensions.spacingS,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingM, vertical: AppDimensions.spacingS),
               decoration: BoxDecoration(
                 color: isPhoneSelected ? const Color(0xFFD3E3FD) : Colors.white,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusL),
@@ -49,14 +46,9 @@ class ServiceContactTabs extends StatelessWidget {
           GestureDetector(
             onTap: onLocationTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacingM,
-                vertical: AppDimensions.spacingS,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingM, vertical: AppDimensions.spacingS),
               decoration: BoxDecoration(
-                color: isLocationSelected
-                    ? const Color(0xFFD3E3FD)
-                    : Colors.white,
+                color: isLocationSelected ? const Color(0xFFD3E3FD) : Colors.white,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusL),
               ),
               child: Text(
@@ -73,14 +65,9 @@ class ServiceContactTabs extends StatelessWidget {
           GestureDetector(
             onTap: onSocialTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacingM,
-                vertical: AppDimensions.spacingS,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingM, vertical: AppDimensions.spacingS),
               decoration: BoxDecoration(
-                color: isSocialSelected
-                    ? const Color(0xFFD3E3FD)
-                    : Colors.white,
+                color: isSocialSelected ? const Color(0xFFD3E3FD) : Colors.white,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusL),
               ),
               child: Text(

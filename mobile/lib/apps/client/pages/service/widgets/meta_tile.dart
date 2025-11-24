@@ -11,11 +11,7 @@ class ServiceMetaTile extends StatelessWidget {
         // Region
         Text(
           "Qoraqalpog'iston",
-          style: AppTextStyles.bodySmall.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-            color: AppColors.primary,
-          ),
+          style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.primary),
         ),
         const SizedBox(width: AppDimensions.spacingXS),
 
@@ -23,21 +19,14 @@ class ServiceMetaTile extends StatelessWidget {
         Container(
           width: 3,
           height: 3,
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          ),
+          decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(AppDimensions.radiusPill)),
         ),
         const SizedBox(width: AppDimensions.spacingXS),
 
         // Category
         Text(
           'Dekoratsiya',
-          style: AppTextStyles.bodySmall.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-            color: AppColors.primary,
-          ),
+          style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.primary),
         ),
       ],
     );

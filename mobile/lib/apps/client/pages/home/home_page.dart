@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:wedy/apps/client/layouts/main_layout.dart';
 import 'package:wedy/apps/client/widgets/section_header.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/widgets/cards/service_card.dart';
-import '../../../../shared/widgets/inputs/search_field.dart';
+import '../../widgets/service_card.dart';
+import '../../widgets/search_field.dart';
 
 part 'widgets/hot_offers_banner.dart';
-part 'widgets/client_category_scroller.dart';
+part 'widgets/category_scroller.dart';
 
 class ClientHomePage extends StatelessWidget {
   const ClientHomePage({super.key});
@@ -21,124 +22,78 @@ class ClientHomePage extends StatelessWidget {
     const categories = clientCategories;
     const hotOffers = _hotOffers;
 
-    return Scaffold(
-      body: SafeArea(
-        child: NestedScrollView(
-          headerSliverBuilder: (_, innerBoxIsScrollable) {
-            return [
-              SliverAppBar(
-                floating: true,
-                expandedHeight: 195,
-                collapsedHeight: 80,
-                automaticallyImplyLeading: false,
-                backgroundColor: AppColors.background,
-                flexibleSpace: ListView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacingL,
-                        vertical: AppDimensions.spacingM,
-                      ),
-                      child: WedySearchField(hintText: 'Qidirish'),
-                    ),
-                    _ClientCategoryScroller(categories: categories),
-                    SizedBox(height: AppDimensions.spacingM),
-                  ],
-                ),
-              ),
-            ];
-          },
-          body: Container(
-            color: AppColors.background,
-            child: SingleChildScrollView(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(40),
-                    topRight: Radius.circular(40),
-                  ),
-                  border: Border(
-                    top: BorderSide(color: Color(0xFFE0E0E0), width: .5),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // Hot Offers Section
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        right: AppDimensions.spacingL,
-                        bottom: AppDimensions.spacingL,
-                        left: AppDimensions.spacingL,
-                        top: AppDimensions.spacingL,
-                      ),
-                      child: _HotOffersBanner(),
-                    ),
-                    // Decoratsiya Section
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final category = clientCategories[index];
-                        return Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimensions.spacingL,
-                              ),
-                              child: GestureDetector(
-                                onTap: () => context.push(
-                                  RouteNames.items,
-                                  extra: category,
-                                ),
-                                child: SectionHeader(title: category.label),
-                              ),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                            SizedBox(
-                              height: 211,
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppDimensions.spacingL,
-                                ),
-                                scrollDirection: Axis.horizontal,
-                                itemBuilder: (context, index) {
-                                  final item = hotOffers[index];
-                                  return SizedBox(
-                                    width: 150,
-                                    child: ServiceCard(
-                                      imageUrl: item.imageUrl,
-                                      title: item.title,
-                                      price: item.price,
-                                      location: item.location,
-                                      category: item.category,
-                                      rating: item.rating,
-                                    ),
-                                  );
-                                },
-                                separatorBuilder: (_, _) => const SizedBox(
-                                  width: AppDimensions.spacingS,
-                                ),
-                                itemCount: hotOffers.length,
-                              ),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                          ],
-                        );
-                      },
-                      itemCount: clientCategories.length,
-                    ),
-
-                    const SizedBox(height: AppDimensions.spacingM),
-                  ],
-                ),
-              ),
-            ),
+    return ClientMainLayout(
+      expandedHeight: 195,
+      collapsedHeight: 70,
+      headerContent: ListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingL, vertical: AppDimensions.spacingM),
+            child: ClientSearchField(hintText: 'Qidirish'),
           ),
-        ),
+          _CategoryScroller(categories: categories),
+          SizedBox(height: AppDimensions.spacingM),
+        ],
       ),
+      bodyChildren: [
+        // Hot Offers Section
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+          child: _HotOffersBanner(),
+        ),
+        const SizedBox(height: AppDimensions.spacingL),
+
+        // Services Section
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemBuilder: (context, index) {
+            final category = clientCategories[index];
+            return Column(
+              children: [
+                // Section Header
+                ClientSectionHeader(
+                  title: category.label,
+                  onTap: () => context.pushNamed(RouteNames.items, extra: category),
+                  applyPadding: true,
+                ),
+                const SizedBox(height: AppDimensions.spacingS),
+
+                // Services
+                SizedBox(
+                  height: 211,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (context, index) {
+                      final item = hotOffers[index];
+                      return SizedBox(
+                        width: 150,
+                        child: ClientServiceCard(
+                          imageUrl: item.imageUrl,
+                          title: item.title,
+                          price: item.price,
+                          location: item.location,
+                          category: item.category,
+                          rating: item.rating,
+                        ),
+                      );
+                    },
+                    separatorBuilder: (_, _) => const SizedBox(width: AppDimensions.spacingS),
+                    itemCount: hotOffers.length,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.spacingS),
+              ],
+            );
+          },
+          itemCount: clientCategories.length,
+        ),
+
+        const SizedBox(height: AppDimensions.spacingM),
+      ],
     );
   }
 }
@@ -210,8 +165,7 @@ const clientCategories = [
 
 const _hotOffers = [
   _ClientService(
-    imageUrl:
-        'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=800&q=60',
+    imageUrl: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=800&q=60',
     title: 'Bu yerda nom bo\'ladi...',
     price: '9 999 999 999',
     location: 'Toshkent',
@@ -228,8 +182,7 @@ const _hotOffers = [
     rating: 5.0,
   ),
   _ClientService(
-    imageUrl:
-        'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=800&q=60',
+    imageUrl: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=800&q=60',
     title: 'Bu yerda nom bo\'ladi...',
     price: '9 999 999 999',
     location: 'Toshkent',

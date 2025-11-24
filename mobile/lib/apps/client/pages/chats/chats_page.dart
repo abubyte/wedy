@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wedy/core/theme/app_dimensions.dart';
-import 'package:wedy/shared/widgets/common/empty_state.dart';
+import 'package:wedy/core/constants/app_dimensions.dart';
+import 'package:wedy/shared/widgets/empty_state.dart';
 
 class ClientChatsPage extends StatelessWidget {
   const ClientChatsPage({super.key});

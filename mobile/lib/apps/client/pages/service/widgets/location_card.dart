@@ -11,14 +11,14 @@ class ServiceLocationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: .5),
+        border: Border.all(color: AppColors.border, width: .5),
       ),
       child: Column(
         children: [
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-              border: Border.all(color: const Color(0xFFE0E0E0), width: .5),
+              border: Border.all(color: AppColors.border, width: .5),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
@@ -38,16 +38,10 @@ class ServiceLocationCard extends StatelessWidget {
                     height: 200,
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusL,
-                      ),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                     ),
                     child: const Center(
-                      child: Icon(
-                        IconsaxPlusLinear.location,
-                        color: AppColors.textSecondary,
-                        size: 48,
-                      ),
+                      child: Icon(IconsaxPlusLinear.location, color: AppColors.textSecondary, size: 48),
                     ),
                   );
                 },

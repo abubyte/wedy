@@ -19,9 +19,7 @@ class ServiceHeaderButtons extends StatelessWidget {
               color: AppColors.surface,
               border: Border.all(color: AppColors.border, width: .5),
             ),
-            child: const Center(
-              child: Icon(IconsaxPlusLinear.arrow_left_1, color: Colors.black),
-            ),
+            child: const Center(child: Icon(IconsaxPlusLinear.arrow_left_1, color: Colors.black)),
           ),
         ),
 
@@ -39,9 +37,7 @@ class ServiceHeaderButtons extends StatelessWidget {
                   color: AppColors.surface,
                   border: Border.all(color: AppColors.border, width: .5),
                 ),
-                child: const Center(
-                  child: Icon(IconsaxPlusLinear.heart, color: Colors.black),
-                ),
+                child: const Center(child: Icon(IconsaxPlusLinear.heart, color: Colors.black)),
               ),
             ),
             const SizedBox(width: AppDimensions.spacingS),
@@ -57,9 +53,7 @@ class ServiceHeaderButtons extends StatelessWidget {
                   color: AppColors.surface,
                   border: Border.all(color: AppColors.border, width: .5),
                 ),
-                child: const Center(
-                  child: Icon(IconsaxPlusLinear.export_2, color: Colors.black),
-                ),
+                child: const Center(child: Icon(IconsaxPlusLinear.export_2, color: Colors.black)),
               ),
             ),
           ],

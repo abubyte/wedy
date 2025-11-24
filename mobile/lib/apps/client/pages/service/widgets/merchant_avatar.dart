@@ -14,13 +14,8 @@ class ServiceMerchantAvatar extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          boxShadow: const [
-            BoxShadow(color: Color(0xFF5A8EF4), blurRadius: 30),
-          ],
-          image: const DecorationImage(
-            image: NetworkImage('https://picsum.photos/200/300'),
-            fit: BoxFit.cover,
-          ),
+          boxShadow: const [BoxShadow(color: Color(0xFF5A8EF4), blurRadius: 30)],
+          image: const DecorationImage(image: NetworkImage('https://picsum.photos/200/300'), fit: BoxFit.cover),
         ),
       ),
     );

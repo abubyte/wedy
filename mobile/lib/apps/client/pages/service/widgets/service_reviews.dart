@@ -1,9 +1,7 @@
 part of '../service_page.dart';
 
 class ServiceReviews extends StatelessWidget {
-  const ServiceReviews({
-    super.key,
-  });
+  const ServiceReviews({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,8 +11,7 @@ class ServiceReviews extends StatelessWidget {
         itemCount: 5,
         scrollDirection: Axis.horizontal,
         shrinkWrap: true,
-        separatorBuilder: (context, index) =>
-            const SizedBox(width: AppDimensions.spacingS),
+        separatorBuilder: (context, index) => const SizedBox(width: AppDimensions.spacingS),
         itemBuilder: (context, index) {
           return Center(
             child: Container(
@@ -26,13 +23,8 @@ class ServiceReviews extends StatelessWidget {
               padding: const EdgeInsets.all(AppDimensions.spacingSM),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(
-                  AppDimensions.radiusM,
-                ),
-                border: Border.all(
-                  color: const Color(0xFFE0E0E0),
-                  width: .5,
-                ),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                border: Border.all(color: AppColors.border, width: .5),
               ),
               child: Column(
                 children: [
@@ -43,13 +35,9 @@ class ServiceReviews extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.radiusPill,
-                          ),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
                           image: const DecorationImage(
-                            image: NetworkImage(
-                              'https://picsum.photos/200/300',
-                            ),
+                            image: NetworkImage('https://picsum.photos/200/300'),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -76,22 +64,15 @@ class ServiceReviews extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              const Icon(
-                                IconsaxPlusBold.star_1,
-                                size: 9,
-                                color: Colors.yellow,
-                              ),
-                              const SizedBox(
-                                width: AppDimensions.spacingXS,
-                              ),
+                              const Icon(IconsaxPlusBold.star_1, size: 9, color: Colors.yellow),
+                              const SizedBox(width: AppDimensions.spacingXS),
                               Text(
                                 '4.9',
-                                style: AppTextStyles.bodySmall
-                                    .copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 9,
-                                      color: const Color(0xFF9CA3AF),
-                                    ),
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 9,
+                                  color: const Color(0xFF9CA3AF),
+                                ),
                               ),
                             ],
                           ),
