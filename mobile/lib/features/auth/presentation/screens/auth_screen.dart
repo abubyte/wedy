@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:wedy/shared/widgets/circular_button.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../shared/widgets/buttons/icon_button.dart';
-import '../../../../shared/widgets/buttons/primary_button.dart';
+import '../../../../shared/widgets/primary_button.dart';
 import '../widgets/otp_input_widget.dart';
 import '../widgets/phone_input_widget.dart';
 
@@ -76,9 +76,9 @@ class _AuthScreenState extends State<AuthScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         if (_step != _AuthStep.phone)
-          WedyIconButton(
+          WedyCircularButton(
             icon: Icons.arrow_back_ios_new_rounded,
-            onPressed: _handleBack,
+            onTap: _handleBack,
           )
         else
           const SizedBox(width: 44),
@@ -162,15 +162,9 @@ class _PhoneStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Telefon raqamingizni yozing:',
-          style: AppTextStyles.headline2,
-        ),
+        Text('Telefon raqamingizni yozing:', style: AppTextStyles.headline2),
         const SizedBox(height: AppDimensions.spacingM),
-        Text(
-          'Telefon raqam kiriting',
-          style: AppTextStyles.caption,
-        ),
+        Text('Telefon raqam kiriting', style: AppTextStyles.caption),
         const SizedBox(height: AppDimensions.spacingS),
         PhoneInputWidget(controller: controller),
         const SizedBox(height: AppDimensions.spacingXL),
@@ -203,10 +197,7 @@ class _OtpStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'SMS orqali kelgan kodni yozing:',
-          style: AppTextStyles.headline2,
-        ),
+        Text('SMS orqali kelgan kodni yozing:', style: AppTextStyles.headline2),
         const SizedBox(height: AppDimensions.spacingXL),
         OtpInputWidget(controller: controller),
         const SizedBox(height: AppDimensions.spacingL),
@@ -219,7 +210,9 @@ class _OtpStep extends StatelessWidget {
             GestureDetector(
               onTap: canResend ? onResend : null,
               child: Text(
-                canResend ? 'qayta yuboring' : '$minutes:$seconds dan keyin qayta yuboramiz',
+                canResend
+                    ? 'qayta yuboring'
+                    : '$minutes:$seconds dan keyin qayta yuboramiz',
                 style: AppTextStyles.caption.copyWith(color: AppColors.primary),
               ),
             ),
@@ -261,10 +254,7 @@ class _NameStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Chiroyli ismingizni yozing:',
-          style: AppTextStyles.headline2,
-        ),
+        Text('Chiroyli ismingizni yozing:', style: AppTextStyles.headline2),
         const SizedBox(height: AppDimensions.spacingM),
         TextField(
           controller: controller,
@@ -298,4 +288,3 @@ class _NameStep extends StatelessWidget {
     );
   }
 }
-
