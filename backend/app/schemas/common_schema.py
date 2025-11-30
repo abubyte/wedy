@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
-
 class PaginationParams(BaseModel):
     """Standard pagination parameters."""
     page: int = Field(1, ge=1, description="Page number (1-based)")

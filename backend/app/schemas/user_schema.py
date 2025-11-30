@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 
-from app.models import UserType
+from app.models import UserType, InteractionType
 from app.core.security import verify_phone_number, normalize_phone_number
-from app.schemas.merchant import MerchantProfileUpdateRequest
+from app.schemas.merchant_schema import MerchantProfileUpdateRequest
+from app.schemas.service_schema import ServiceListItem
 
 
 class UserProfileUpdateRequest(BaseModel):
@@ -44,3 +45,18 @@ class UserProfileResponse(BaseModel):
     avatar_url: Optional[str] = None
     user_type: UserType
     created_at: datetime
+
+
+class UserInteractionItem(BaseModel):
+    """User interaction item with service details."""
+    interaction_type: InteractionType
+    interacted_at: datetime
+    service: ServiceListItem
+
+
+class UserInteractionsResponse(BaseModel):
+    """Response schema for user interactions."""
+    liked_services: List[UserInteractionItem] = []
+    saved_services: List[UserInteractionItem] = []
+    total_liked: int = 0
+    total_saved: int = 0

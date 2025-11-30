@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 
 from app.models import ContactType, SubscriptionStatus
 
-
 class MerchantProfileResponse(BaseModel):
     """Merchant profile response with subscription info."""
     
