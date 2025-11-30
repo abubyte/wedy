@@ -1,19 +1,21 @@
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from sqlmodel import Session, select
-from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from dateutil.relativedelta import relativedelta
 
-from app.models.payment import (
+from app.models import (
     TariffPlan, Payment, MerchantSubscription,
-    PaymentType, PaymentMethod, PaymentStatus, SubscriptionStatus
+    PaymentType, PaymentMethod, PaymentStatus,
+    SubscriptionStatus, User, Merchant, Service,
+    FeaturedService, FeatureType,
 )
-from app.models.user import User, Merchant
-from app.models.service import Service, FeaturedService, FeatureType
-from app.schemas.payment import (
+from app.schemas.payment_schema import (
     TariffPaymentRequest, FeaturedServicePaymentRequest,
     PaymentResponse, TariffPlanResponse, SubscriptionResponse
 )
+from app.repositories.payment_repository import PaymentRepository
 
 
 class PaymentError(Exception):
@@ -31,19 +33,18 @@ class PaymentService:
     
     def __init__(
         self,
-        session: Session,
+        session: AsyncSession,
         payment_providers: Dict[str, Any],
         sms_service: Any
     ):
         self.session = session
         self.payment_providers = payment_providers
         self.sms_service = sms_service
+        self.payment_repo = PaymentRepository(session)
     
     async def get_active_tariff_plans(self) -> List[TariffPlan]:
         """Get all active tariff plans."""
-        statement = select(TariffPlan).where(TariffPlan.is_active == True)
-        result = self.session.exec(statement)
-        return list(result.scalars().all())
+        return await self.payment_repo.get_active_tariff_plans()
     
     def _calculate_subscription_price(self, base_price: float, duration_months: int) -> float:
         """Calculate subscription price with duration discounts."""
@@ -85,7 +86,7 @@ class PaymentService:
         """Create a tariff subscription payment."""
         try:
             # Get tariff plan
-            plan = self.session.get(TariffPlan, request.tariff_plan_id)
+            plan = await self.payment_repo.get_tariff_plan_by_id(request.tariff_plan_id)
             if not plan or not plan.is_active:
                 raise PaymentError("Tariff plan not found or inactive")
             
@@ -94,13 +95,18 @@ class PaymentService:
                 plan.price_per_month, request.duration_months
             )
             
-            # Create payment record
+            # Create payment record with metadata
             payment = Payment(
                 user_id=user_id,
                 amount=final_amount,
                 payment_type=PaymentType.TARIFF_SUBSCRIPTION,
                 payment_method=request.payment_method,
-                status=PaymentStatus.PENDING
+                status=PaymentStatus.PENDING,
+                payment_metadata={
+                    'tariff_plan_id': str(request.tariff_plan_id),
+                    'duration_months': request.duration_months,
+                    'plan_name': plan.name
+                }
             )
             
             # Generate payment with provider
@@ -124,14 +130,12 @@ class PaymentService:
                 raise PaymentError(f"Failed to create payment with provider: {str(e)}")
             
             # Save to database
-            self.session.add(payment)
-            self.session.commit()
-            self.session.refresh(payment)
+            payment = await self.payment_repo.create_payment(payment)
             
             return PaymentResponse.from_orm(payment)
             
         except Exception as e:
-            self.session.rollback()
+            await self.session.rollback()
             if isinstance(e, PaymentError):
                 raise
             raise PaymentError(f"Failed to create payment: {str(e)}")
@@ -144,14 +148,17 @@ class PaymentService:
         """Create a featured service payment."""
         try:
             # Verify service belongs to user's merchant
-            result = self.session.exec(
-                select(Merchant).where(Merchant.user_id == user_id)
-            )
-            merchant = result.scalars().first()
+            merchant_stmt = select(Merchant).where(Merchant.user_id == user_id)
+            merchant_result = await self.session.execute(merchant_stmt)
+            merchant = merchant_result.scalar_one_or_none()
+            
             if not merchant:
                 raise PaymentError("User is not a merchant")
             
-            service = self.session.get(Service, request.service_id)
+            service_stmt = select(Service).where(Service.id == request.service_id)
+            service_result = await self.session.execute(service_stmt)
+            service = service_result.scalar_one_or_none()
+            
             if not service or service.merchant_id != merchant.id:
                 raise PaymentError("Service not found or not owned by merchant")
             
@@ -161,13 +168,18 @@ class PaymentService:
                 base_daily_price, request.duration_days
             )
             
-            # Create payment record
+            # Create payment record with metadata
             payment = Payment(
                 user_id=user_id,
                 amount=final_amount,
                 payment_type=PaymentType.FEATURED_SERVICE,
                 payment_method=request.payment_method,
-                status=PaymentStatus.PENDING
+                status=PaymentStatus.PENDING,
+                payment_metadata={
+                    'service_id': str(request.service_id),
+                    'duration_days': request.duration_days,
+                    'service_name': service.name
+                }
             )
             
             # Generate payment with provider
@@ -191,14 +203,12 @@ class PaymentService:
                 raise PaymentError(f"Failed to create payment with provider: {str(e)}")
             
             # Save to database
-            self.session.add(payment)
-            self.session.commit()
-            self.session.refresh(payment)
+            payment = await self.payment_repo.create_payment(payment)
             
             return PaymentResponse.from_orm(payment)
             
         except Exception as e:
-            self.session.rollback()
+            await self.session.rollback()
             if isinstance(e, PaymentError):
                 raise
             raise PaymentError(f"Failed to create featured service payment: {str(e)}")
@@ -216,10 +226,7 @@ class PaymentService:
                 raise PaymentError("Transaction ID not found in webhook data")
             
             # Find payment by transaction ID
-            result = self.session.exec(
-                select(Payment).where(Payment.transaction_id == transaction_id)
-            )
-            payment = result.scalars().first()
+            payment = await self.payment_repo.get_payment_by_transaction_id(transaction_id)
 
             if not payment:
                 raise PaymentError(f"Payment not found for transaction ID: {transaction_id}")
@@ -229,9 +236,15 @@ class PaymentService:
             
             if is_completed:
                 # Update payment status
-                payment.status = PaymentStatus.COMPLETED
-                payment.completed_at = datetime.utcnow()
-                payment.webhook_data = webhook_data
+                await self.payment_repo.update_payment_status(
+                    payment.id,
+                    PaymentStatus.COMPLETED,
+                    completed_at=datetime.now(),
+                    webhook_data=webhook_data
+                )
+                
+                # Refresh payment to get updated version
+                payment = await self.payment_repo.get_payment_by_id(payment.id)
                 
                 # Process payment based on type
                 if payment.payment_type == PaymentType.TARIFF_SUBSCRIPTION:
@@ -239,17 +252,20 @@ class PaymentService:
                 elif payment.payment_type == PaymentType.FEATURED_SERVICE:
                     await self._process_featured_service_payment(payment, webhook_data)
                 
-                self.session.commit()
+                await self.session.commit()
                 return True
             else:
                 # Handle failed payment
-                payment.status = PaymentStatus.FAILED
-                payment.webhook_data = webhook_data
-                self.session.commit()
+                await self.payment_repo.update_payment_status(
+                    payment.id,
+                    PaymentStatus.FAILED,
+                    webhook_data=webhook_data
+                )
+                await self.session.commit()
                 return False
                 
         except Exception as e:
-            self.session.rollback()
+            await self.session.rollback()
             raise PaymentError(f"Failed to process webhook: {str(e)}")
     
     def _extract_transaction_id(self, method: PaymentMethod, webhook_data: Dict[str, Any]) -> Optional[str]:
@@ -279,29 +295,30 @@ class PaymentService:
         webhook_data: Dict[str, Any]
     ):
         """Process completed tariff subscription payment."""
-        # Extract duration from webhook data or payment metadata
-        duration_months = webhook_data.get('duration_months', 1)  # Default to 1 month
+        # Extract duration and tariff_plan_id from payment metadata (preferred) or webhook data
+        payment_metadata = payment.payment_metadata or {}
+        duration_months = payment_metadata.get('duration_months') or webhook_data.get('duration_months', 1)
+        tariff_plan_id_str = payment_metadata.get('tariff_plan_id') or webhook_data.get('tariff_plan_id')
         
         # Find merchant
-        result = self.session.exec(
-            select(Merchant).where(Merchant.user_id == payment.user_id)
-        )
-        merchant = result.scalars().first()
+        merchant_stmt = select(Merchant).where(Merchant.user_id == payment.user_id)
+        merchant_result = await self.session.execute(merchant_stmt)
+        merchant = merchant_result.scalar_one_or_none()
 
         if not merchant:
             raise PaymentError("Merchant not found for payment")
         
-        # Find tariff plan (stored in webhook data or derive from payment amount)
-        tariff_plan_id = webhook_data.get('tariff_plan_id')
-        if tariff_plan_id:
-            plan = self.session.get(TariffPlan, tariff_plan_id)
+        # Find tariff plan
+        if tariff_plan_id_str:
+            tariff_plan_id = UUID(tariff_plan_id_str)
+            plan = await self.payment_repo.get_tariff_plan_by_id(tariff_plan_id)
         else:
             # Fallback: find plan by reverse calculating from amount
-            # This is a simplified approach - in production, store plan ID in payment
-            plans = self.session.exec(select(TariffPlan).where(TariffPlan.is_active == True)).scalars().all()
+            plans = await self.payment_repo.get_active_tariff_plans()
             plan = None
             for p in plans:
-                if abs(self._calculate_subscription_price(p.price_per_month, duration_months) - payment.amount) < 1.0:
+                calculated_amount = self._calculate_subscription_price(p.price_per_month, duration_months)
+                if abs(calculated_amount - payment.amount) < 1.0:
                     plan = p
                     break
         
@@ -322,13 +339,19 @@ class PaymentService:
         webhook_data: Dict[str, Any]
     ):
         """Process completed featured service payment."""
-        service_id = webhook_data.get('service_id')
-        duration_days = webhook_data.get('duration_days', 7)  # Default to 7 days
+        # Extract from payment metadata (preferred) or webhook data
+        payment_metadata = payment.payment_metadata or {}
+        service_id_str = payment_metadata.get('service_id') or webhook_data.get('service_id')
+        duration_days = payment_metadata.get('duration_days') or webhook_data.get('duration_days', 7)
         
-        if not service_id:
-            raise PaymentError("Service ID not found in webhook data")
+        if not service_id_str:
+            raise PaymentError("Service ID not found in payment metadata or webhook data")
         
-        service = self.session.get(Service, service_id)
+        service_id = UUID(service_id_str)
+        service_stmt = select(Service).where(Service.id == service_id)
+        service_result = await self.session.execute(service_stmt)
+        service = service_result.scalar_one_or_none()
+        
         if not service:
             raise PaymentError("Service not found")
         
@@ -337,8 +360,8 @@ class PaymentService:
             service_id=service.id,
             merchant_id=service.merchant_id,
             payment_id=payment.id,
-            start_date=date.today(),
-            end_date=date.today() + timedelta(days=duration_days),
+            start_date=datetime.now(),
+            end_date=datetime.now() + timedelta(days=duration_days),
             days_duration=duration_days,
             amount_paid=payment.amount,
             feature_type=FeatureType.PAID_FEATURE,
@@ -346,6 +369,7 @@ class PaymentService:
         )
         
         self.session.add(featured_service)
+        await self.session.flush()
     
     async def _activate_subscription(
         self,
@@ -354,59 +378,67 @@ class PaymentService:
         tariff_plan_id: UUID,
         duration_months: int
     ) -> MerchantSubscription:
-        """Activate merchant subscription."""
+        """Activate merchant subscription with proper calendar month calculation."""
         # Expire any existing active subscriptions
-        existing_subscriptions = self.session.exec(
-            select(MerchantSubscription).where(
-                MerchantSubscription.merchant_id == merchant_id,
-                MerchantSubscription.status == SubscriptionStatus.ACTIVE
-            )
-        ).scalars().all()
+        existing_subscriptions = await self.payment_repo.get_merchant_subscriptions(
+            merchant_id, 
+            status=SubscriptionStatus.ACTIVE
+        )
         
         for sub in existing_subscriptions:
             sub.status = SubscriptionStatus.CANCELLED
+            self.session.add(sub)
+        
+        # Calculate end date using proper calendar months
+        start_date = date.today()
+        end_date = start_date + relativedelta(months=duration_months)
         
         # Create new subscription
         subscription = MerchantSubscription(
             merchant_id=merchant_id,
             tariff_plan_id=tariff_plan_id,
             payment_id=payment.id,
-            start_date=date.today(),
-            end_date=date.today() + timedelta(days=duration_months * 30),  # Approximate month
+            start_date=start_date,
+            end_date=end_date,
             status=SubscriptionStatus.ACTIVE
         )
         
-        self.session.add(subscription)
+        subscription = await self.payment_repo.create_subscription(subscription)
         return subscription
     
     async def get_merchant_subscription(self, user_id: UUID) -> Optional[SubscriptionResponse]:
         """Get merchant's current subscription."""
         # Find merchant
-        result = self.session.exec(
-            select(Merchant).where(Merchant.user_id == user_id)
-        )
-        merchant = result.scalars().first()
+        merchant_stmt = select(Merchant).where(Merchant.user_id == user_id)
+        merchant_result = await self.session.execute(merchant_stmt)
+        merchant = merchant_result.scalar_one_or_none()
 
         if not merchant:
             return None
         
         # Find active subscription
-        result = self.session.exec(
-            select(MerchantSubscription)
-            .join(TariffPlan)
-            .where(
-                MerchantSubscription.merchant_id == merchant.id,
-                MerchantSubscription.status == SubscriptionStatus.ACTIVE
-            )
-        )
-        subscription = result.scalars().first()
+        subscription = await self.payment_repo.get_merchant_active_subscription(merchant.id)
         
         if not subscription:
             return None
         
-        # Load relationships
-        self.session.refresh(subscription)
-        return SubscriptionResponse.from_orm(subscription)
+        # Load tariff plan relationship
+        plan_stmt = select(TariffPlan).where(TariffPlan.id == subscription.tariff_plan_id)
+        plan_result = await self.session.execute(plan_stmt)
+        tariff_plan = plan_result.scalar_one_or_none()
+        
+        if not tariff_plan:
+            return None
+        
+        # Create response with tariff plan
+        return SubscriptionResponse(
+            id=subscription.id,
+            tariff_plan=TariffPlanResponse.from_orm(tariff_plan),
+            start_date=subscription.start_date,
+            end_date=subscription.end_date,
+            status=subscription.status,
+            created_at=subscription.created_at
+        )
     
     async def check_subscription_limit(
         self,
@@ -441,19 +473,4 @@ class PaymentService:
     
     async def expire_old_subscriptions(self) -> int:
         """Expire subscriptions that have passed their end date."""
-        expired_subscriptions = self.session.exec(
-            select(MerchantSubscription).where(
-                MerchantSubscription.status == SubscriptionStatus.ACTIVE,
-                MerchantSubscription.end_date < date.today()
-            )
-        ).scalars().all()
-        
-        count = 0
-        for subscription in expired_subscriptions:
-            subscription.status = SubscriptionStatus.EXPIRED
-            count += 1
-        
-        if count > 0:
-            self.session.commit()
-        
-        return count
+        return await self.payment_repo.expire_subscriptions_by_date(date.today())

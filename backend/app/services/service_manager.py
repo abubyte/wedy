@@ -8,7 +8,7 @@ from app.core.exceptions import NotFoundError, ValidationError
 from app.models import User, InteractionType
 from app.repositories.service_repository import ServiceRepository
 from app.repositories.user_repository import UserRepository
-from app.schemas.service import (
+from app.schemas.service_schema import (
     ServiceCategoryResponse,
     ServiceCategoriesResponse,
     ServiceListItem,
@@ -19,7 +19,7 @@ from app.schemas.service import (
     MerchantBasicInfo,
     ServiceImageResponse
 )
-from app.schemas.common import PaginationParams
+from app.schemas.common_schema import PaginationParams
 from app.utils.constants import UZBEKISTAN_REGIONS, INTERACTION_TYPES
 
 
@@ -324,13 +324,21 @@ class ServiceManager:
             
         Returns:
             ServiceListItem response object
+            
+        Raises:
+            NotFoundError: If merchant or category not found for service
         """
         # Get merchant info
         merchant = await self.service_repo.get_merchant_by_service(service.id)
-        merchant_user = await self.user_repo.get_by_id(merchant.user_id) if merchant else None
+        if not merchant:
+            raise NotFoundError(f"Merchant not found for service {service.id}")
+        
+        merchant_user = await self.user_repo.get_by_id(merchant.user_id)
         
         # Get category info
         category = await self.service_repo.get_category_by_service(service.id)
+        if not category:
+            raise NotFoundError(f"Category not found for service {service.id}")
         
         # Get main image (first image)
         images = await self.service_repo.get_service_images(service.id)
@@ -341,13 +349,13 @@ class ServiceManager:
         
         merchant_info = MerchantBasicInfo(
             id=merchant.id,
-            business_name=merchant.business_name,
+            business_name=merchant.business_name or "",
             overall_rating=merchant.overall_rating,
             total_reviews=merchant.total_reviews,
-            location_region=merchant.location_region,
+            location_region=merchant.location_region or "",
             is_verified=merchant.is_verified,
             avatar_url=merchant_user.avatar_url if merchant_user else None
-        ) if merchant else None
+        )
         
         return ServiceListItem(
             id=service.id,
@@ -362,8 +370,8 @@ class ServiceManager:
             save_count=service.save_count,
             created_at=service.created_at,
             merchant=merchant_info,
-            category_id=category.id if category else None,
-            category_name=category.name if category else "Unknown",
+            category_id=category.id,
+            category_name=category.name,
             main_image_url=main_image_url,
             is_featured=is_featured
         )

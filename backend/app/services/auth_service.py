@@ -21,12 +21,12 @@ from app.core.exceptions import (
     ConflictError
 )
 from app.models import User, UserType, Merchant, ServiceCategory
-from app.schemas.auth import (
+from app.schemas.auth_schema import (
     SendOTPResponse, 
     VerifyOTPResponse, 
     TokenResponse
 )
-from app.services.external.sms_service import SMSService
+from app.services.sms_service import SMSService
 from app.utils.redis_client import RedisClient
 
 

@@ -1,1 +1,0 @@
-# TODO implement Payme payment provider service

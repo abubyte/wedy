@@ -1,8 +1,9 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import List, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
 
 from app.core.exceptions import NotFoundError, ValidationError, ForbiddenError, PaymentRequiredError
 from app.models import (
@@ -15,12 +16,13 @@ from app.models import (
     Image,
     ImageType,
     FeatureType,
+    FeaturedService,
     InteractionType
 )
 from app.repositories.merchant_repository import MerchantRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.service_repository import ServiceRepository
-from app.schemas.merchant import (
+from app.schemas.merchant_schema import (
     MerchantProfileResponse,
     ActiveSubscriptionInfo,
     MerchantProfileUpdateRequest,
@@ -386,7 +388,10 @@ class MerchantManager:
             )
         
         # Validate category exists
-        category = await self.service_repo.get_by_id(service_data.category_id)
+        from app.models import ServiceCategory
+        category_stmt = select(ServiceCategory).where(ServiceCategory.id == service_data.category_id)
+        category_result = await self.db.execute(category_stmt)
+        category = category_result.scalar_one_or_none()
         if not category:
             raise NotFoundError("Service category not found")
         
@@ -409,8 +414,7 @@ class MerchantManager:
         
         created_service = await self.service_repo.create(service)
         
-        # Get category for response
-        category = await self.service_repo.get_by_id(service_data.category_id)
+        # Get category for response (already validated above)
         
         return MerchantServiceResponse(
             id=created_service.id,
@@ -529,7 +533,7 @@ class MerchantManager:
         featured_responses = []
         active_count = 0
         
-        now = datetime.utcnow()
+        now = datetime.now()
         
         for featured_service, service in featured_data:
             is_currently_active = (
@@ -556,19 +560,108 @@ class MerchantManager:
             
             featured_responses.append(featured_response)
         
-        # Get remaining free slots
+        # Get remaining free slots (monthly allocations used this month)
         subscription_data = await self.merchant_repo.get_active_subscription(merchant.id)
         remaining_free_slots = 0
         if subscription_data:
             _, tariff_plan = subscription_data
-            monthly_free_count = await self.merchant_repo.count_active_featured_services(merchant.id)
-            remaining_free_slots = max(0, tariff_plan.monthly_featured_cards - monthly_free_count)
+            # Use the now variable already defined above
+            # Count monthly allocations used in current month
+            monthly_used = await self.merchant_repo.count_monthly_featured_allocations_used(
+                merchant.id, now.year, now.month
+            )
+            remaining_free_slots = max(0, tariff_plan.monthly_featured_cards - monthly_used)
         
         return MerchantFeaturedServicesResponse(
             featured_services=featured_responses,
             total=len(featured_responses),
             active_count=active_count,
             remaining_free_slots=remaining_free_slots
+        )
+    
+    async def create_monthly_featured_service(
+        self,
+        user_id: UUID,
+        service_id: UUID
+    ) -> FeaturedServiceResponse:
+        """
+        Create monthly featured service allocation (free).
+        
+        Args:
+            user_id: UUID of the user
+            service_id: UUID of the service to feature
+            
+        Returns:
+            Featured service response
+            
+        Raises:
+            NotFoundError: If merchant or service not found
+            PaymentRequiredError: If subscription expired
+            ForbiddenError: If monthly allocation limit exceeded
+        """
+        merchant = await self.merchant_repo.get_merchant_by_user_id(user_id)
+        if not merchant:
+            raise NotFoundError("Merchant profile not found")
+        
+        # Check active subscription and limits
+        subscription_data = await self._ensure_active_subscription(merchant.id)
+        _, tariff_plan = subscription_data
+        
+        # Check monthly allocation limit
+        from datetime import datetime
+        now = datetime.now()
+        monthly_used = await self.merchant_repo.count_monthly_featured_allocations_used(
+            merchant.id, now.year, now.month
+        )
+        
+        if monthly_used >= tariff_plan.monthly_featured_cards:
+            raise ForbiddenError(
+                f"Monthly featured allocation limit exceeded. Used: {monthly_used}, "
+                f"Max allowed: {tariff_plan.monthly_featured_cards}"
+            )
+        
+        # Verify service belongs to merchant
+        service_stmt = select(Service).where(
+            and_(
+                Service.id == service_id,
+                Service.merchant_id == merchant.id
+            )
+        )
+        service_result = await self.db.execute(service_stmt)
+        service = service_result.scalar_one_or_none()
+        
+        if not service:
+            raise NotFoundError("Service not found or not owned by merchant")
+        
+        # Create monthly featured service (1 month duration)
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=30)  # 1 month
+        
+        featured_service = FeaturedService(
+            service_id=service.id,
+            merchant_id=merchant.id,
+            payment_id=None,  # No payment for monthly allocation
+            start_date=start_date,
+            end_date=end_date,
+            days_duration=30,
+            amount_paid=None,
+            feature_type=FeatureType.MONTHLY_ALLOCATION,
+            is_active=True
+        )
+        
+        created_featured = await self.merchant_repo.create_featured_service(featured_service)
+        
+        return FeaturedServiceResponse(
+            id=created_featured.id,
+            service_id=service.id,
+            service_name=service.name,
+            start_date=created_featured.start_date,
+            end_date=created_featured.end_date,
+            days_duration=created_featured.days_duration,
+            amount_paid=created_featured.amount_paid,
+            feature_type=created_featured.feature_type.value,
+            is_active=True,
+            created_at=created_featured.created_at
         )
     
     async def _ensure_active_subscription(self, merchant_id: UUID) -> tuple:

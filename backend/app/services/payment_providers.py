@@ -9,7 +9,7 @@ import httpx
 from fastapi import HTTPException
 
 from app.core.config import get_settings
-from app.models.payment import PaymentMethod
+from app.models.payment_model import PaymentMethod
 
 
 settings = get_settings()
@@ -112,87 +112,168 @@ class PaymeProvider(BasePaymentProvider):
         else:
             return "pending"
 
-# TODO: Implement ClickProvider similarly
-# class ClickProvider(BasePaymentProvider):
-#     """Click payment provider implementation."""
+class ClickProvider(BasePaymentProvider):
+    """Click payment provider implementation."""
     
-#     def __init__(self):
-#         self.merchant_id = settings.CLICK_MERCHANT_ID
-#         self.secret_key = settings.CLICK_SECRET_KEY
-#         self.api_url = settings.CLICK_API_URL or "https://api.click.uz/v2/merchant"
-#         self.service_id = settings.CLICK_SERVICE_ID
-    
-#     async def create_payment(self, payment_data: Dict[str, Any]) -> Dict[str, str]:
-#         """Create Click payment."""
-#         try:
-#             # Create unique merchant transaction ID
-#             merchant_trans_id = str(uuid.uuid4())
-            
-#             # Prepare payment data
-#             payment_request = {
-#                 "service_id": self.service_id,
-#                 "click_trans_id": "",
-#                 "merchant_trans_id": merchant_trans_id,
-#                 "amount": payment_data["amount"],
-#                 "action": 0,  # 0 = prepare
-#                 "error": 0,
-#                 "error_note": "",
-#                 "sign_time": "",
-#                 "sign_string": ""
-#             }
-            
-#             # Generate signature
-#             sign_string = self._generate_signature(payment_request)
-#             payment_request["sign_string"] = sign_string
-            
-#             # Create payment URL (Click typically uses a redirect URL)
-#             payment_url = f"https://my.click.uz/services/pay?service_id={self.service_id}&merchant_id={self.merchant_id}&amount={payment_data['amount']}&transaction_param={merchant_trans_id}"
-            
-#             return {
-#                 "payment_url": payment_url,
-#                 "transaction_id": merchant_trans_id
-#             }
-            
-#         except Exception as e:
-#             raise PaymentProviderError(f"Click payment creation failed: {str(e)}")
-    
-#     def _generate_signature(self, params: Dict[str, Any]) -> str:
-#         """Generate Click signature."""
-#         # Click signature format: click_trans_id + service_id + secret_key + merchant_trans_id + amount + action + error + error_note + sign_time
-#         sign_parts = [
-#             str(params.get("click_trans_id", "")),
-#             str(params.get("service_id", "")),
-#             self.secret_key,
-#             str(params.get("merchant_trans_id", "")),
-#             str(params.get("amount", "")),
-#             str(params.get("action", "")),
-#             str(params.get("error", "")),
-#             str(params.get("error_note", "")),
-#             str(params.get("sign_time", ""))
-#         ]
+    def __init__(self):
+        # Check if Click is configured
+        if not settings.CLICK_SECRET_KEY or not settings.CLICK_MERCHANT_ID or not settings.CLICK_SERVICE_ID:
+            raise PaymentProviderError(
+                "Click payment provider not configured. "
+                "Missing CLICK_SECRET_KEY, CLICK_MERCHANT_ID, or CLICK_SERVICE_ID"
+            )
         
-#         sign_string = "".join(sign_parts)
-#         return hashlib.md5(sign_string.encode()).hexdigest()
+        self.merchant_id = settings.CLICK_MERCHANT_ID
+        self.secret_key = settings.CLICK_SECRET_KEY
+        self.service_id = settings.CLICK_SERVICE_ID
+        self.api_url = settings.CLICK_API_URL or "https://api.click.uz/v2/merchant"
     
-#     def verify_webhook(self, webhook_data: Dict[str, Any], signature: str) -> bool:
-#         """Verify Click webhook signature."""
-#         try:
-#             expected_signature = self._generate_signature(webhook_data)
-#             return hmac.compare_digest(signature, expected_signature)
-#         except Exception:
-#             return False
-    
-#     def extract_payment_status(self, webhook_data: Dict[str, Any]) -> str:
-#         """Extract payment status from Click webhook."""
-#         action = webhook_data.get("action", 0)
-#         error = webhook_data.get("error", 0)
+    async def create_payment(self, payment_data: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Create Click payment.
         
-#         if action == 1 and error == 0:  # Complete action with no error
-#             return "completed"
-#         elif error != 0:
-#             return "failed"
-#         else:
-#             return "pending"
+        Click payment flow:
+        1. Generate merchant transaction ID
+        2. Create payment URL with parameters
+        3. User redirects to Click payment page
+        """
+        try:
+            from datetime import datetime
+            
+            # Create unique merchant transaction ID
+            merchant_trans_id = str(uuid.uuid4())
+            
+            # Convert amount to string (Click expects amount as string)
+            amount_str = str(int(payment_data["amount"]))
+            
+            # Generate sign_time (Unix timestamp)
+            sign_time = str(int(datetime.now().timestamp()))
+            
+            # Prepare signature data
+            # Click signature format: click_trans_id + service_id + secret_key + merchant_trans_id + amount + action + error + error_note + sign_time
+            # For payment creation: click_trans_id is empty, action=0 (prepare), error=0
+            signature_data = {
+                "click_trans_id": "",
+                "service_id": self.service_id,
+                "merchant_trans_id": merchant_trans_id,
+                "amount": amount_str,
+                "action": "0",
+                "error": "0",
+                "error_note": "",
+                "sign_time": sign_time
+            }
+            
+            # Generate signature
+            sign_string = self._generate_signature(signature_data)
+            
+            # Create payment URL
+            # Click payment URL format: https://my.click.uz/services/pay?service_id=...&merchant_id=...&amount=...&transaction_param=...
+            payment_url = (
+                f"https://my.click.uz/services/pay"
+                f"?service_id={self.service_id}"
+                f"&merchant_id={self.merchant_id}"
+                f"&amount={amount_str}"
+                f"&transaction_param={merchant_trans_id}"
+                f"&sign_time={sign_time}"
+                f"&sign_string={sign_string}"
+            )
+            
+            return {
+                "payment_url": payment_url,
+                "transaction_id": merchant_trans_id
+            }
+            
+        except Exception as e:
+            if isinstance(e, PaymentProviderError):
+                raise
+            raise PaymentProviderError(f"Click payment creation failed: {str(e)}")
+    
+    def _generate_signature(self, params: Dict[str, Any]) -> str:
+        """
+        Generate Click signature using MD5 hash.
+        
+        Signature format: click_trans_id + service_id + secret_key + merchant_trans_id + amount + action + error + error_note + sign_time
+        """
+        # Build signature string in the correct order
+        sign_parts = [
+            str(params.get("click_trans_id", "")),
+            str(params.get("service_id", "")),
+            self.secret_key,
+            str(params.get("merchant_trans_id", "")),
+            str(params.get("amount", "")),
+            str(params.get("action", "")),
+            str(params.get("error", "")),
+            str(params.get("error_note", "")),
+            str(params.get("sign_time", ""))
+        ]
+        
+        sign_string = "".join(sign_parts)
+        return hashlib.md5(sign_string.encode()).hexdigest()
+    
+    def verify_webhook(self, webhook_data: Dict[str, Any], signature: str) -> bool:
+        """
+        Verify Click webhook signature.
+        
+        Args:
+            webhook_data: Webhook data from Click
+            signature: Signature received in webhook (sign_string field)
+            
+        Returns:
+            True if signature is valid, False otherwise
+        """
+        try:
+            # Extract signature from webhook data if not provided separately
+            if not signature and "sign_string" in webhook_data:
+                signature = webhook_data["sign_string"]
+            
+            # Generate expected signature
+            expected_signature = self._generate_signature(webhook_data)
+            
+            return hmac.compare_digest(signature, expected_signature)
+        except Exception:
+            return False
+    
+    def extract_payment_status(self, webhook_data: Dict[str, Any]) -> str:
+        """
+        Extract payment status from Click webhook.
+        
+        Click webhook actions:
+        - action = 0: Payment prepared
+        - action = 1: Payment completed successfully
+        - action = -1: Payment cancelled
+        
+        Error codes:
+        - error = 0: No error
+        - error != 0: Error occurred
+        
+        Returns:
+            "completed", "failed", or "pending"
+        """
+        action = webhook_data.get("action", 0)
+        error = webhook_data.get("error", 0)
+        
+        # Convert to int if string
+        if isinstance(action, str):
+            try:
+                action = int(action)
+            except (ValueError, TypeError):
+                action = 0
+        
+        if isinstance(error, str):
+            try:
+                error = int(error)
+            except (ValueError, TypeError):
+                error = 0
+        
+        # Completed: action = 1 and error = 0
+        if action == 1 and error == 0:
+            return "completed"
+        # Failed: error != 0 or action = -1
+        elif error != 0 or action == -1:
+            return "failed"
+        # Pending: action = 0
+        else:
+            return "pending"
 
 # TODO: Implement UzumBankProvider similarly
 # class UzumBankProvider(BasePaymentProvider):
@@ -286,7 +367,7 @@ class PaymentProviderFactory:
     
     _providers = {
         PaymentMethod.PAYME: PaymeProvider,
-        # PaymentMethod.CLICK: ClickProvider, # TODO: Uncomment when ClickProvider is implemented
+        PaymentMethod.CLICK: ClickProvider,
         # PaymentMethod.UZUMBANK: UzumBankProvider # TODO: Uncomment when UzumBankProvider is implemented
     }
     
@@ -307,8 +388,23 @@ class PaymentProviderFactory:
 
 # Provider instances for dependency injection
 def get_payment_providers() -> Dict[str, BasePaymentProvider]:
-    """Get payment provider instances for dependency injection."""
-    return {
-        method.value: PaymentProviderFactory.create_provider(method)
-        for method in PaymentMethod
-    }
+    """
+    Get payment provider instances for dependency injection.
+    
+    Only returns providers that are properly configured.
+    Providers with missing credentials are silently skipped.
+    """
+    providers = {}
+    
+    for method in PaymentMethod:
+        try:
+            provider = PaymentProviderFactory.create_provider(method)
+            providers[method.value] = provider
+        except PaymentProviderError:
+            # Provider not configured, skip it
+            continue
+        except Exception:
+            # Other errors, skip it
+            continue
+    
+    return providers
