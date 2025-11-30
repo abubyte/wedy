@@ -31,6 +31,7 @@ dependencies:
 
   # UI Components
   cupertino_icons: ^1.0.6
+  iconsax_plus: ^1.0.0
   cached_network_image: ^3.3.0
   image_picker: ^1.0.4
   flutter_svg: ^2.0.9
@@ -46,6 +47,7 @@ dependencies:
   connectivity_plus: ^6.1.5
   permission_handler: ^12.0.1
   dartz: ^0.10.1
+  widgets_easier: ^0.0.10
 
   # Design System
   flutter_screenutil: ^5.9.0
@@ -71,7 +73,9 @@ dependencies:
 
   # Security
   flutter_secure_storage: ^9.0.0
-  iconsax_plus: ^1.0.0
+
+  # Dependency Injection
+  get_it: ^7.6.4
 
 dev_dependencies:
   flutter_test:

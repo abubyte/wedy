@@ -12,9 +12,7 @@ class AppConfig {
   static AppConfig? _instance;
   static AppConfig get instance {
     if (_instance == null) {
-      throw Exception(
-        'AppConfig not initialized. Call AppConfig.initialize() first.',
-      );
+      throw Exception('AppConfig not initialized. Call AppConfig.initialize() first.');
     }
     return _instance!;
   }
@@ -32,10 +30,7 @@ class AppConfig {
 
   /// Initialize the app configuration
   /// This should be called before runApp()
-  static void initialize({
-    required AppType appType,
-    required Environment environment,
-  }) {
+  static void initialize({required AppType appType, required Environment environment}) {
     _instance = AppConfig._();
     _instance!.appType = appType;
     _instance!.environment = environment;
@@ -43,7 +38,11 @@ class AppConfig {
     // Set environment-specific values
     switch (environment) {
       case Environment.development:
-        _instance!.baseUrl = 'http://api.abubyte.uz';
+        // Use localhost for development
+        // For Android emulator, use http://10.0.2.2:8000
+        // For iOS simulator, use http://localhost:8000
+        // For physical device, use your computer's IP address (e.g., http://192.168.100.34:8000)
+        _instance!.baseUrl = 'http://192.168.100.34:8000';
         _instance!.enableLogging = true;
         _instance!.enableAnalytics = false;
         break;
@@ -62,15 +61,11 @@ class AppConfig {
     // Set app-specific values
     switch (appType) {
       case AppType.client:
-        _instance!.appName = environment == Environment.production
-            ? 'Wedy'
-            : 'Wedy Client (${environment.name})';
+        _instance!.appName = environment == Environment.production ? 'Wedy' : 'Wedy Client (${environment.name})';
         _instance!.packageName = environment == Environment.production
             ? 'uz.wedy.app'
             : 'uz.wedy.app.${environment.name}';
-        _instance!.bundleId = environment == Environment.production
-            ? 'uz.wedy.app'
-            : 'uz.wedy.app.${environment.name}';
+        _instance!.bundleId = environment == Environment.production ? 'uz.wedy.app' : 'uz.wedy.app.${environment.name}';
         break;
       case AppType.merchant:
         _instance!.appName = environment == Environment.production
