@@ -1,7 +1,21 @@
 from functools import lru_cache
-from typing import List, Union
-from pydantic import Field, validator
-from pydantic_settings import BaseSettings
+from typing import List, Union, Optional
+from pydantic import Field, field_validator
+
+try:
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+    HAS_PYDANTIC_SETTINGS = True
+except ImportError:
+    try:
+        from pydantic.v1 import BaseSettings
+        # For pydantic v1, we'll use class Config instead
+        SettingsConfigDict = None
+        HAS_PYDANTIC_SETTINGS = False
+    except ImportError:
+        raise ImportError(
+            "Either 'pydantic-settings' or 'pydantic' must be installed. "
+            "Install with: pip install pydantic-settings"
+        )
 
 
 class Settings(BaseSettings):
@@ -23,7 +37,8 @@ class Settings(BaseSettings):
     # Documentation
     ENABLE_DOCS: bool = False
 
-    @validator("CORS_ORIGINS", pre=True)
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v):
         if isinstance(v, str):
             s = v.strip()
@@ -71,8 +86,9 @@ class Settings(BaseSettings):
     PAYME_API_URL: str = "https://checkout.paycom.uz"
     PAYME_TEST_API_URL: str = "https://test.paycom.uz"
 
-    # CLICK_SECRET_KEY: str
-    # CLICK_MERCHANT_ID: str
+    CLICK_SECRET_KEY: Optional[str] = None
+    CLICK_MERCHANT_ID: Optional[str] = None
+    CLICK_SERVICE_ID: Optional[str] = None
     CLICK_API_URL: str = "https://api.click.uz/v2/merchant"
     CLICK_TEST_API_URL: str = "https://api.click.uz/v2/merchant"
 
@@ -81,11 +97,21 @@ class Settings(BaseSettings):
     UZUMBANK_API_URL: str = "https://api.uzumbank.uz"
     UZUMBANK_TEST_API_URL: str = "https://api.uzumbank.uz"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        extra = "ignore"
+    # Pydantic configuration
+    if HAS_PYDANTIC_SETTINGS:
+        model_config = SettingsConfigDict(
+            env_file=".env",
+            env_file_encoding="utf-8",
+            case_sensitive=True,
+            extra="ignore"
+        )
+    else:
+        # Pydantic v1 configuration
+        class Config:
+            env_file = ".env"
+            env_file_encoding = "utf-8"
+            case_sensitive = True
+            extra = "ignore"
 
 
 @lru_cache()

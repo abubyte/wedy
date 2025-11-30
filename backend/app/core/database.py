@@ -44,7 +44,7 @@ async def create_db_and_tables() -> None:
     """
     async with engine.begin() as conn:
         # Import all models to ensure they are registered with SQLModel
-        from app.models import user, service, payment, review, analytics  # noqa
+        from app.models import User, Service, Payment, Review, DailyServiceMetrics, MerchantDailyMetrics  # noqa
         
         # Create all tables
         await conn.run_sync(SQLModel.metadata.create_all)

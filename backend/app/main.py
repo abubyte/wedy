@@ -7,7 +7,7 @@ import logging
 from app.core.config import settings
 from app.core.database import create_db_and_tables, close_db_connection
 from app.core.exceptions import WedyException, map_exception_to_http
-from app.api.v1 import auth, users, services, merchants, payments, reviews, admin
+from app.api.v1 import auth, categories, users, services, merchants, merchants_cover_image, merchants_gallery, merchants_contacts, payments, reviews, tariffs
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -148,15 +148,33 @@ app.include_router(
 )
 
 app.include_router(
-    services.router,
-    prefix=settings.API_V1_STR + "/services",
-    tags=["Services"]
-)
-
-app.include_router(
     merchants.router,
     prefix=settings.API_V1_STR + "/merchants",
     tags=["Merchants"]
+)
+
+app.include_router(
+    merchants_cover_image.router,
+    prefix=settings.API_V1_STR + "/merchants",
+    tags=["Merchants Cover Image"]
+)
+
+app.include_router(
+    merchants_gallery.router,
+    prefix=settings.API_V1_STR + "/merchants",
+    tags=["Merchants Gallery"]
+)
+
+app.include_router(
+    merchants_contacts.router,
+    prefix=settings.API_V1_STR + "/merchants",
+    tags=["Merchants Contacts"]
+)
+
+app.include_router(
+    tariffs.router,
+    prefix=settings.API_V1_STR + "/tariffs",
+    tags=["Tariffs"]
 )
 
 app.include_router(
@@ -166,15 +184,21 @@ app.include_router(
 )
 
 app.include_router(
-    reviews.router,
-    prefix=settings.API_V1_STR + "/reviews",
-    tags=["Reviews"]
+    categories.router,
+    prefix=settings.API_V1_STR + "/categories",
+    tags=["Categories"]
 )
 
 app.include_router(
-    admin.router,
-    prefix=settings.API_V1_STR + "/admin",
-    tags=["Admin"]
+    services.router,
+    prefix=settings.API_V1_STR + "/services",
+    tags=["Services"]
+)
+
+app.include_router(
+    reviews.router,
+    prefix=settings.API_V1_STR + "/reviews",
+    tags=["Reviews"]
 )
 
 
