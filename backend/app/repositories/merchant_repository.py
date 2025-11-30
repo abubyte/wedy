@@ -19,6 +19,7 @@ from app.models import (
     TariffPlan,
     SubscriptionStatus,
     FeaturedService,
+    FeatureType,
     DailyServiceMetrics,
     Review
 )
@@ -316,7 +317,7 @@ class MerchantRepository(BaseRepository[Merchant]):
         Returns:
             Count of active featured services
         """
-        now = datetime.utcnow()
+        now = datetime.now()
         
         statement = (
             select(func.count(FeaturedService.id))
@@ -330,7 +331,61 @@ class MerchantRepository(BaseRepository[Merchant]):
             )
         )
         result = await self.db.execute(statement)
-        return result.scalar_one()
+        return result.scalar_one() or 0
+    
+    async def count_monthly_featured_allocations_used(
+        self, 
+        merchant_id: UUID, 
+        year: int, 
+        month: int
+    ) -> int:
+        """
+        Count monthly featured allocations used in a specific month.
+        
+        Args:
+            merchant_id: UUID of the merchant
+            year: Year to check
+            month: Month to check (1-12)
+            
+        Returns:
+            Count of monthly allocations used in the given month
+        """
+        # Get featured services that started in the given month/year
+        # and are of type MONTHLY_ALLOCATION
+        start_of_month = datetime(year, month, 1)
+        if month == 12:
+            end_of_month = datetime(year + 1, 1, 1)
+        else:
+            end_of_month = datetime(year, month + 1, 1)
+        
+        statement = (
+            select(func.count(FeaturedService.id))
+            .where(
+                and_(
+                    FeaturedService.merchant_id == merchant_id,
+                    FeaturedService.feature_type == FeatureType.MONTHLY_ALLOCATION,
+                    FeaturedService.start_date >= start_of_month,
+                    FeaturedService.start_date < end_of_month
+                )
+            )
+        )
+        result = await self.db.execute(statement)
+        return result.scalar_one() or 0
+    
+    async def create_featured_service(self, featured_service: FeaturedService) -> FeaturedService:
+        """
+        Create a featured service record.
+        
+        Args:
+            featured_service: FeaturedService instance
+            
+        Returns:
+            Created featured service
+        """
+        self.db.add(featured_service)
+        await self.db.commit()
+        await self.db.refresh(featured_service)
+        return featured_service
     
     async def create_contact(self, contact: MerchantContact) -> MerchantContact:
         """
@@ -361,6 +416,26 @@ class MerchantRepository(BaseRepository[Merchant]):
         await self.db.commit()
         await self.db.refresh(contact)
         return contact
+    
+    async def get_contact_by_id(self, contact_id: UUID, merchant_id: UUID) -> Optional[MerchantContact]:
+        """
+        Get merchant contact by ID, verifying it belongs to the merchant.
+        
+        Args:
+            contact_id: UUID of the contact
+            merchant_id: UUID of the merchant
+            
+        Returns:
+            MerchantContact instance or None if not found
+        """
+        statement = select(MerchantContact).where(
+            and_(
+                MerchantContact.id == contact_id,
+                MerchantContact.merchant_id == merchant_id
+            )
+        )
+        result = await self.db.execute(statement)
+        return result.scalar_one_or_none()
     
     async def delete_contact(self, contact_id: UUID) -> bool:
         """
@@ -446,6 +521,27 @@ class MerchantRepository(BaseRepository[Merchant]):
 
         if merchant:
             merchant.cover_image_url = s3_url
+            self.db.add(merchant)
+            await self.db.commit()
+            return True
+        return False
+    
+    async def delete_cover_image(self, merchant_id: UUID) -> bool:
+        """
+        Delete merchant cover image (set to None).
+        
+        Args:
+            merchant_id: UUID of the merchant
+            
+        Returns:
+            True if deleted, False if merchant not found
+        """
+        statement = select(Merchant).where(Merchant.id == merchant_id)
+        result = await self.db.execute(statement)
+        merchant = result.scalar_one_or_none()
+
+        if merchant:
+            merchant.cover_image_url = None
             self.db.add(merchant)
             await self.db.commit()
             return True

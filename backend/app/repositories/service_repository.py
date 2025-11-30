@@ -18,7 +18,7 @@ from app.models import (
     InteractionType
 )
 from app.repositories.base import BaseRepository
-from app.schemas.service import ServiceSearchFilters
+from app.schemas.service_schema import ServiceSearchFilters
 from app.utils.constants import UZBEKISTAN_REGIONS
 
 
@@ -170,7 +170,7 @@ class ServiceRepository(BaseRepository[Service]):
         Returns:
             List of featured services
         """
-        now = datetime.utcnow()
+        now = datetime.now()
         
         statement = (
             select(Service)
@@ -299,7 +299,7 @@ class ServiceRepository(BaseRepository[Service]):
         Returns:
             Tuple of (is_featured, end_date)
         """
-        now = datetime.utcnow()
+        now = datetime.now()
         
         statement = (
             select(FeaturedService.end_date)
@@ -432,3 +432,46 @@ class ServiceRepository(BaseRepository[Service]):
         services = result.scalars().all()
 
         return services, total_count
+    
+    async def get_user_interactions(
+        self,
+        user_id: UUID,
+        interaction_type: Optional[InteractionType] = None
+    ) -> List[Tuple['UserInteraction', Service]]:
+        """
+        Get user interactions with services.
+        
+        Args:
+            user_id: UUID of the user
+            interaction_type: Optional filter by interaction type (LIKE or SAVE)
+            
+        Returns:
+            List of tuples (UserInteraction, Service)
+        """
+        # Build query
+        conditions = [UserInteraction.user_id == user_id]
+        
+        # Filter by interaction type if specified (only LIKE and SAVE are meaningful for listing)
+        if interaction_type and interaction_type in [InteractionType.LIKE, InteractionType.SAVE]:
+            conditions.append(UserInteraction.interaction_type == interaction_type)
+        else:
+            # Default to LIKE and SAVE only (not VIEW or SHARE)
+            conditions.append(
+                UserInteraction.interaction_type.in_([InteractionType.LIKE, InteractionType.SAVE])
+            )
+        
+        # Join with services and filter only active services
+        statement = (
+            select(UserInteraction, Service)
+            .join(Service, UserInteraction.service_id == Service.id)
+            .where(
+                and_(
+                    *conditions,
+                    Service.is_active == True
+                )
+            )
+            .order_by(UserInteraction.created_at.desc())
+        )
+        
+        result = await self.db.execute(statement)
+        return result.all()

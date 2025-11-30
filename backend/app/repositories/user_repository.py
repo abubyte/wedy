@@ -4,7 +4,8 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.models.user import User, Merchant
+from app.models.user_model import User
+from app.models.merchant_model import Merchant
 from app.repositories.base import BaseRepository
 
 
@@ -60,3 +61,20 @@ class UserRepository(BaseRepository[User]):
         
         result = await self.db.execute(statement)
         return result.scalar_one_or_none() is not None
+    
+    async def soft_delete_user(self, user_id: UUID) -> bool:
+        """
+        Soft delete a user by setting is_active=False.
+        
+        Args:
+            user_id: UUID of the user to delete
+            
+        Returns:
+            True if deleted, False if not found
+        """
+        user = await self.get_by_id(user_id)
+        if user:
+            user.is_active = False
+            await self.update(user)
+            return True
+        return False
