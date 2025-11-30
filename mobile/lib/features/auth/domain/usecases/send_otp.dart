@@ -16,19 +16,39 @@ class SendOtp {
       return const Left(ValidationFailure('Phone number cannot be empty'));
     }
 
-    // Phone number format validation (Uzbekistan format: 9XXXXXXXXX)
-    if (!_isValidUzbekPhoneNumber(phoneNumber)) {
+    // Normalize phone number
+    final normalized = _normalizePhoneNumber(phoneNumber);
+
+    // Phone number format validation (Uzbekistan format: 9 digits)
+    if (!_isValidUzbekPhoneNumber(normalized)) {
       return const Left(ValidationFailure('Invalid phone number format'));
     }
 
-    // Call repository (data layer)
-    return await repository.sendOtp(phoneNumber);
+    // Call repository (data layer) with normalized number
+    return await repository.sendOtp(normalized);
+  }
+
+  /// Normalize phone number to standard format (9 digits)
+  String _normalizePhoneNumber(String phone) {
+    // Remove any spaces, dashes, or non-digit characters
+    final cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
+    
+    // If it starts with country code 998, remove it
+    if (cleaned.startsWith('998') && cleaned.length == 12) {
+      return cleaned.substring(3);
+    }
+    
+    // Return last 9 digits (in case of any extra digits)
+    if (cleaned.length >= 9) {
+      return cleaned.substring(cleaned.length - 9);
+    }
+    
+    return cleaned;
   }
 
   bool _isValidUzbekPhoneNumber(String phone) {
-    // Remove any spaces or dashes
-    final cleaned = phone.replaceAll(RegExp(r'[\s-]'), '');
-    // Check if it's 9 digits starting with 9
-    return RegExp(r'^9\d{8}$').hasMatch(cleaned);
+    // Check if it's exactly 9 digits (Uzbekistan format)
+    // Phone number should already be normalized at this point
+    return RegExp(r'^\d{9}$').hasMatch(phone);
   }
 }

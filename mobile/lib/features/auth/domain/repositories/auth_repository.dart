@@ -13,8 +13,15 @@ abstract class AuthRepository {
   Future<Either<Failure, AuthTokens>> verifyOtp({required String phoneNumber, required String otpCode});
 
   /// Complete user registration
-  Future<Either<Failure, User>> completeRegistration({required String name, required UserType userType});
+  Future<Either<Failure, User>> completeRegistration({
+    required String phoneNumber,
+    required String name,
+    required UserType userType,
+  });
 
   /// Refresh authentication tokens
   Future<Either<Failure, AuthTokens>> refreshToken(String refreshToken);
+
+  /// Get current user profile
+  Future<Either<Failure, User>> getProfile();
 }

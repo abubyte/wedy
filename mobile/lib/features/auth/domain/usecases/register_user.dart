@@ -11,8 +11,16 @@ class RegisterUser {
   RegisterUser(this.repository);
 
   /// Execute the use case
-  Future<Either<Failure, User>> call({required String name, required UserType userType}) async {
+  Future<Either<Failure, User>> call({
+    required String phoneNumber,
+    required String name,
+    required UserType userType,
+  }) async {
     // Business logic validation
+    if (phoneNumber.isEmpty) {
+      return const Left(ValidationFailure('Phone number cannot be empty'));
+    }
+
     if (name.trim().isEmpty) {
       return const Left(ValidationFailure('Name cannot be empty'));
     }
@@ -26,6 +34,6 @@ class RegisterUser {
     }
 
     // Call repository (data layer)
-    return await repository.completeRegistration(name: name.trim(), userType: userType);
+    return await repository.completeRegistration(phoneNumber: phoneNumber, name: name.trim(), userType: userType);
   }
 }

@@ -2,7 +2,7 @@
 class AuthTokens {
   final String accessToken;
   final String refreshToken;
-  final DateTime expiresAt;
+  final DateTime? expiresAt;
 
-  const AuthTokens({required this.accessToken, required this.refreshToken, required this.expiresAt});
+  const AuthTokens({required this.accessToken, required this.refreshToken, this.expiresAt});
 }

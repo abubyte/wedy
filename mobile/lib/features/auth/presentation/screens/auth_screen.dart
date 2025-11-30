@@ -2,14 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:wedy/core/config/app_config.dart';
 import 'package:wedy/shared/widgets/circular_button.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/navigation/route_names.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 import '../widgets/otp_input_widget.dart';
 import '../widgets/phone_input_widget.dart';
+import '../../domain/entities/user.dart';
 
 enum _AuthStep { phone, otp, name }
 
@@ -28,6 +36,7 @@ class _AuthScreenState extends State<AuthScreen> {
   _AuthStep _step = _AuthStep.phone;
   Timer? _countdownTimer;
   int _secondsRemaining = 120;
+  String? _phoneNumber;
 
   @override
   void dispose() {
@@ -40,31 +49,56 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingXL,
-            vertical: AppDimensions.spacingXL,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: AppDimensions.spacingXL),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: _buildStepContent(),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
+        } else if (state is OtpSent) {
+          setState(() {
+            _step = _AuthStep.otp;
+            _phoneNumber = state.phoneNumber;
+            _startCountdown();
+          });
+        } else if (state is RegistrationRequired) {
+          setState(() {
+            _step = _AuthStep.name;
+            _phoneNumber = state.phoneNumber;
+          });
+        } else if (state is Authenticated) {
+          // Navigate to home screen when authenticated
+          if (context.mounted) {
+            context.go(RouteNames.home);
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingXL, vertical: AppDimensions.spacingXL),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: AppDimensions.spacingXL),
+                Expanded(
+                  child: AnimatedSwitcher(duration: const Duration(milliseconds: 250), child: _buildStepContent()),
                 ),
-              ),
-              const SizedBox(height: AppDimensions.spacingL),
-              WedyPrimaryButton(
-                label: _step == _AuthStep.name ? 'Tasdiqlash' : 'Keyingi',
-                onPressed: _handleNext,
-              ),
-            ],
+                const SizedBox(height: AppDimensions.spacingL),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    final isLoading = state is AuthLoading;
+                    return WedyPrimaryButton(
+                      label: _step == _AuthStep.name ? 'Tasdiqlash' : 'Keyingi',
+                      onPressed: isLoading ? null : _handleNext,
+                      loading: isLoading,
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -76,16 +110,10 @@ class _AuthScreenState extends State<AuthScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         if (_step != _AuthStep.phone)
-          WedyCircularButton(
-            icon: Icons.arrow_back_ios_new_rounded,
-            onTap: _handleBack,
-          )
+          WedyCircularButton(icon: Icons.arrow_back_ios_new_rounded, onTap: _handleBack)
         else
           const SizedBox(width: 44),
-        Text(
-          'Wedy',
-          style: AppTextStyles.title1.copyWith(color: AppColors.primary),
-        ),
+        Text('Wedy', style: AppTextStyles.title1.copyWith(color: AppColors.primary)),
         const SizedBox(width: 44),
       ],
     );
@@ -96,30 +124,44 @@ class _AuthScreenState extends State<AuthScreen> {
       case _AuthStep.phone:
         return _PhoneStep(controller: _phoneController);
       case _AuthStep.otp:
-        return _OtpStep(
-          controller: _otpController,
-          secondsRemaining: _secondsRemaining,
-          onResend: _restartCountdown,
-        );
+        return _OtpStep(controller: _otpController, secondsRemaining: _secondsRemaining, onResend: _handleResendOtp);
       case _AuthStep.name:
         return _NameStep(controller: _nameController);
     }
   }
 
   void _handleNext() {
-    setState(() {
-      if (_step == _AuthStep.phone) {
-        _step = _AuthStep.otp;
-        _startCountdown();
-      } else if (_step == _AuthStep.otp) {
-        _step = _AuthStep.name;
-      } else {
-        // Final step submit placeholder.
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ro\'yhatdan o\'tish yakunlandi')),
-        );
+    if (_step == _AuthStep.phone) {
+      final phoneNumber = _phoneController.text.trim();
+      if (phoneNumber.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Telefon raqamni kiriting')));
+        return;
       }
-    });
+      context.read<AuthBloc>().add(SendOtpEvent(phoneNumber));
+    } else if (_step == _AuthStep.otp) {
+      final otpCode = _otpController.text.trim();
+      if (otpCode.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP kodni kiriting')));
+        return;
+      }
+      if (_phoneNumber == null) return;
+      context.read<AuthBloc>().add(VerifyOtpEvent(phoneNumber: _phoneNumber!, otpCode: otpCode));
+    } else {
+      // Final step - complete registration
+      final name = _nameController.text.trim();
+      if (name.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ismingizni kiriting')));
+        return;
+      }
+      if (_phoneNumber == null) return;
+
+      // Determine user type based on app type
+      final userType = AppConfig.instance.isClient ? UserType.client : UserType.merchant;
+
+      context.read<AuthBloc>().add(
+        CompleteRegistrationEvent(phoneNumber: _phoneNumber!, name: name, userType: userType),
+      );
+    }
   }
 
   void _handleBack() {
@@ -127,10 +169,19 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_step == _AuthStep.otp) {
         _step = _AuthStep.phone;
         _countdownTimer?.cancel();
+        _otpController.clear();
       } else if (_step == _AuthStep.name) {
         _step = _AuthStep.otp;
+        _nameController.clear();
       }
     });
+  }
+
+  void _handleResendOtp() {
+    if (_phoneNumber != null && _secondsRemaining == 0) {
+      context.read<AuthBloc>().add(SendOtpEvent(_phoneNumber!));
+      _startCountdown();
+    }
   }
 
   void _startCountdown() {
@@ -145,10 +196,6 @@ class _AuthScreenState extends State<AuthScreen> {
         });
       }
     });
-  }
-
-  void _restartCountdown() {
-    _startCountdown();
   }
 }
 
@@ -178,11 +225,7 @@ class _PhoneStep extends StatelessWidget {
 }
 
 class _OtpStep extends StatelessWidget {
-  const _OtpStep({
-    required this.controller,
-    required this.secondsRemaining,
-    required this.onResend,
-  });
+  const _OtpStep({required this.controller, required this.secondsRemaining, required this.onResend});
 
   final TextEditingController controller;
   final int secondsRemaining;
@@ -203,16 +246,11 @@ class _OtpStep extends StatelessWidget {
         const SizedBox(height: AppDimensions.spacingL),
         Row(
           children: [
-            Text(
-              'Agar kodni olmagan bo\'lsangiz ',
-              style: AppTextStyles.caption,
-            ),
+            Text('Agar kodni olmagan bo\'lsangiz ', style: AppTextStyles.caption),
             GestureDetector(
               onTap: canResend ? onResend : null,
               child: Text(
-                canResend
-                    ? 'qayta yuboring'
-                    : '$minutes:$seconds dan keyin qayta yuboramiz',
+                canResend ? 'qayta yuboring' : '$minutes:$seconds dan keyin qayta yuboramiz',
                 style: AppTextStyles.caption.copyWith(color: AppColors.primary),
               ),
             ),
@@ -259,9 +297,7 @@ class _NameStep extends StatelessWidget {
         TextField(
           controller: controller,
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            hintText: 'Ismingiz yoki tashkilot nomini yozing',
-          ),
+          decoration: const InputDecoration(hintText: 'Ismingiz yoki tashkilot nomini yozing'),
         ),
         const SizedBox(height: AppDimensions.spacingXL),
         Text.rich(
