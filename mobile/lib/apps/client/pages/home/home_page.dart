@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:wedy/apps/client/layouts/main_layout.dart';
-import 'package:wedy/apps/client/widgets/section_header.dart';
+import 'package:wedy/shared/widgets/section_header.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -54,7 +54,7 @@ class ClientHomePage extends StatelessWidget {
             return Column(
               children: [
                 // Section Header
-                ClientSectionHeader(
+                SectionHeader(
                   title: category.label,
                   onTap: () => context.pushNamed(RouteNames.items, extra: category),
                   applyPadding: true,
@@ -98,8 +98,8 @@ class ClientHomePage extends StatelessWidget {
   }
 }
 
-class _ClientCategory {
-  const _ClientCategory({
+class ClientCategory {
+  const ClientCategory({
     required this.label,
     required this.icon,
     required this.backgroundColor,
@@ -131,31 +131,31 @@ class _ClientService {
 }
 
 const clientCategories = [
-  _ClientCategory(
+  ClientCategory(
     label: 'Decoratsiya',
     icon: IconsaxPlusLinear.colorfilter,
     backgroundColor: Color(0xFFD3E3FD),
     iconColor: Colors.black,
   ),
-  _ClientCategory(
+  ClientCategory(
     label: 'Sozandalar',
     icon: IconsaxPlusLinear.microphone,
     backgroundColor: Color(0xFFD3E3FD),
     iconColor: Colors.black,
   ),
-  _ClientCategory(
+  ClientCategory(
     label: 'Restoran',
     icon: IconsaxPlusLinear.cake,
     backgroundColor: Color(0xFFD3E3FD),
     iconColor: Colors.black,
   ),
-  _ClientCategory(
+  ClientCategory(
     label: 'Art',
     icon: IconsaxPlusLinear.magic_star,
     backgroundColor: Color(0xFFD3E3FD),
     iconColor: Colors.black,
   ),
-  _ClientCategory(
+  ClientCategory(
     label: 'Foto/Video',
     icon: IconsaxPlusLinear.camera,
     backgroundColor: Color(0xFFD3E3FD),

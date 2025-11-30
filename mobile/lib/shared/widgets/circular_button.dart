@@ -10,8 +10,19 @@ class WedyCircularButton extends StatelessWidget {
   final double? iconSize;
   final VoidCallback? onTap;
   final bool isPrimary;
+  final Color? color;
+  final Color? borderColor;
 
-  const WedyCircularButton({super.key, this.icon, this.size = 43, this.onTap, this.isPrimary = false, this.iconSize});
+  const WedyCircularButton({
+    super.key,
+    this.icon,
+    this.size = 43,
+    this.onTap,
+    this.isPrimary = false,
+    this.iconSize,
+    this.color,
+    this.borderColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +33,8 @@ class WedyCircularButton extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          color: isPrimary ? AppColors.primary : AppColors.surface,
-          border: Border.all(color: isPrimary ? AppColors.primaryDark : AppColors.border, width: .5),
+          color: color ?? (isPrimary ? AppColors.primary : AppColors.surface),
+          border: Border.all(color: borderColor ?? (isPrimary ? AppColors.primaryDark : AppColors.border), width: .5),
         ),
         child: Center(
           child: Icon(

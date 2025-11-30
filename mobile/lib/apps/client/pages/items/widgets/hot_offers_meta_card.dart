@@ -1,8 +1,9 @@
 part of '../items_page.dart';
 
 class _HotOffersMetaCard extends StatelessWidget {
-  const _HotOffersMetaCard({super.key, required this.category});
+  const _HotOffersMetaCard({required this.category});
 
+  // ignore: prefer_typing_uninitialized_variables, strict_top_level_inference
   final category;
 
   @override

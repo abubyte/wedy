@@ -4,14 +4,8 @@ import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
 
-class ClientSectionHeader extends StatelessWidget {
-  const ClientSectionHeader({
-    super.key,
-    required this.title,
-    this.hasAction = true,
-    this.onTap,
-    this.applyPadding = false,
-  });
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({super.key, required this.title, this.hasAction = true, this.onTap, this.applyPadding = false});
 
   final String title;
   final bool hasAction;

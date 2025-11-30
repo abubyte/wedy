@@ -1,25 +1,37 @@
-part of '../service_page.dart';
+part of '../../features/service/presentation/screens/service/service_page.dart';
 
 class ServiceReviews extends StatelessWidget {
-  const ServiceReviews({super.key});
+  const ServiceReviews({super.key, this.vertical = false});
+
+  final bool vertical;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 110,
+      height: vertical ? null : 110,
       child: ListView.separated(
         itemCount: 5,
-        scrollDirection: Axis.horizontal,
+        scrollDirection: vertical ? Axis.vertical : Axis.horizontal,
         shrinkWrap: true,
-        separatorBuilder: (context, index) => const SizedBox(width: AppDimensions.spacingS),
+        physics: vertical ? const NeverScrollableScrollPhysics() : null,
+        separatorBuilder: (context, index) =>
+            const SizedBox(width: AppDimensions.spacingS, height: AppDimensions.spacingS),
         itemBuilder: (context, index) {
           return Center(
             child: Container(
               margin: EdgeInsets.only(
-                left: index == 0 ? AppDimensions.spacingL : 0,
-                right: index == 4 ? AppDimensions.spacingL : 0,
+                left: vertical
+                    ? 0
+                    : index == 0
+                    ? AppDimensions.spacingL
+                    : 0,
+                right: vertical
+                    ? 0
+                    : index == 4
+                    ? AppDimensions.spacingL
+                    : 0,
               ),
-              width: 300,
+              width: vertical ? null : 300,
               padding: const EdgeInsets.all(AppDimensions.spacingSM),
               decoration: BoxDecoration(
                 color: AppColors.surface,
@@ -82,12 +94,14 @@ class ServiceReviews extends StatelessWidget {
                   ),
                   const SizedBox(height: AppDimensions.spacingS),
                   Text(
-                    'Biz to‘ylar uchun zamonaviy dekor xizmatlarini taqdim etamiz. Gul kompozitsiyalari, yorug‘lik va dizayn va bu h...',
+                    'Biz to‘ylar uchun zamonaviy dekor xizmatlarini taqdim etamiz. Gul kompozitsiyalari, yorug‘lik va dizayn va bu h... Biz to‘ylar uchun zamonaviy dekor xizmatlarini taqdim etamiz. Gul kompozitsiyalari, yorug‘lik va dizayn va bu h... Biz to‘ylar uchun zamonaviy dekor xizmatlarini taqdim etamiz. Gul kompozitsiyalari, yorug‘lik va dizayn va bu h...',
                     style: AppTextStyles.bodySmall.copyWith(
                       fontWeight: FontWeight.w500,
                       fontSize: 10,
                       color: const Color(0xFF9CA3AF),
                     ),
+                    overflow: vertical ? null : TextOverflow.ellipsis,
+                    maxLines: vertical ? null : 2,
                   ),
                 ],
               ),

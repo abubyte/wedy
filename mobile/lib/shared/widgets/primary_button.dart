@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wedy/core/theme/app_colors.dart';
 
 import '../../core/constants/app_dimensions.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -10,6 +11,7 @@ class WedyPrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.expanded = true,
+    this.outlined = false,
     this.loading = false,
     this.padding,
   });
@@ -18,6 +20,7 @@ class WedyPrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Widget? icon;
   final bool expanded;
+  final bool outlined;
   final bool loading;
   final EdgeInsetsGeometry? padding;
 
@@ -38,10 +41,11 @@ class WedyPrimaryButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         padding:
             padding ??
-            const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingL,
-              vertical: AppDimensions.spacingSM,
-            ),
+            const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL, vertical: AppDimensions.spacingSM),
+        backgroundColor: outlined ? Colors.transparent : null,
+        foregroundColor: outlined ? Colors.black : null,
+
+        side: outlined ? const BorderSide(color: AppColors.border) : null,
       ),
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
@@ -50,28 +54,26 @@ class WedyPrimaryButton extends StatelessWidget {
                 key: ValueKey('loading'),
                 height: 22,
                 width: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.6,
-                  valueColor: AlwaysStoppedAnimation(Colors.white),
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2.6, valueColor: AlwaysStoppedAnimation(Colors.white)),
               )
-            : _Label(key: const ValueKey('label'), label: label, icon: icon),
+            : _Label(key: const ValueKey('label'), label: label, icon: icon, outlined: outlined),
       ),
     );
   }
 }
 
 class _Label extends StatelessWidget {
-  const _Label({super.key, required this.label, this.icon});
+  const _Label({super.key, required this.label, this.icon, this.outlined = false});
 
   final String label;
   final Widget? icon;
+  final bool outlined;
 
   @override
   Widget build(BuildContext context) {
     final text = Text(
       label,
-      style: AppTextStyles.buttonLarge,
+      style: AppTextStyles.buttonLarge.copyWith(color: outlined ? Colors.black : null),
       textAlign: TextAlign.center,
     );
 

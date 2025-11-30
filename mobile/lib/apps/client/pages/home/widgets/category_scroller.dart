@@ -3,7 +3,7 @@ part of '../home_page.dart';
 class _CategoryScroller extends StatelessWidget {
   const _CategoryScroller({required this.categories});
 
-  final List<_ClientCategory> categories;
+  final List<ClientCategory> categories;
 
   @override
   Widget build(BuildContext context) {
