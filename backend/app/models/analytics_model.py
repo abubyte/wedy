@@ -38,8 +38,8 @@ class DailyServiceMetrics(SQLModel, table=True):
     average_rating: float = Field(default=0.0, description="Average rating on this date")
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
 
 class MerchantDailyMetrics(SQLModel, table=True):
@@ -71,5 +71,5 @@ class MerchantDailyMetrics(SQLModel, table=True):
     overall_rating: float = Field(default=0.0, description="Overall merchant rating")
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
