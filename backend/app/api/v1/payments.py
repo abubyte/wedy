@@ -4,12 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
 from app.api.deps import get_current_user
-from app.models.user import User
-from app.models.payment import PaymentMethod
+from app.models.user_model import User
+from app.models.payment_model import PaymentMethod
 from app.services.payment_service import PaymentService, PaymentError, SubscriptionError
 from app.services.payment_providers import get_payment_providers
-from app.schemas.payment import (
-    TariffPlanResponse, PaymentResponse, SubscriptionResponse,
+from app.schemas.payment_schema import (
+    PaymentResponse, SubscriptionResponse,
     TariffPaymentRequest, FeaturedServicePaymentRequest,
     WebhookPaymentData, PaymentWebhookResponse
 )
@@ -28,38 +28,6 @@ def get_payment_service(
         payment_providers=payment_providers,
         sms_service=None  # SMS service would be injected here # TODO
     )
-
-
-@router.get("/tariffs", response_model=List[TariffPlanResponse])
-async def get_tariff_plans(
-    payment_service: PaymentService = Depends(get_payment_service)
-):
-    """Get available tariff plans."""
-    try:
-        plans = await payment_service.get_active_tariff_plans()
-        return [TariffPlanResponse.from_orm(plan) for plan in plans]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get tariff plans: {str(e)}")
-
-
-@router.get("/merchants/subscription", response_model=SubscriptionResponse)
-async def get_merchant_subscription(
-    current_user: User = Depends(get_current_user),
-    payment_service: PaymentService = Depends(get_payment_service)
-):
-    """Get merchant's current subscription."""
-    try:
-        subscription = await payment_service.get_merchant_subscription(current_user.id)
-        if not subscription:
-            raise HTTPException(
-                status_code=404, 
-                detail="No active subscription found for this merchant"
-            )
-        return subscription
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get subscription: {str(e)}")
 
 
 @router.post("/tariff", response_model=PaymentResponse, status_code=201)
@@ -177,106 +145,6 @@ async def _process_webhook_background(
     except Exception as e:
         # Log error (in production, use proper logging and maybe retry logic)
         print(f"Background webhook processing error: {str(e)}")
-
-
-@router.get("/subscription/limits")
-async def get_subscription_limits(
-    current_user: User = Depends(get_current_user),
-    payment_service: PaymentService = Depends(get_payment_service)
-):
-    """Get merchant's subscription limits and current usage."""
-    try:
-        if current_user.user_type != "merchant":
-            raise HTTPException(
-                status_code=403,
-                detail="Only merchants can check subscription limits"
-            )
-        
-        subscription = await payment_service.get_merchant_subscription(current_user.id)
-        if not subscription:
-            return {
-                "subscription": None,
-                "limits": {},
-                "message": "No active subscription"
-            }
-        
-        # In a real implementation, you would calculate current usage
-        # For now, return the limits from the tariff plan
-        limits = {
-            "services": {
-                "limit": subscription.tariff_plan.max_services,
-                "current": 0,  # Would be calculated from database
-                "available": subscription.tariff_plan.max_services
-            },
-            "images_per_service": {
-                "limit": subscription.tariff_plan.max_images_per_service,
-                "current": 0,
-                "available": subscription.tariff_plan.max_images_per_service
-            },
-            "phone_numbers": {
-                "limit": subscription.tariff_plan.max_phone_numbers,
-                "current": 0,
-                "available": subscription.tariff_plan.max_phone_numbers
-            },
-            "gallery_images": {
-                "limit": subscription.tariff_plan.max_gallery_images,
-                "current": 0,
-                "available": subscription.tariff_plan.max_gallery_images
-            },
-            "social_accounts": {
-                "limit": subscription.tariff_plan.max_social_accounts,
-                "current": 0,
-                "available": subscription.tariff_plan.max_social_accounts
-            },
-            "website_allowed": subscription.tariff_plan.allow_website,
-            "cover_image_allowed": subscription.tariff_plan.allow_cover_image,
-            "monthly_featured_cards": subscription.tariff_plan.monthly_featured_cards
-        }
-        
-        return {
-            "subscription": subscription,
-            "limits": limits
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get subscription limits: {str(e)}"
-        )
-
-
-@router.post("/subscription/check-limit")
-async def check_subscription_limit(
-    limit_type: str,
-    current_count: int,
-    current_user: User = Depends(get_current_user),
-    payment_service: PaymentService = Depends(get_payment_service)
-):
-    """Check if merchant can perform action within subscription limits."""
-    try:
-        if current_user.user_type != "merchant":
-            raise HTTPException(
-                status_code=403,
-                detail="Only merchants can check subscription limits"
-            )
-        
-        can_proceed = await payment_service.check_subscription_limit(
-            current_user.id, limit_type, current_count
-        )
-        
-        return {
-            "can_proceed": can_proceed,
-            "limit_type": limit_type,
-            "current_count": current_count
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to check subscription limit: {str(e)}"
-        )
 
 
 # Admin endpoints (would require admin authentication in production)
