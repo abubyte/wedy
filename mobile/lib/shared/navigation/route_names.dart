@@ -8,4 +8,8 @@ class RouteNames {
   static const String hotOffers = '/hot-offers';
   static const String items = '/items';
   static const String serviceDetails = '/service-details';
+  static const String reviews = '/reviews';
+  static const String tariff = '/tariff';
+  static const String edit = '/edit';
+  static const String boost = '/boost';
 }
