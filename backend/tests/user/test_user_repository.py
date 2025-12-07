@@ -3,7 +3,7 @@ Tests for UserRepository.
 """
 import pytest
 import random
-from uuid import uuid4
+# UUID import removed - using 9-digit string IDs now
 
 from app.repositories.user_repository import UserRepository
 from app.models import User, UserType, Merchant
@@ -27,7 +27,8 @@ class TestUserRepository:
         """Test getting non-existent user returns None."""
         repo = UserRepository(db_session)
         
-        user = await repo.get_by_id(uuid4())
+        # Use a 9-digit string ID instead of UUID
+        user = await repo.get_by_id("999999999")
         
         assert user is None
     
@@ -102,7 +103,7 @@ class TestUserRepository:
         # Phone number is taken by another user
         is_taken = await repo.is_phone_number_taken(
             sample_client_user.phone_number,
-            exclude_user_id=uuid4()  # Different user ID
+            exclude_user_id="999999999"  # Different user ID (9-digit string)
         )
         assert is_taken is True
     
@@ -254,7 +255,7 @@ class TestUserRepository:
         """Test soft deleting non-existent user returns False."""
         repo = UserRepository(db_session)
         
-        deleted = await repo.soft_delete_user(uuid4())
+        deleted = await repo.soft_delete_user("999999999")  # Non-existent 9-digit string ID
         
         assert deleted is False
 

@@ -2,7 +2,7 @@
 Tests for ServiceManager.
 """
 import pytest
-from uuid import uuid4
+import random
 
 from app.services.service_manager import ServiceManager
 from app.core.exceptions import NotFoundError, ValidationError
@@ -69,7 +69,7 @@ class TestServiceManager:
         # Create service in different category
         from app.models import ServiceCategory, Service
         other_category = ServiceCategory(
-            name=f"OtherCategory_{str(uuid4())[:8]}",
+            name=f"OtherCategory_{random.randint(1000, 9999)}",  # Use random int for unique category name
             description="Other category",
             is_active=True
         )
@@ -201,7 +201,7 @@ class TestServiceManager:
         # Create another category and service
         from app.models import ServiceCategory, Service
         category2 = ServiceCategory(
-            name=f"Category2_{str(uuid4())[:8]}",
+            name=f"Category2_{random.randint(1000, 9999)}",  # Use random int for unique category name
             is_active=True
         )
         db_session.add(category2)
@@ -542,7 +542,7 @@ class TestServiceManager:
         manager = ServiceManager(db_session)
         
         with pytest.raises(NotFoundError, match="Service not found or inactive"):
-            await manager.get_service_details(uuid4())
+            await manager.get_service_details("999999999")  # Non-existent 9-digit string ID
     
     async def test_record_service_interaction_like(
         self,
@@ -601,6 +601,57 @@ class TestServiceManager:
         assert "share" in result["message"].lower()
         assert "new_count" in result
     
+    async def test_record_service_interaction_view(
+        self,
+        db_session,
+        sample_service: "Service",
+        sample_client_user: "User"
+    ):
+        """Test recording view interaction."""
+        manager = ServiceManager(db_session)
+        
+        result = await manager.record_service_interaction(
+            user_id=sample_client_user.id,
+            service_id=sample_service.id,
+            interaction_type="view"
+        )
+        
+        assert result["success"] is True
+        assert "view" in result["message"].lower()
+        assert "new_count" in result
+    
+    async def test_record_service_interaction_duplicate_view(
+        self,
+        db_session,
+        sample_service: "Service",
+        sample_client_user: "User"
+    ):
+        """Test recording duplicate view returns success."""
+        manager = ServiceManager(db_session)
+        
+        # Record view first time
+        result1 = await manager.record_service_interaction(
+            user_id=sample_client_user.id,
+            service_id=sample_service.id,
+            interaction_type="view"
+        )
+        
+        assert result1["success"] is True
+        assert "recorded" in result1["message"].lower()
+        first_count = result1["new_count"]
+        
+        # Record view again (should return success, not error)
+        result2 = await manager.record_service_interaction(
+            user_id=sample_client_user.id,
+            service_id=sample_service.id,
+            interaction_type="view"
+        )
+        
+        assert result2["success"] is True
+        assert "already" in result2["message"].lower()
+        # View count should not increase on duplicate
+        assert result2["new_count"] == first_count
+    
     async def test_record_service_interaction_invalid_type(
         self,
         db_session,
@@ -627,7 +678,7 @@ class TestServiceManager:
         
         with pytest.raises(NotFoundError, match="User not found"):
             await manager.record_service_interaction(
-                user_id=uuid4(),
+                user_id="999999999",  # Non-existent 9-digit string user ID
                 service_id=sample_service.id,
                 interaction_type="like"
             )
@@ -643,7 +694,7 @@ class TestServiceManager:
         with pytest.raises(NotFoundError, match="Service not found or inactive"):
             await manager.record_service_interaction(
                 user_id=sample_client_user.id,
-                service_id=uuid4(),
+                service_id="999999999",  # Non-existent 9-digit string service ID
                 interaction_type="like"
             )
 

@@ -2,7 +2,7 @@
 Tests for Service API endpoints.
 """
 import pytest
-from uuid import uuid4
+import random
 from httpx import AsyncClient
 
 from app.models import User
@@ -136,7 +136,7 @@ class TestServiceAPI:
         
         # Create another category and service
         category2 = ServiceCategory(
-            name=f"Category2_{str(uuid4())[:8]}",
+            name=f"Category2_{random.randint(1000, 9999)}",  # Use random int for unique category name
             is_active=True
         )
         db_session.add(category2)
@@ -308,7 +308,7 @@ class TestServiceAPI:
     ):
         """Test GET /{service_id} with non-existent service."""
         response = await unauthenticated_client.get(
-            f"/api/v1/services/{uuid4()}"
+            f"/api/v1/services/999999999"  # Non-existent 9-digit string ID
         )
         
         assert response.status_code == 404
@@ -346,6 +346,55 @@ class TestServiceAPI:
         )
         
         assert response.status_code == 403  # Forbidden
+    
+    async def test_record_service_interaction_view(
+        self,
+        test_app,
+        sample_service,
+        authenticated_client
+    ):
+        """Test POST /{service_id}/interact with view."""
+        response = await authenticated_client.post(
+            f"/api/v1/services/{sample_service.id}/interact",
+            json={"interaction_type": "view"}
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "view" in data["message"].lower()
+        assert "new_count" in data
+    
+    async def test_record_service_interaction_duplicate_view(
+        self,
+        test_app,
+        sample_service,
+        authenticated_client
+    ):
+        """Test POST /{service_id}/interact with duplicate view returns success."""
+        # Record view first time
+        response1 = await authenticated_client.post(
+            f"/api/v1/services/{sample_service.id}/interact",
+            json={"interaction_type": "view"}
+        )
+        
+        assert response1.status_code == 200
+        data1 = response1.json()
+        assert data1["success"] is True
+        first_count = data1["new_count"]
+        
+        # Record view again (should return success, not error)
+        response2 = await authenticated_client.post(
+            f"/api/v1/services/{sample_service.id}/interact",
+            json={"interaction_type": "view"}
+        )
+        
+        assert response2.status_code == 200  # Should still return success
+        data2 = response2.json()
+        assert data2["success"] is True
+        assert "already" in data2["message"].lower() or "view" in data2["message"].lower()
+        # View count should not increase on duplicate
+        assert data2["new_count"] == first_count
     
     async def test_record_service_interaction_invalid_type(
         self,
