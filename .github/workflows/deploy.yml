@@ -102,7 +102,12 @@ jobs:
             ${{ secrets.AWS_BUCKET_NAME && format('echo "AWS_BUCKET_NAME={0}" >> /root/wedy/backend/.env', secrets.AWS_BUCKET_NAME) || '' }}
             ${{ secrets.AWS_REGION && format('echo "AWS_REGION={0}" >> /root/wedy/backend/.env', secrets.AWS_REGION) || '' }}
 
-            # Payment providers: Payme
+            # Payment providers: Payme (separate terminals for tariff and service boost)
+            ${{ secrets.PAYME_TARIFF_SECRET_KEY && format('echo "PAYME_TARIFF_SECRET_KEY={0}" >> /root/wedy/backend/.env', secrets.PAYME_TARIFF_SECRET_KEY) || '' }}
+            ${{ secrets.PAYME_TARIFF_MERCHANT_ID && format('echo "PAYME_TARIFF_MERCHANT_ID={0}" >> /root/wedy/backend/.env', secrets.PAYME_TARIFF_MERCHANT_ID) || '' }}
+            ${{ secrets.PAYME_SERVICE_BOOST_SECRET_KEY && format('echo "PAYME_SERVICE_BOOST_SECRET_KEY={0}" >> /root/wedy/backend/.env', secrets.PAYME_SERVICE_BOOST_SECRET_KEY) || '' }}
+            ${{ secrets.PAYME_SERVICE_BOOST_MERCHANT_ID && format('echo "PAYME_SERVICE_BOOST_MERCHANT_ID={0}" >> /root/wedy/backend/.env', secrets.PAYME_SERVICE_BOOST_MERCHANT_ID) || '' }}
+            # Legacy Payme credentials (fallback)
             ${{ secrets.PAYME_SECRET_KEY && format('echo "PAYME_SECRET_KEY={0}" >> /root/wedy/backend/.env', secrets.PAYME_SECRET_KEY) || '' }}
             ${{ secrets.PAYME_MERCHANT_ID && format('echo "PAYME_MERCHANT_ID={0}" >> /root/wedy/backend/.env', secrets.PAYME_MERCHANT_ID) || '' }}
             ${{ secrets.PAYME_API_URL && format('echo "PAYME_API_URL={0}" >> /root/wedy/backend/.env', secrets.PAYME_API_URL) || '' }}
@@ -125,37 +130,6 @@ jobs:
             echo "✓ Production .env created successfully"
           EOF
 
-      - name: Create SSL certificate files
-        run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
-            echo "==> Creating SSL directories..."
-            mkdir -p /root/wedy/infra/nginx/ssl/api.abubyte.uz
-            mkdir -p /root/wedy/infra/nginx/ssl/default
-
-            echo "==> Writing API certificate files..."
-            cat > /root/wedy/infra/nginx/ssl/api.abubyte.uz/privkey.pem << 'CERT_PRIV'
-          ${{ secrets.SSL_PRIVKEY }}
-          CERT_PRIV
-
-            cat > /root/wedy/infra/nginx/ssl/api.abubyte.uz/fullchain.pem << 'CERT_FULL'
-          ${{ secrets.SSL_FULLCHAIN }}
-          CERT_FULL
-
-            echo "==> Writing default fallback certificate files..."
-            cat > /root/wedy/infra/nginx/ssl/default/key.pem << 'CERT_DKEY'
-          ${{ secrets.DEFAULT_KEY }}
-          CERT_DKEY
-
-            cat > /root/wedy/infra/nginx/ssl/default/cert.pem << 'CERT_DCERT'
-          ${{ secrets.DEFAULT_CERT }}
-          CERT_DCERT
-
-            chmod 600 /root/wedy/infra/nginx/ssl/api.abubyte.uz/*.pem
-            chmod 600 /root/wedy/infra/nginx/ssl/default/*.pem
-            echo "✓ SSL certificates created successfully"
-          EOF
-
-
       - name: Build and start services
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
@@ -172,15 +146,29 @@ jobs:
             echo "==> Starting services..."
             docker compose up -d
 
+            echo "==> Setting up SSL certificates (if needed)..."
+            # Generate self-signed certificate for default server if it doesn't exist
+            if [ ! -f infra/nginx/ssl/default/cert.pem ]; then
+              echo "==> Generating self-signed certificate..."
+              ./infra/nginx/generate-self-signed.sh || echo "==> Warning: Self-signed certificate generation skipped"
+            fi
+            
+            # Reload nginx if it's running
+            docker compose exec nginx nginx -s reload 2>/dev/null || echo "==> Nginx not yet running, will start normally"
+
             echo "==> Waiting for services to be healthy..."
             sleep 10
             
             # Check service status
             docker compose ps
             
-            # Check if backend is responding
+            # Check if backend is responding (try multiple endpoints)
             for i in {1..30}; do
-              if curl -f http://localhost:8000/health 2>/dev/null || curl -f http://localhost:8000/docs 2>/dev/null; then
+              # Try direct backend first (internal), then through nginx, then HTTPS
+              if curl -f http://localhost:8000/health 2>/dev/null || \
+                 curl -f http://localhost/health 2>/dev/null || \
+                 curl -k -f https://api.wedy.uz/health 2>/dev/null || \
+                 curl -f https://api.wedy.uz/health 2>/dev/null; then
                 echo "==> Backend is healthy!"
                 break
               fi
@@ -188,6 +176,7 @@ jobs:
                 echo "==> Backend health check failed after 30 attempts!"
                 echo "==> Checking logs..."
                 docker compose logs --tail=50 backend
+                docker compose logs --tail=50 nginx 2>/dev/null || true
                 exit 1
               fi
               echo "==> Waiting for backend... (attempt $i/30)"
@@ -200,6 +189,15 @@ jobs:
             echo "==> Deployment successful!"
             echo "==> Services status:"
             docker compose ps
+            
+            echo ""
+            echo "==> Deployment Summary:"
+            echo "   - Backend: http://localhost:8000 (internal)"
+            echo "   - Public API: https://api.wedy.uz"
+            echo "   - Health Check: https://api.wedy.uz/health"
+            echo ""
+            echo "==> Note: If SSL certificate is not yet configured, run:"
+            echo "   ./infra/nginx/init-letsencrypt.sh"
           EOF
 
       - name: Notify on failure
