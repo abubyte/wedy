@@ -16,11 +16,8 @@ from app.schemas.payment_schema import (
     PaymentResponse, TariffPlanResponse, SubscriptionResponse
 )
 from app.repositories.payment_repository import PaymentRepository
-
-
-class PaymentError(Exception):
-    """Payment-related error."""
-    pass
+from app.core.exceptions import PaymentError
+from app.core.config import get_settings
 
 
 class SubscriptionError(Exception):
@@ -80,7 +77,7 @@ class PaymentService:
     
     async def create_tariff_payment(
         self,
-        user_id: UUID,
+        user_id: str,
         request: TariffPaymentRequest
     ) -> PaymentResponse:
         """Create a tariff subscription payment."""
@@ -112,37 +109,63 @@ class PaymentService:
             # Generate payment with provider
             provider = self.payment_providers.get(request.payment_method.value)
             if not provider:
-                raise PaymentError(f"Payment provider {request.payment_method} not available")
+                raise PaymentError(
+                    f"Payment provider {request.payment_method} is not available. "
+                    f"Please configure the required credentials in your environment variables."
+                )
             
             try:
-                payment_data = provider.create_payment({
+                # Get user to retrieve phone number
+                user_stmt = select(User).where(User.id == user_id)
+                user_result = await self.session.execute(user_stmt)
+                user = user_result.scalar_one_or_none()
+                
+                if not user:
+                    raise PaymentError("User not found")
+                
+                # Pass payment.id (UUID generated on object creation) to provider
+                settings = get_settings()
+                payment_data = await provider.create_payment({
+                    'payment_id': str(payment.id),  # Payment UUID for account_id
+                    'payment_type': PaymentType.TARIFF_SUBSCRIPTION.value,  # Payment type for terminal selection
                     'amount': final_amount,
                     'description': f'Tariff subscription: {plan.name} ({request.duration_months} months)',
                     'user_id': str(user_id),
-                    'tariff_plan_id': str(request.tariff_plan_id),
-                    'duration_months': request.duration_months
+                    'phone_number': user.phone_number,  # User's 9-digit phone number
+                    'tariff_id': str(request.tariff_plan_id),  # Tariff plan ID for Payme requisite
+                    'tariff_plan_id': str(request.tariff_plan_id),  # Keep for backward compatibility
+                    'month_count': request.duration_months,  # Duration in months for Payme requisite
+                    'duration_months': request.duration_months,  # Keep for backward compatibility
+                    'return_url': f"{settings.BASE_URL}/payment/success"
                 })
                 
                 payment.payment_url = payment_data['payment_url']
                 payment.transaction_id = payment_data['transaction_id']
                 
             except Exception as e:
-                raise PaymentError(f"Failed to create payment with provider: {str(e)}")
+                error_msg = str(e) if str(e) else f"{type(e).__name__}: {repr(e)}"
+                raise PaymentError(f"Failed to create payment with provider: {error_msg}")
             
             # Save to database
             payment = await self.payment_repo.create_payment(payment)
             
-            return PaymentResponse.from_orm(payment)
+            return PaymentResponse.model_validate(payment)
             
         except Exception as e:
             await self.session.rollback()
             if isinstance(e, PaymentError):
                 raise
-            raise PaymentError(f"Failed to create payment: {str(e)}")
+            import traceback
+            error_details = traceback.format_exc()
+            error_msg = str(e) if str(e) else f"{type(e).__name__}: {repr(e)}"
+            print(f"Payment creation error: {error_msg}")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Traceback: {error_details}")
+            raise PaymentError(f"Failed to create payment: {error_msg}")
     
     async def create_featured_service_payment(
         self,
-        user_id: UUID,
+        user_id: str,
         request: FeaturedServicePaymentRequest
     ) -> PaymentResponse:
         """Create a featured service payment."""
@@ -185,33 +208,58 @@ class PaymentService:
             # Generate payment with provider
             provider = self.payment_providers.get(request.payment_method.value)
             if not provider:
-                raise PaymentError(f"Payment provider {request.payment_method} not available")
+                raise PaymentError(
+                    f"Payment provider {request.payment_method} is not available. "
+                    f"Please configure the required credentials in your environment variables."
+                )
             
             try:
-                payment_data = provider.create_payment({
+                # Get user to retrieve phone number
+                user_stmt = select(User).where(User.id == user_id)
+                user_result = await self.session.execute(user_stmt)
+                user = user_result.scalar_one_or_none()
+                
+                if not user:
+                    raise PaymentError("User not found")
+                
+                # Pass payment.id (UUID generated on object creation) to provider
+                settings = get_settings()
+                payment_data = await provider.create_payment({
+                    'payment_id': str(payment.id),  # Payment UUID for account_id
+                    'payment_type': PaymentType.FEATURED_SERVICE.value,  # Payment type for terminal selection
                     'amount': final_amount,
                     'description': f'Featured service: {service.name} ({request.duration_days} days)',
                     'user_id': str(user_id),
-                    'service_id': str(request.service_id),
-                    'duration_days': request.duration_days
+                    'phone_number': user.phone_number,  # User's 9-digit phone number
+                    'service_id': str(request.service_id),  # Service ID (9-digit numeric)
+                    'days_count': request.duration_days,  # Duration in days
+                    'duration_days': request.duration_days,  # Keep for backward compatibility
+                    'return_url': f"{settings.BASE_URL}/payment/success"
                 })
                 
                 payment.payment_url = payment_data['payment_url']
                 payment.transaction_id = payment_data['transaction_id']
                 
             except Exception as e:
-                raise PaymentError(f"Failed to create payment with provider: {str(e)}")
+                error_msg = str(e) if str(e) else f"{type(e).__name__}: {repr(e)}"
+                raise PaymentError(f"Failed to create payment with provider: {error_msg}")
             
             # Save to database
             payment = await self.payment_repo.create_payment(payment)
             
-            return PaymentResponse.from_orm(payment)
+            return PaymentResponse.model_validate(payment)
             
         except Exception as e:
             await self.session.rollback()
             if isinstance(e, PaymentError):
                 raise
-            raise PaymentError(f"Failed to create featured service payment: {str(e)}")
+            import traceback
+            error_details = traceback.format_exc()
+            error_msg = str(e) if str(e) else f"{type(e).__name__}: {repr(e)}"
+            print(f"Featured service payment creation error: {error_msg}")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Traceback: {error_details}")
+            raise PaymentError(f"Failed to create featured service payment: {error_msg}")
     
     async def process_payment_webhook(
         self,
@@ -347,7 +395,7 @@ class PaymentService:
         if not service_id_str:
             raise PaymentError("Service ID not found in payment metadata or webhook data")
         
-        service_id = UUID(service_id_str)
+        service_id = service_id_str  # Already a string, no conversion needed
         service_stmt = select(Service).where(Service.id == service_id)
         service_result = await self.session.execute(service_stmt)
         service = service_result.scalar_one_or_none()
@@ -406,7 +454,7 @@ class PaymentService:
         subscription = await self.payment_repo.create_subscription(subscription)
         return subscription
     
-    async def get_merchant_subscription(self, user_id: UUID) -> Optional[SubscriptionResponse]:
+    async def get_merchant_subscription(self, user_id: str) -> Optional[SubscriptionResponse]:
         """Get merchant's current subscription."""
         # Find merchant
         merchant_stmt = select(Merchant).where(Merchant.user_id == user_id)
@@ -433,7 +481,7 @@ class PaymentService:
         # Create response with tariff plan
         return SubscriptionResponse(
             id=subscription.id,
-            tariff_plan=TariffPlanResponse.from_orm(tariff_plan),
+            tariff_plan=TariffPlanResponse.model_validate(tariff_plan),
             start_date=subscription.start_date,
             end_date=subscription.end_date,
             status=subscription.status,
@@ -442,7 +490,7 @@ class PaymentService:
     
     async def check_subscription_limit(
         self,
-        user_id: UUID,
+        user_id: str,
         limit_type: str,
         current_count: int
     ) -> bool:

@@ -54,6 +54,10 @@ async def create_tariff_payment(
         else:
             raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"API Error in create_tariff_payment: {str(e)}")
+        print(f"Traceback: {error_details}")
         raise HTTPException(status_code=500, detail=f"Failed to create payment: {str(e)}")
 
 

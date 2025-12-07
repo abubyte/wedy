@@ -9,7 +9,7 @@ import httpx
 from fastapi import HTTPException
 
 from app.core.config import get_settings
-from app.models.payment_model import PaymentMethod
+from app.models.payment_model import PaymentMethod, PaymentType
 
 
 settings = get_settings()
@@ -40,48 +40,178 @@ class BasePaymentProvider(ABC):
 
 
 class PaymeProvider(BasePaymentProvider):
-    """Payme payment provider implementation."""
+    """
+    Payme payment provider implementation (manual, no PayTechUZ).
+    
+    Supports two separate terminals:
+    - Terminal 1: For tariff payments (requires phone_number, tariff_id, month_count)
+    - Terminal 2: For service boost payments (requires phone_number, service_id, days_count)
+    
+    Based on Payme's official documentation: https://developer.help.paycom.uz/
+    """
     
     def __init__(self):
-        self.merchant_id = settings.PAYME_MERCHANT_ID
-        self.secret_key = settings.PAYME_SECRET_KEY
-        self.api_url = settings.PAYME_API_URL or "https://checkout.paycom.uz/api"
+        # We'll select the terminal based on payment type
+        # Check if at least one terminal is configured
+        has_tariff = settings.PAYME_TARIFF_MERCHANT_ID and settings.PAYME_TARIFF_SECRET_KEY
+        has_service_boost = settings.PAYME_SERVICE_BOOST_MERCHANT_ID and settings.PAYME_SERVICE_BOOST_SECRET_KEY
+        
+        if not has_tariff and not has_service_boost:
+            # Fallback to legacy credentials if available
+            if settings.PAYME_MERCHANT_ID and settings.PAYME_SECRET_KEY:
+                self.merchant_id = settings.PAYME_MERCHANT_ID
+                self.secret_key = settings.PAYME_SECRET_KEY
+            else:
+                raise PaymentProviderError(
+                    "Payme payment provider not configured. "
+                    "Missing terminal credentials. Configure either: "
+                    "(PAYME_TARIFF_MERCHANT_ID, PAYME_TARIFF_SECRET_KEY) or "
+                    "(PAYME_SERVICE_BOOST_MERCHANT_ID, PAYME_SERVICE_BOOST_SECRET_KEY)"
+                )
+        
+        # Set API URLs (test or production)
+        self.api_url = settings.PAYME_TEST_API_URL if settings.DEBUG else settings.PAYME_API_URL
+        if not self.api_url:
+            self.api_url = "https://test.paycom.uz" if settings.DEBUG else "https://checkout.paycom.uz"
+        # Ensure we use the /api endpoint
+        if not self.api_url.endswith('/api'):
+            self.api_url = f"{self.api_url.rstrip('/')}/api"
+    
+    def _get_terminal_credentials(self, payment_type: Optional[PaymentType] = None) -> tuple[str, str]:
+        """
+        Get merchant ID and secret key for the appropriate terminal.
+        
+        Args:
+            payment_type: Payment type to determine which terminal to use
+            
+        Returns:
+            Tuple of (merchant_id, secret_key)
+        """
+        # Determine which terminal to use based on payment type
+        if payment_type == PaymentType.TARIFF_SUBSCRIPTION:
+            merchant_id = settings.PAYME_TARIFF_MERCHANT_ID
+            secret_key = settings.PAYME_TARIFF_SECRET_KEY
+            if not merchant_id or not secret_key:
+                raise PaymentProviderError(
+                    "Payme tariff terminal not configured. "
+                    "Missing PAYME_TARIFF_MERCHANT_ID or PAYME_TARIFF_SECRET_KEY"
+                )
+        elif payment_type == PaymentType.FEATURED_SERVICE:
+            merchant_id = settings.PAYME_SERVICE_BOOST_MERCHANT_ID
+            secret_key = settings.PAYME_SERVICE_BOOST_SECRET_KEY
+            if not merchant_id or not secret_key:
+                raise PaymentProviderError(
+                    "Payme service boost terminal not configured. "
+                    "Missing PAYME_SERVICE_BOOST_MERCHANT_ID or PAYME_SERVICE_BOOST_SECRET_KEY"
+                )
+        else:
+            # Fallback to legacy or default terminal
+            merchant_id = settings.PAYME_TARIFF_MERCHANT_ID or settings.PAYME_MERCHANT_ID
+            secret_key = settings.PAYME_TARIFF_SECRET_KEY or settings.PAYME_SECRET_KEY
+            if not merchant_id or not secret_key:
+                raise PaymentProviderError(
+                    "Payme terminal not configured for payment type. "
+                    "Please configure terminal credentials."
+                )
+        
+        return merchant_id, secret_key
     
     async def create_payment(self, payment_data: Dict[str, Any]) -> Dict[str, str]:
-        """Create Payme payment."""
+        """
+        Create Payme payment URL.
+        
+        Payment URL format: https://checkout.paycom.uz/api?m={merchant_id}&ac={base64_params}
+        
+        Account requisites depend on payment type:
+        - Tariff: phone_number, tariff_id, month_count
+        - Service Boost: phone_number, service_id, days_count
+        """
         try:
+            # Get payment type
+            payment_type_str = payment_data.get("payment_type")
+            payment_type = None
+            if payment_type_str:
+                try:
+                    # Try to match by value (string) first
+                    for pt in PaymentType:
+                        if pt.value == payment_type_str:
+                            payment_type = pt
+                            break
+                    # If not found, try direct enum conversion
+                    if payment_type is None:
+                        payment_type = PaymentType(payment_type_str)
+                except (ValueError, TypeError):
+                    pass
+            
+            # Get terminal credentials based on payment type
+            merchant_id, secret_key = self._get_terminal_credentials(payment_type)
+            
+            # Store secret key for webhook verification
+            self.secret_key = secret_key
+            
             # Convert amount to tiyins (1 UZS = 100 tiyins)
             amount_tiyins = int(payment_data["amount"] * 100)
             
-            # Create unique order ID
-            order_id = str(uuid.uuid4())
+            # Use payment_id if provided, otherwise generate one
+            payment_id = payment_data.get("payment_id", str(uuid.uuid4()))
             
-            # Prepare payment request
+            # Build account requisites based on payment type
+            account = {
+                "order_id": payment_id
+            }
+            
+            # Add payment type-specific requisites
+            if payment_type == PaymentType.TARIFF_SUBSCRIPTION:
+                # Tariff payments require: phone_number, tariff_id, month_count
+                if "phone_number" in payment_data:
+                    account["phone_number"] = str(payment_data["phone_number"])
+                if "tariff_id" in payment_data:
+                    account["tariff_id"] = str(payment_data["tariff_id"])
+                if "month_count" in payment_data:
+                    account["month_count"] = int(payment_data["month_count"])
+            
+            elif payment_type == PaymentType.FEATURED_SERVICE:
+                # Service boost payments require: phone_number, service_id, days_count
+                if "phone_number" in payment_data:
+                    account["phone_number"] = str(payment_data["phone_number"])
+                if "service_id" in payment_data:
+                    account["service_id"] = str(payment_data["service_id"])
+                if "days_count" in payment_data:
+                    account["days_count"] = int(payment_data["days_count"])
+            
+            # Prepare payment parameters
             payment_params = {
                 "amount": amount_tiyins,
-                "account": {
-                    "order_id": order_id,
-                    "user_id": payment_data["user_id"]
-                }
+                "account": account
             }
             
             # Generate payment URL
             base64_params = self._encode_params(payment_params)
-            payment_url = f"{self.api_url}?{urlencode({'m': self.merchant_id, 'ac': base64_params})}"
+            payment_url = f"{self.api_url}?{urlencode({'m': merchant_id, 'ac': base64_params})}"
             
             return {
                 "payment_url": payment_url,
-                "transaction_id": order_id
+                "transaction_id": payment_id
             }
             
+        except PaymentProviderError:
+            raise
         except Exception as e:
             raise PaymentProviderError(f"Payme payment creation failed: {str(e)}")
     
     def _encode_params(self, params: Dict[str, Any]) -> str:
-        """Encode parameters for Payme URL."""
+        """
+        Encode parameters for Payme URL using base64.
+        
+        Args:
+            params: Dictionary containing amount and account requisites
+            
+        Returns:
+            Base64-encoded JSON string
+        """
         import base64
-        json_params = json.dumps(params, separators=(',', ':'))
-        return base64.b64encode(json_params.encode()).decode()
+        json_params = json.dumps(params, separators=(',', ':'), ensure_ascii=False)
+        return base64.b64encode(json_params.encode('utf-8')).decode('utf-8')
     
     def verify_webhook(self, webhook_data: Dict[str, Any], signature: str) -> bool:
         """Verify Payme webhook signature."""
