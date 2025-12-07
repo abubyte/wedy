@@ -6,7 +6,7 @@ from datetime import datetime
 
 class ReviewCreateRequest(BaseModel):
     """Request schema for creating a review."""
-    service_id: UUID = Field(..., description="ID of the service being reviewed")
+    service_id: str = Field(..., description="9-digit numeric string ID of the service being reviewed")
     rating: int = Field(..., ge=1, le=5, description="Rating from 1 to 5 stars")
     comment: Optional[str] = Field(None, max_length=2000, description="Review comment")
 
@@ -21,7 +21,7 @@ class ReviewUserResponse(BaseModel):
     """User information in review response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: UUID
+    id: str  # User.id is 9-digit numeric string
     name: str
     avatar_url: Optional[str] = None
 
@@ -30,7 +30,7 @@ class ReviewServiceResponse(BaseModel):
     """Service information in review response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: UUID
+    id: str  # Service.id is 9-digit numeric string
     name: str
 
 
@@ -39,8 +39,8 @@ class ReviewDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     id: UUID
-    service_id: UUID
-    user_id: UUID
+    service_id: str
+    user_id: str
     merchant_id: UUID
     rating: int
     comment: Optional[str] = None

@@ -77,9 +77,9 @@ class ReviewService:
     
     async def list_reviews(
         self,
-        service_id: Optional[UUID] = None,
+        service_id: Optional[str] = None,
         merchant_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
+        user_id: Optional[str] = None,
         include_inactive: bool = False,
         pagination: PaginationParams = PaginationParams()
     ) -> ReviewListResponse:
@@ -157,14 +157,14 @@ class ReviewService:
     
     async def create_review(
         self,
-        user_id: UUID,
+        user_id: str,
         request: ReviewCreateRequest
     ) -> ReviewDetailResponse:
         """
         Create a new review.
         
         Args:
-            user_id: UUID of the user creating the review
+            user_id: 9-digit numeric string ID of the user creating the review
             request: Review creation data
             
         Returns:
@@ -252,7 +252,7 @@ class ReviewService:
     async def update_review(
         self,
         review_id: UUID,
-        user_id: UUID,
+        user_id: str,
         request: ReviewUpdateRequest
     ) -> ReviewDetailResponse:
         """
@@ -260,7 +260,7 @@ class ReviewService:
         
         Args:
             review_id: UUID of the review to update
-            user_id: UUID of the user updating the review
+            user_id: 9-digit numeric string ID of the user updating the review
             request: Review update data
             
         Returns:
@@ -334,7 +334,7 @@ class ReviewService:
         
         Args:
             review_id: UUID of the review to delete
-            user_id: UUID of the user deleting the review
+            user_id: 9-digit numeric string ID of the user deleting the review
             
         Returns:
             True if deleted successfully

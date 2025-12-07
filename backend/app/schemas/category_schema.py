@@ -24,7 +24,7 @@ class CategoryDetailResponse(BaseModel):
     """Detailed category response schema for admin."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: UUID
+    id: int
     name: str
     description: Optional[str] = None
     icon_url: Optional[str] = None

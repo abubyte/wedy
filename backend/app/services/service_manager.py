@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import List, Optional
-from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,7 +58,7 @@ class ServiceManager:
     
     async def browse_services(
         self,
-        category_id: Optional[UUID] = None,
+        category_id: Optional[int] = None,
         pagination: PaginationParams = PaginationParams()
     ) -> PaginatedServiceResponse:
         """
@@ -174,12 +173,12 @@ class ServiceManager:
             total=len(service_items)
         )
     
-    async def get_service_details(self, service_id: UUID) -> ServiceDetailResponse:
+    async def get_service_details(self, service_id: str) -> ServiceDetailResponse:
         """
         Get detailed service information.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             ServiceDetailResponse with complete service info
@@ -253,16 +252,16 @@ class ServiceManager:
     
     async def record_service_interaction(
         self,
-        user_id: UUID,
-        service_id: UUID,
+        user_id: str,
+        service_id: str,
         interaction_type: str
     ) -> dict:
         """
         Record user interaction with a service.
         
         Args:
-            user_id: UUID of the user
-            service_id: UUID of the service
+            user_id: 9-digit numeric string ID of the user
+            service_id: 9-digit numeric string ID of the service
             interaction_type: Type of interaction
             
         Returns:
@@ -289,8 +288,8 @@ class ServiceManager:
         # Convert string to enum
         interaction_enum = InteractionType(interaction_type)
         
-        # Record interaction
-        await self.service_repo.record_user_interaction(
+        # Record interaction (returns True if created, False if already existed)
+        was_created = await self.service_repo.record_user_interaction(
             user_id=user_id,
             service_id=service_id,
             interaction_type=interaction_enum
@@ -309,9 +308,15 @@ class ServiceManager:
         else:  # view
             new_count = updated_service.view_count
         
+        # Return success message - even if interaction already existed
+        if was_created:
+            message = f"Service {interaction_type} recorded successfully"
+        else:
+            message = f"Service {interaction_type} already recorded"
+        
         return {
             "success": True,
-            "message": f"Service {interaction_type} recorded successfully",
+            "message": message,
             "new_count": new_count
         }
     

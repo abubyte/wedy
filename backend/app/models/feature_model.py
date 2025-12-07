@@ -20,7 +20,7 @@ class FeaturedService(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     
     # Foreign keys
-    service_id: UUID = Field(foreign_key="services.id")
+    service_id: str = Field(foreign_key="services.id", max_length=9)
     merchant_id: UUID = Field(foreign_key="merchants.id")
     payment_id: Optional[UUID] = Field(
         default=None, 

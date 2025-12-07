@@ -47,7 +47,7 @@ async def get_services(
     
     # Browse/Search filters
     query: Optional[str] = Query(None, description="Search query for name/description"),
-    category_id: Optional[UUID] = Query(None, description="Filter by category ID"),
+    category_id: Optional[int] = Query(None, description="Filter by category ID"),
     location_region: Optional[str] = Query(None, description="Filter by Uzbekistan region"),
     min_price: Optional[float] = Query(None, ge=0, description="Minimum price in UZS"),
     max_price: Optional[float] = Query(None, ge=0, description="Maximum price in UZS"),
@@ -79,7 +79,7 @@ async def get_services(
     Args:
         featured: If True, returns only featured services (other filters ignored)
         query: Search query for service name/description
-        category_id: Filter by category UUID
+        category_id: Filter by category ID (integer)
         location_region: Filter by Uzbekistan region
         min_price: Minimum price in UZS
         max_price: Maximum price in UZS
@@ -199,14 +199,14 @@ async def get_my_services(
 
 @router.get("/{service_id}", response_model=ServiceDetailResponse)
 async def get_service_details(
-    service_id: UUID,
+    service_id: str,
     db: AsyncSession = Depends(get_db_session)
 ):
     """
     Get detailed service information including merchant info and images.
     
     Args:
-        service_id: UUID of the service
+        service_id: 9-digit numeric string ID of the service
         db: Database session
         
     Returns:
@@ -228,7 +228,7 @@ async def get_service_details(
 
 @router.post("/{service_id}/interact", response_model=ServiceInteractionResponse)
 async def record_service_interaction(
-    service_id: UUID,
+    service_id: str,
     request: ServiceInteractionRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session)
@@ -237,7 +237,7 @@ async def record_service_interaction(
     Record user interaction with a service (like, save, share).
     
     Args:
-        service_id: UUID of the service
+        service_id: 9-digit numeric string ID of the service
         request: Interaction request data
         current_user: Current authenticated user
         db: Database session
@@ -320,7 +320,7 @@ async def create_service(
 
 @router.put("/{service_id}", response_model=MerchantServiceResponse)
 async def update_service(
-    service_id: UUID,
+    service_id: str,
     service_data: ServiceUpdateRequest,
     current_user: User = Depends(get_current_merchant_user),
     db: AsyncSession = Depends(get_db_session)
@@ -329,7 +329,7 @@ async def update_service(
     Update a service. Only the merchant who owns the service can update it.
     
     Args:
-        service_id: UUID of the service to update
+        service_id: 9-digit numeric string ID of the service to update
         service_data: Service update data
         current_user: Current authenticated merchant user
         db: Database session
@@ -427,7 +427,7 @@ async def update_service(
 
 @router.delete("/{service_id}", response_model=SuccessResponse)
 async def delete_service(
-    service_id: UUID,
+    service_id: str,
     current_user: User = Depends(get_current_merchant_user),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -435,7 +435,7 @@ async def delete_service(
     Delete (soft delete) a service. Only the merchant who owns the service can delete it.
     
     Args:
-        service_id: UUID of the service to delete
+        service_id: 9-digit numeric string ID of the service to delete
         current_user: Current authenticated merchant user
         db: Database session
         
@@ -479,7 +479,7 @@ async def delete_service(
 
 @router.post("/{service_id}/images", response_model=ImageUploadResponse)
 async def upload_service_image(
-    service_id: UUID,
+    service_id: str,
     file_name: str = Form(..., description="Original file name"),
     content_type: str = Form(..., description="MIME type of the file"),
     display_order: Optional[int] = Form(0, description="Display order"),
@@ -490,7 +490,7 @@ async def upload_service_image(
     Upload service image with tariff limit validation.
     
     Args:
-        service_id: UUID of the service
+        service_id: 9-digit numeric string ID of the service
         file_name: Original file name
         content_type: MIME type of the file
         display_order: Display order for the image
@@ -586,7 +586,7 @@ async def upload_service_image(
 
 @router.delete("/{service_id}/images/{image_id}", response_model=SuccessResponse)
 async def delete_service_image(
-    service_id: UUID,
+    service_id: str,
     image_id: UUID,
     current_user: User = Depends(get_current_merchant_user),
     db: AsyncSession = Depends(get_db_session)
@@ -595,7 +595,7 @@ async def delete_service_image(
     Delete a service image. Only the merchant who owns the service can delete its images.
     
     Args:
-        service_id: UUID of the service
+        service_id: 9-digit numeric string ID of the service
         image_id: UUID of the image to delete
         current_user: Current authenticated merchant user
         db: Database session

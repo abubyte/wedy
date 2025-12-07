@@ -309,7 +309,7 @@ async def get_featured_services_tracking(
 
 @router.post("/featured-services/monthly", response_model=FeaturedServiceResponse)
 async def create_monthly_featured_service(
-    service_id: UUID = Form(..., description="ID of the service to feature"),
+    service_id: str = Form(..., description="9-digit numeric string ID of the service to feature"),
     current_user: User = Depends(get_current_merchant_user),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -317,7 +317,7 @@ async def create_monthly_featured_service(
     Create monthly featured service allocation (free, uses monthly quota).
     
     Args:
-        service_id: UUID of the service to feature
+        service_id: 9-digit numeric string ID of the service to feature
         current_user: Current authenticated merchant user
         db: Database session
         

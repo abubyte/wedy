@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 class ServiceCategoryResponse(BaseModel):
     """Service category response schema."""
-    id: UUID
+    id: int  # ServiceCategory.id is auto-incrementing integer
     name: str
     description: Optional[str] = None
     icon_url: Optional[str] = None
@@ -23,7 +23,7 @@ class ServiceCategoriesResponse(BaseModel):
 
 class ServiceImageResponse(BaseModel):
     """Service image response schema."""
-    id: UUID
+    id: UUID  # Image.id is UUID, Pydantic will serialize to string in JSON
     s3_url: str
     file_name: str
     display_order: int
@@ -31,7 +31,7 @@ class ServiceImageResponse(BaseModel):
 
 class MerchantBasicInfo(BaseModel):
     """Basic merchant information for service listings."""
-    id: UUID
+    id: UUID  # Pydantic will automatically serialize UUID to string in JSON
     business_name: str
     overall_rating: float
     total_reviews: int
@@ -42,7 +42,7 @@ class MerchantBasicInfo(BaseModel):
 
 class ServiceListItem(BaseModel):
     """Service item for listings and search results."""
-    id: UUID
+    id: str
     name: str
     description: str
     price: float
@@ -58,7 +58,7 @@ class ServiceListItem(BaseModel):
     merchant: MerchantBasicInfo
     
     # Category info
-    category_id: UUID
+    category_id: int
     category_name: str
     
     # Main image
@@ -70,7 +70,7 @@ class ServiceListItem(BaseModel):
 
 class ServiceDetailResponse(BaseModel):
     """Detailed service information response."""
-    id: UUID
+    id: str
     name: str
     description: str
     price: float
@@ -99,7 +99,7 @@ class ServiceDetailResponse(BaseModel):
     merchant: MerchantBasicInfo
     
     # Category info
-    category_id: UUID
+    category_id: int
     category_name: str
     
     # Images

@@ -1,9 +1,10 @@
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
-from uuid import UUID, uuid4
 
 from sqlmodel import SQLModel, Field, Relationship, Column, String
+
+from app.utils.id_generator import generate_6digit_id
 
 
 class UserType(str, Enum):
@@ -17,8 +18,13 @@ class User(SQLModel, table=True):
     
     __tablename__ = "users"
     
-    # Primary key
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    # Primary key - 9-digit numeric string
+    id: str = Field(
+        default_factory=lambda: generate_6digit_id(),
+        primary_key=True,
+        max_length=9,
+        description="9-digit numeric user ID"
+    )
     
     # Basic information
     phone_number: str = Field(

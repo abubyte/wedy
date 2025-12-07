@@ -57,7 +57,7 @@ class TariffPaymentRequest(BaseModel):
 
 class FeaturedServicePaymentRequest(BaseModel):
     """Request schema for featured service payment."""
-    service_id: UUID = Field(..., description="ID of the service to feature")
+    service_id: str = Field(..., description="9-digit numeric string ID of the service to feature")
     duration_days: int = Field(..., ge=1, le=365, description="Feature duration in days")
     payment_method: PaymentMethod = Field(..., description="Payment method to use")
 

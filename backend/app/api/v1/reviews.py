@@ -28,7 +28,7 @@ router = APIRouter()
 
 @router.get("/services/{service_id}/reviews", response_model=ReviewListResponse)
 async def get_service_reviews(
-    service_id: UUID,
+    service_id: str,
     include_inactive: bool = Query(False, description="Include inactive reviews"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -38,7 +38,7 @@ async def get_service_reviews(
     Get all reviews for a specific service (public endpoint).
     
     Args:
-        service_id: UUID of the service
+        service_id: 9-digit numeric string ID of the service
         include_inactive: Whether to include inactive reviews
         page: Page number (1-based)
         limit: Items per page (1-100)
@@ -66,9 +66,9 @@ async def get_service_reviews(
 
 @router.get("/", response_model=ReviewListResponse)
 async def list_reviews(
-    service_id: Optional[UUID] = Query(None, description="Filter by service ID"),
+    service_id: Optional[str] = Query(None, description="Filter by service ID (9-digit numeric string)"),
     merchant_id: Optional[UUID] = Query(None, description="Filter by merchant ID"),
-    user_id: Optional[UUID] = Query(None, description="Filter by user ID"),
+    user_id: Optional[str] = Query(None, description="Filter by user ID (9-digit numeric string)"),
     include_inactive: bool = Query(False, description="Include inactive reviews"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),

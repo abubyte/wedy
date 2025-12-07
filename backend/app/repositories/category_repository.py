@@ -3,7 +3,6 @@ from app.models.category_model import ServiceCategory
 from app.repositories.base import BaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
-from uuid import UUID
 from typing import Optional, Tuple, List
 from sqlalchemy import and_, func
 
@@ -13,12 +12,12 @@ class CategoryRepository(BaseRepository[ServiceCategory]):
     def __init__(self, db: AsyncSession):
         super().__init__(ServiceCategory, db)
 
-    async def get_category_by_id(self, category_id: UUID) -> Optional[ServiceCategory]:
+    async def get_category_by_id(self, category_id: int) -> Optional[ServiceCategory]:
         """
         Get category by ID.
         
         Args:
-            category_id: UUID of the category
+            category_id: Integer ID of the category
             
         Returns:
             ServiceCategory or None
@@ -115,12 +114,12 @@ class CategoryRepository(BaseRepository[ServiceCategory]):
         await self.db.refresh(category)
         return category
     
-    async def delete_category(self, category_id: UUID) -> bool:
+    async def delete_category(self, category_id: int) -> bool:
         """
         Delete a category (soft delete by setting is_active=False).
         
         Args:
-            category_id: UUID of the category to delete
+            category_id: Integer ID of the category to delete
             
         Returns:
             True if deleted, False if not found
@@ -150,12 +149,12 @@ class CategoryRepository(BaseRepository[ServiceCategory]):
         
         return True
     
-    async def get_category_service_count(self, category_id: UUID) -> int:
+    async def get_category_service_count(self, category_id: int) -> int:
         """
         Get count of active services in a category.
         
         Args:
-            category_id: UUID of the category
+            category_id: Integer ID of the category
             
         Returns:
             Count of active services
@@ -169,12 +168,12 @@ class CategoryRepository(BaseRepository[ServiceCategory]):
         result = await self.db.execute(statement)
         return result.scalar_one()
     
-    async def update_icon_url(self, category_id: UUID, icon_url: str) -> bool:
+    async def update_icon_url(self, category_id: int, icon_url: str) -> bool:
         """
         Update category icon URL.
         
         Args:
-            category_id: UUID of the category
+            category_id: Integer ID of the category
             icon_url: S3 URL of the icon image
             
         Returns:
@@ -189,12 +188,12 @@ class CategoryRepository(BaseRepository[ServiceCategory]):
         await self.db.commit()
         return True
     
-    async def delete_icon(self, category_id: UUID) -> bool:
+    async def delete_icon(self, category_id: int) -> bool:
         """
         Delete category icon (set icon_url to None).
         
         Args:
-            category_id: UUID of the category
+            category_id: Integer ID of the category
             
         Returns:
             True if deleted, False if category not found

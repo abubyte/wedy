@@ -14,7 +14,7 @@ class DailyServiceMetrics(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     
     # Foreign keys
-    service_id: UUID = Field(foreign_key="services.id", index=True)
+    service_id: str = Field(foreign_key="services.id", index=True, max_length=9)
     merchant_id: UUID = Field(foreign_key="merchants.id", index=True)
     
     # Date for metrics

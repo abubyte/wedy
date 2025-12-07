@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional, List
-from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field, Relationship
 
 class ServiceCategory(SQLModel, table=True):
@@ -8,8 +7,8 @@ class ServiceCategory(SQLModel, table=True):
     
     __tablename__ = "service_categories"
     
-    # Primary key
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    # Primary key - auto-incrementing integer
+    id: int = Field(primary_key=True, sa_column_kwargs={"autoincrement": True})
     
     # Category information
     name: str = Field(max_length=100, unique=True, description="Category name")

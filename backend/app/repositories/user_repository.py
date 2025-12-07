@@ -1,5 +1,4 @@
 from typing import Optional
-from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -29,12 +28,12 @@ class UserRepository(BaseRepository[User]):
         result = await self.db.execute(statement)
         return result.scalar_one_or_none()
     
-    async def get_merchant_by_user_id(self, user_id: UUID) -> Optional[Merchant]:
+    async def get_merchant_by_user_id(self, user_id: str) -> Optional[Merchant]:
         """
         Get merchant profile by user ID.
         
         Args:
-            user_id: UUID of the user
+            user_id: 9-digit numeric string ID of the user
             
         Returns:
             Merchant instance or None if not found
@@ -43,7 +42,7 @@ class UserRepository(BaseRepository[User]):
         result = await self.db.execute(statement)
         return result.scalar_one_or_none()
     
-    async def is_phone_number_taken(self, phone_number: str, exclude_user_id: Optional[UUID] = None) -> bool:
+    async def is_phone_number_taken(self, phone_number: str, exclude_user_id: Optional[str] = None) -> bool:
         """
         Check if phone number is already taken by another user.
         
@@ -62,12 +61,12 @@ class UserRepository(BaseRepository[User]):
         result = await self.db.execute(statement)
         return result.scalar_one_or_none() is not None
     
-    async def soft_delete_user(self, user_id: UUID) -> bool:
+    async def soft_delete_user(self, user_id: str) -> bool:
         """
         Soft delete a user by setting is_active=False.
         
         Args:
-            user_id: UUID of the user to delete
+            user_id: 9-digit numeric string ID of the user to delete
             
         Returns:
             True if deleted, False if not found

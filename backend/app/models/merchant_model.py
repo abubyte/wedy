@@ -12,8 +12,8 @@ class Merchant(SQLModel, table=True):
     # Primary key
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     
-    # Foreign key to User
-    user_id: UUID = Field(foreign_key="users.id", unique=True)
+    # Foreign key to User (now 9-digit numeric string)
+    user_id: str = Field(foreign_key="users.id", unique=True, max_length=9)
     
     # Business information
     # business_name: str = Field(max_length=255, description="Business/company name") #REMOVE_CATEGORY_FROM_REGISTRATION

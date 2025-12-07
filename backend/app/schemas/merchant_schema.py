@@ -11,7 +11,7 @@ class MerchantProfileResponse(BaseModel):
     
     # Basic merchant info
     id: UUID
-    user_id: UUID
+    user_id: str
     business_name: str
     description: Optional[str] = None
     cover_image_url: Optional[str] = None
@@ -117,7 +117,7 @@ class ServiceCreateRequest(BaseModel):
     """Request schema for creating a service."""
     name: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1, max_length=2000)
-    category_id: UUID
+    category_id: int
     price: float = Field(ge=0)
     location_region: str = Field(max_length=100)
     latitude: Optional[float] = Field(None, ge=-90, le=90)
@@ -128,7 +128,7 @@ class ServiceUpdateRequest(BaseModel):
     """Request schema for updating a service."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = Field(None, min_length=1, max_length=2000)
-    category_id: Optional[UUID] = None
+    category_id: Optional[int] = None
     price: Optional[float] = Field(None, ge=0)
     location_region: Optional[str] = Field(None, max_length=100)
     latitude: Optional[float] = Field(None, ge=-90, le=90)
@@ -161,7 +161,7 @@ class MerchantServiceResponse(BaseModel):
     updated_at: datetime
     
     # Category info
-    category_id: UUID
+    category_id: int
     category_name: str
     
     # Images count
@@ -182,7 +182,7 @@ class MerchantServicesResponse(BaseModel):
 
 class ServiceAnalyticsResponse(BaseModel):
     """Service analytics response schema."""
-    service_id: UUID
+    service_id: str
     service_name: str
     
     # Total counts
@@ -225,7 +225,7 @@ class MerchantAnalyticsResponse(BaseModel):
 class FeaturedServiceResponse(BaseModel):
     """Featured service tracking response."""
     id: UUID
-    service_id: UUID
+    service_id: str
     service_name: str
     start_date: datetime
     end_date: datetime

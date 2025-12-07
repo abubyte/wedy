@@ -22,8 +22,8 @@ class UserInteraction(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     
     # Foreign keys
-    user_id: UUID = Field(foreign_key="users.id", index=True)
-    service_id: UUID = Field(foreign_key="services.id", index=True)
+    user_id: str = Field(foreign_key="users.id", index=True, max_length=9)
+    service_id: str = Field(foreign_key="services.id", index=True, max_length=9)
     
     # Interaction details
     interaction_type: InteractionType = Field(description="Type of interaction")

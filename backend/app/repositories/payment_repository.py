@@ -174,7 +174,7 @@ class PaymentRepository:
     
     async def get_payments_by_user_id(
         self, 
-        user_id: UUID, 
+        user_id: str, 
         payment_type: Optional[PaymentType] = None,
         status: Optional[PaymentStatus] = None
     ) -> List[Payment]:
@@ -320,11 +320,11 @@ class PaymentRepository:
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
     
-    async def count_service_images(self, service_id: UUID) -> int:
+    async def count_service_images(self, service_id: str) -> int:
         """Count images for a service."""
         statement = select(func.count(Image.id)).where(
             and_(
-                Image.related_id == service_id,
+                Image.related_id == str(service_id),
                 Image.image_type == ImageType.SERVICE_IMAGE,
                 Image.is_active == True
             )

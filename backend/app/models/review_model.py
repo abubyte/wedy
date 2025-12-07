@@ -15,8 +15,8 @@ class Review(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     
     # Foreign keys
-    service_id: UUID = Field(foreign_key="services.id", index=True)
-    user_id: UUID = Field(foreign_key="users.id")
+    service_id: str = Field(foreign_key="services.id", index=True, max_length=9)
+    user_id: str = Field(foreign_key="users.id", max_length=9)
     merchant_id: UUID = Field(foreign_key="merchants.id", index=True)
     
     # Review content

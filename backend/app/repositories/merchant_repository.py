@@ -32,12 +32,12 @@ class MerchantRepository(BaseRepository[Merchant]):
     def __init__(self, db: AsyncSession):
         super().__init__(Merchant, db)
     
-    async def get_merchant_by_user_id(self, user_id: UUID) -> Optional[Merchant]:
+    async def get_merchant_by_user_id(self, user_id: str) -> Optional[Merchant]:
         """
         Get merchant profile by user ID.
         
         Args:
-            user_id: UUID of the user
+            user_id: 9-digit numeric string ID of the user
             
         Returns:
             Merchant profile or None
@@ -229,12 +229,12 @@ class MerchantRepository(BaseRepository[Merchant]):
         result = await self.db.execute(statement)
         return result.scalar_one()
     
-    async def count_service_images(self, service_id: UUID) -> int:
+    async def count_service_images(self, service_id: str) -> int:
         """
         Count images for a specific service.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             Count of service images
@@ -243,7 +243,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             select(func.count(Image.id))
             .where(
                 and_(
-                    Image.related_id == service_id,
+                    Image.related_id == str(service_id),
                     Image.image_type == ImageType.SERVICE_IMAGE,
                     Image.is_active == True
                 )

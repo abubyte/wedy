@@ -1,11 +1,13 @@
-from typing import Generic, TypeVar, Type, Optional, List
-from uuid import UUID
+from typing import Generic, TypeVar, Type, Optional, List, Union
 
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel, select
 
 T = TypeVar("T", bound=SQLModel)
+
+# ID can be str (9-digit numeric), int (auto-increment), or UUID
+IDType = Union[str, int, "UUID"]
 
 
 class BaseRepository(Generic[T]):
@@ -15,12 +17,12 @@ class BaseRepository(Generic[T]):
         self.model_class = model_class
         self.db = db
     
-    async def get_by_id(self, id: UUID) -> Optional[T]:
+    async def get_by_id(self, id: IDType) -> Optional[T]:
         """
         Get a record by ID.
         
         Args:
-            id: UUID of the record
+            id: ID of the record (can be str, int, or UUID)
             
         Returns:
             Model instance or None if not found
@@ -88,12 +90,12 @@ class BaseRepository(Generic[T]):
         await self.db.refresh(obj)
         return obj
     
-    async def delete(self, id: UUID) -> bool:
+    async def delete(self, id: IDType) -> bool:
         """
         Delete a record by ID.
         
         Args:
-            id: UUID of the record to delete
+            id: ID of the record to delete (can be str, int, or UUID)
             
         Returns:
             True if deleted, False if not found
@@ -105,12 +107,12 @@ class BaseRepository(Generic[T]):
             return True
         return False
     
-    async def exists(self, id: UUID) -> bool:
+    async def exists(self, id: IDType) -> bool:
         """
         Check if a record exists by ID.
         
         Args:
-            id: UUID of the record
+            id: ID of the record (can be str, int, or UUID)
             
         Returns:
             True if exists, False otherwise

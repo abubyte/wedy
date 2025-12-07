@@ -84,14 +84,14 @@ async def list_categories_admin(
 
 @router.get("/{category_id}", response_model=CategoryDetailResponse)
 async def get_category(
-    category_id: UUID,
+    category_id: int,
     db: AsyncSession = Depends(get_db_session)
 ):
     """
     Get category by ID (public endpoint).
     
     Args:
-        category_id: UUID of the category
+        category_id: Integer ID of the category
         db: Database session
         
     Returns:
@@ -153,7 +153,7 @@ async def create_category(
 
 @router.put("/{category_id}", response_model=CategoryDetailResponse)
 async def update_category(
-    category_id: UUID,
+    category_id: int,
     request: CategoryUpdateRequest,
     current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db_session)
@@ -162,7 +162,7 @@ async def update_category(
     Update an existing category (admin only).
     
     Args:
-        category_id: UUID of the category to update
+        category_id: Integer ID of the category to update
         request: Category update data
         current_user: Current authenticated admin user
         db: Database session
@@ -198,7 +198,7 @@ async def update_category(
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(
-    category_id: UUID,
+    category_id: int,
     current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -209,7 +209,7 @@ async def delete_category(
     If no active services, it will be hard-deleted.
     
     Args:
-        category_id: UUID of the category to delete
+        category_id: Integer ID of the category to delete
         current_user: Current authenticated admin user
         db: Database session
         
@@ -240,7 +240,7 @@ async def delete_category(
 
 @router.post("/{category_id}/icon", response_model=ImageUploadResponse)
 async def upload_category_icon(
-    category_id: UUID,
+    category_id: int,
     file: UploadFile = File(..., description="Category icon image file"),
     current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db_session)
@@ -249,7 +249,7 @@ async def upload_category_icon(
     Upload category icon directly to S3 and update category's icon_url (admin only).
     
     Args:
-        category_id: UUID of the category
+        category_id: Integer ID of the category
         file: Icon image file
         current_user: Current authenticated admin user
         db: Database session
@@ -321,7 +321,7 @@ async def upload_category_icon(
 
 @router.delete("/{category_id}/icon", response_model=SuccessResponse)
 async def delete_category_icon(
-    category_id: UUID,
+    category_id: int,
     current_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -329,7 +329,7 @@ async def delete_category_icon(
     Delete category icon (admin only).
     
     Args:
-        category_id: UUID of the category
+        category_id: Integer ID of the category
         current_user: Current authenticated admin user
         db: Database session
         

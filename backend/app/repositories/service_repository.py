@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
-from uuid import UUID
 
 from sqlalchemy import and_, func, or_, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -195,12 +194,12 @@ class ServiceRepository(BaseRepository[Service]):
         result = await self.db.execute(statement)
         return result.scalars().all()
     
-    async def get_service_with_details(self, service_id: UUID) -> Optional[Service]:
+    async def get_service_with_details(self, service_id: str) -> Optional[Service]:
         """
         Get service with all related data loaded.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             Service with relationships loaded or None
@@ -225,12 +224,12 @@ class ServiceRepository(BaseRepository[Service]):
 
         return service
     
-    async def get_service_images(self, service_id: UUID) -> List[Image]:
+    async def get_service_images(self, service_id: str) -> List[Image]:
         """
         Get all images for a service ordered by display_order.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             List of service images
@@ -239,7 +238,7 @@ class ServiceRepository(BaseRepository[Service]):
             select(Image)
             .where(
                 and_(
-                    Image.related_id == service_id,
+                    Image.related_id == str(service_id),
                     Image.image_type == ImageType.SERVICE_IMAGE,
                     Image.is_active == True
                 )
@@ -251,12 +250,12 @@ class ServiceRepository(BaseRepository[Service]):
         # We expect a list of Image model instances
         return result.scalars().all()
     
-    async def get_merchant_by_service(self, service_id: UUID) -> Optional[Merchant]:
+    async def get_merchant_by_service(self, service_id: str) -> Optional[Merchant]:
         """
         Get merchant information for a service.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             Merchant object or None
@@ -270,12 +269,12 @@ class ServiceRepository(BaseRepository[Service]):
         result = await self.db.execute(statement)
         return result.scalar_one_or_none()
     
-    async def get_category_by_service(self, service_id: UUID) -> Optional[ServiceCategory]:
+    async def get_category_by_service(self, service_id: str) -> Optional[ServiceCategory]:
         """
         Get category for a service.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             ServiceCategory or None
@@ -289,12 +288,12 @@ class ServiceRepository(BaseRepository[Service]):
         result = await self.db.execute(statement)
         return result.scalar_one_or_none()
     
-    async def is_service_featured(self, service_id: UUID) -> Tuple[bool, Optional[datetime]]:
+    async def is_service_featured(self, service_id: str) -> Tuple[bool, Optional[datetime]]:
         """
         Check if service is currently featured and get end date.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             Tuple of (is_featured, end_date)
@@ -320,35 +319,38 @@ class ServiceRepository(BaseRepository[Service]):
 
         return (end_date is not None, end_date)
     
-    async def increment_view_count(self, service_id: UUID) -> None:
+    async def increment_view_count(self, service_id: str) -> None:
         """
         Increment the view count for a service.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
         """
         statement = text(
             "UPDATE services SET view_count = view_count + 1 WHERE id = :service_id"
         )
-        await self.db.execute(statement, {"service_id": str(service_id)})
+        await self.db.execute(statement, {"service_id": service_id})
         await self.db.commit()
     
     async def record_user_interaction(
         self, 
-        user_id: UUID, 
-        service_id: UUID, 
+        user_id: str, 
+        service_id: str, 
         interaction_type: InteractionType
-    ) -> None:
+    ) -> bool:
         """
         Record a user interaction with a service.
         
         Args:
-            user_id: UUID of the user
-            service_id: UUID of the service
+            user_id: 9-digit numeric string ID of the user
+            service_id: 9-digit numeric string ID of the service
             interaction_type: Type of interaction
+            
+        Returns:
+            bool: True if interaction was created, False if it already existed
         """
-        # Check if interaction already exists for like/save
-        if interaction_type in [InteractionType.LIKE, InteractionType.SAVE]:
+        # Check if interaction already exists for like/save/view
+        if interaction_type in [InteractionType.LIKE, InteractionType.SAVE, InteractionType.VIEW]:
             existing_statement = select(UserInteraction).where(
                 and_(
                     UserInteraction.user_id == user_id,
@@ -358,7 +360,7 @@ class ServiceRepository(BaseRepository[Service]):
             )
             existing_result = await self.db.execute(existing_statement)
             if existing_result.scalars().first():
-                return  # Already exists, don't duplicate
+                return False  # Already exists, don't duplicate
         
         # Create new interaction
         interaction = UserInteraction(
@@ -377,24 +379,28 @@ class ServiceRepository(BaseRepository[Service]):
             await self._increment_counter(service_id, "save_count")
         elif interaction_type == InteractionType.SHARE:
             await self._increment_counter(service_id, "share_count")
+        elif interaction_type == InteractionType.VIEW:
+            await self._increment_counter(service_id, "view_count")
+        
+        return True  # Interaction was created
     
-    async def _increment_counter(self, service_id: UUID, counter_field: str) -> None:
+    async def _increment_counter(self, service_id: str, counter_field: str) -> None:
         """
         Increment a specific counter field for a service.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             counter_field: Field name to increment
         """
         statement = text(
             f"UPDATE services SET {counter_field} = {counter_field} + 1 WHERE id = :service_id"
         )
-        await self.db.execute(statement, {"service_id": str(service_id)})
+        await self.db.execute(statement, {"service_id": service_id})
         await self.db.commit()
     
     async def get_services_by_category(
         self, 
-        category_id: UUID, 
+        category_id: int, 
         offset: int = 0, 
         limit: int = 20
     ) -> Tuple[List[Service], int]:
@@ -402,7 +408,7 @@ class ServiceRepository(BaseRepository[Service]):
         Get services by category with pagination.
         
         Args:
-            category_id: UUID of the category
+            category_id: Integer ID of the category
             offset: Pagination offset
             limit: Pagination limit
             
@@ -435,14 +441,14 @@ class ServiceRepository(BaseRepository[Service]):
     
     async def get_user_interactions(
         self,
-        user_id: UUID,
+        user_id: str,
         interaction_type: Optional[InteractionType] = None
     ) -> List[Tuple['UserInteraction', Service]]:
         """
         Get user interactions with services.
         
         Args:
-            user_id: UUID of the user
+            user_id: 9-digit numeric string ID of the user
             interaction_type: Optional filter by interaction type (LIKE or SAVE)
             
         Returns:

@@ -1,9 +1,11 @@
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlmodel import SQLModel, Field, Relationship
+
+from app.utils.id_generator import generate_6digit_id
 
 
 class Service(SQLModel, table=True):
@@ -11,12 +13,17 @@ class Service(SQLModel, table=True):
     
     __tablename__ = "services"
     
-    # Primary key
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    # Primary key - 9-digit numeric string
+    id: str = Field(
+        default_factory=lambda: generate_6digit_id(),
+        primary_key=True,
+        max_length=9,
+        description="9-digit numeric service ID"
+    )
     
     # Foreign keys
-    merchant_id: UUID = Field(foreign_key="merchants.id", index=True)
-    category_id: UUID = Field(foreign_key="service_categories.id", index=True)
+    merchant_id: UUID = Field(foreign_key="merchants.id", index=True)  # Merchant.id is still UUID
+    category_id: int = Field(foreign_key="service_categories.id", index=True)
     
     # Service information
     name: str = Field(max_length=255, description="Service name")

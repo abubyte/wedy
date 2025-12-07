@@ -28,7 +28,10 @@ class Image(SQLModel, table=True):
     
     # Classification
     image_type: ImageType = Field(description="Type of image")
-    related_id: UUID = Field(description="ID of related entity (service, merchant, user)")
+    related_id: str = Field(
+        max_length=50,
+        description="ID of related entity (service, merchant, user, category) as string"
+    )
     
     # Display settings
     display_order: int = Field(default=0, description="Order for display")

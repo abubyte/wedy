@@ -40,7 +40,7 @@ class ReviewRepository(BaseRepository[Review]):
     
     async def get_reviews_by_service(
         self,
-        service_id: UUID,
+        service_id: str,
         include_inactive: bool = False,
         offset: int = 0,
         limit: int = 100
@@ -49,7 +49,7 @@ class ReviewRepository(BaseRepository[Review]):
         Get all reviews for a service with pagination.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             include_inactive: Whether to include inactive reviews
             offset: Pagination offset
             limit: Pagination limit
@@ -114,7 +114,7 @@ class ReviewRepository(BaseRepository[Review]):
     
     async def get_reviews_by_user(
         self,
-        user_id: UUID,
+        user_id: str,
         include_inactive: bool = False,
         offset: int = 0,
         limit: int = 100
@@ -123,7 +123,7 @@ class ReviewRepository(BaseRepository[Review]):
         Get all reviews by a user with pagination.
         
         Args:
-            user_id: UUID of the user
+            user_id: 9-digit numeric string ID of the user
             include_inactive: Whether to include inactive reviews
             offset: Pagination offset
             limit: Pagination limit
@@ -151,15 +151,15 @@ class ReviewRepository(BaseRepository[Review]):
     
     async def get_user_review_for_service(
         self,
-        user_id: UUID,
-        service_id: UUID
+        user_id: str,
+        service_id: str
     ) -> Optional[Review]:
         """
         Get a user's review for a specific service.
         
         Args:
-            user_id: UUID of the user
-            service_id: UUID of the service
+            user_id: 9-digit numeric string ID of the user
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             Review or None
@@ -222,12 +222,12 @@ class ReviewRepository(BaseRepository[Review]):
             return True
         return False
     
-    async def calculate_service_rating(self, service_id: UUID) -> Tuple[float, int]:
+    async def calculate_service_rating(self, service_id: str) -> Tuple[float, int]:
         """
         Calculate average rating and total review count for a service.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
             
         Returns:
             Tuple of (average_rating, total_count)
@@ -250,12 +250,12 @@ class ReviewRepository(BaseRepository[Review]):
             return avg_rating, total_count
         return 0.0, 0
     
-    async def update_service_rating(self, service_id: UUID) -> None:
+    async def update_service_rating(self, service_id: str) -> None:
         """
         Update service's overall_rating and total_reviews based on active reviews.
         
         Args:
-            service_id: UUID of the service
+            service_id: 9-digit numeric string ID of the service
         """
         avg_rating, total_count = await self.calculate_service_rating(service_id)
         
@@ -268,9 +268,9 @@ class ReviewRepository(BaseRepository[Review]):
     
     async def get_all_reviews(
         self,
-        service_id: Optional[UUID] = None,
+        service_id: Optional[str] = None,
         merchant_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
+        user_id: Optional[str] = None,
         include_inactive: bool = False,
         offset: int = 0,
         limit: int = 100

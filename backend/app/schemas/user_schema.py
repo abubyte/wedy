@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import List, Optional
-from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 
@@ -39,7 +38,7 @@ class UserProfileUpdateRequest(BaseModel):
 class UserProfileResponse(BaseModel):
     """Response schema for user profile."""
 
-    id: UUID
+    id: str
     phone_number: str
     name: str
     avatar_url: Optional[str] = None

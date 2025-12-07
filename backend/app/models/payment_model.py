@@ -41,8 +41,8 @@ class Payment(SQLModel, table=True):
     # Primary key
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     
-    # Foreign key
-    user_id: UUID = Field(foreign_key="users.id")
+    # Foreign key (now 9-digit numeric string)
+    user_id: str = Field(foreign_key="users.id", max_length=9)
     
     # Payment information
     amount: float = Field(ge=0, description="Payment amount in UZS")
