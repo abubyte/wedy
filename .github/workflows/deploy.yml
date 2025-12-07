@@ -146,6 +146,29 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@${{ secrets.SSH_HOST }} << 'EOF'
             set -e  # Exit on any error
             
+            # Check if Docker is installed
+            if ! command -v docker &> /dev/null; then
+              echo "ERROR: Docker is not installed on the server"
+              echo "Please install Docker and Docker Compose:"
+              echo "  curl -fsSL https://get.docker.com -o get-docker.sh"
+              echo "  sh get-docker.sh"
+              echo "  apt-get install docker-compose-plugin -y"
+              exit 1
+            fi
+            
+            # Check if docker compose is available
+            if ! docker compose version &> /dev/null; then
+              echo "ERROR: Docker Compose is not available"
+              echo "Please install Docker Compose plugin:"
+              echo "  apt-get update"
+              echo "  apt-get install docker-compose-plugin -y"
+              exit 1
+            fi
+            
+            echo "==> Docker version:"
+            docker --version
+            docker compose version
+            
             cd /root/wedy
 
             echo "==> Pulling base images..."
@@ -161,10 +184,16 @@ jobs:
             # Generate self-signed certificate for default server if it doesn't exist
             if [ ! -f infra/nginx/ssl/default/cert.pem ]; then
               echo "==> Generating self-signed certificate..."
-              ./infra/nginx/generate-self-signed.sh || echo "==> Warning: Self-signed certificate generation skipped"
+              if [ -f ./infra/nginx/generate-self-signed.sh ]; then
+                chmod +x ./infra/nginx/generate-self-signed.sh
+                ./infra/nginx/generate-self-signed.sh || echo "==> Warning: Self-signed certificate generation skipped"
+              else
+                echo "==> Warning: generate-self-signed.sh not found, skipping"
+              fi
             fi
             
-            # Reload nginx if it's running
+            # Reload nginx if it's running (wait a bit for services to start)
+            sleep 5
             docker compose exec nginx nginx -s reload 2>/dev/null || echo "==> Nginx not yet running, will start normally"
 
             echo "==> Waiting for services to be healthy..."
