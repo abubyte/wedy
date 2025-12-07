@@ -17,10 +17,21 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Verify SSH key
+        run: |
+          if ! ssh-add -l; then
+            echo "ERROR: SSH key not loaded properly"
+            echo "Please check your SSH_PRIVATE_KEY secret format"
+            echo "See .github/SSH_KEY_TROUBLESHOOTING.md for help"
+            exit 1
+          fi
+
       - name: Add server to known hosts
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Deploy application files
         run: |
