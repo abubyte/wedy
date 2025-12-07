@@ -213,6 +213,12 @@ kubeconfig
 *.pem
 *.p12
 
+# Let's Encrypt / Certbot
+infra/nginx/certbot/conf/
+infra/nginx/certbot/www/
+infra/nginx/ssl/**/*.pem
+!infra/nginx/ssl/**/.gitkeep
+
 # ===== DOCUMENTATION =====
 
 # Generated documentation
@@ -274,3 +280,7 @@ development_instructions.md
 git_setup_checklist.md
 github_workflow.md
 Wedy System Design.pdf
+Wedy System Design.txt
+
+# Architecture documentation (internal reference)
+mobile/CLEAN_ARCHITECTURE_IMPLEMENTATION_ORDER.md
