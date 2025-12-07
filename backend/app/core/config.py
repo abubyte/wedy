@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Wedy API"
     APP_VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
-    BASE_URL: str = "http://api.abubyte.uz"
+    BASE_URL: str = "https://api.wedy.uz"
 
     # Application Constants
     OTP_EXPIRE_MINUTES: int = 5
@@ -36,26 +36,6 @@ class Settings(BaseSettings):
 
     # Documentation
     ENABLE_DOCS: bool = False
-
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v):
-        if isinstance(v, str):
-            s = v.strip()
-            if s.startswith("[") and s.endswith("]"):
-                import json
-                try:
-                    return json.loads(s)
-                except Exception:
-                    inner = s[1:-1].strip()
-                    if not inner:
-                        return []
-                    items = [i.strip().strip('\'\"') for i in inner.split(",")]
-                    return [it for it in items if it]
-
-            return [i.strip() for i in s.split(",") if i.strip()]
-
-        return v
 
     # Database
     DATABASE_URL: str
@@ -80,9 +60,11 @@ class Settings(BaseSettings):
     AWS_BUCKET_NAME: str
     AWS_REGION: str = "eu-north-1"
 
-    # Payment Providers (optional)
-    PAYME_SECRET_KEY: str
-    PAYME_MERCHANT_ID: str
+    # Payment Providers
+    PAYME_TARIFF_SECRET_KEY: Optional[str] = None
+    PAYME_TARIFF_MERCHANT_ID: Optional[str] = None
+    PAYME_SERVICE_BOOST_SECRET_KEY: Optional[str] = None
+    PAYME_SERVICE_BOOST_MERCHANT_ID: Optional[str] = None
     PAYME_API_URL: str = "https://checkout.paycom.uz"
     PAYME_TEST_API_URL: str = "https://test.paycom.uz"
 
@@ -120,3 +102,4 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
