@@ -289,7 +289,11 @@ docker-compose up -d
 docker-compose exec backend poetry run alembic upgrade head
 
 # Seed initial data (optional)
-docker-compose exec backend poetry run python scripts/seed_data.py
+# First, ensure dependencies are installed:
+docker compose exec backend poetry install
+
+# Then run the seed script:
+docker compose exec backend poetry run python scripts/seed_data.py --all
 ```
 
 The API will be available at `http://localhost:8000`
