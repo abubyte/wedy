@@ -15,6 +15,32 @@ import '../../features/profile/domain/usecases/get_profile.dart';
 import '../../features/profile/domain/usecases/update_profile.dart';
 import '../../features/profile/domain/usecases/upload_avatar.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/service/data/datasources/service_remote_datasource.dart';
+import '../../features/service/data/repositories/service_repository_impl.dart';
+import '../../features/service/domain/repositories/service_repository.dart';
+import '../../features/service/domain/usecases/get_services.dart';
+import '../../features/service/domain/usecases/get_service_by_id.dart';
+import '../../features/service/domain/usecases/interact_with_service.dart';
+import '../../features/service/domain/usecases/get_saved_services.dart';
+import '../../features/service/domain/usecases/get_merchant_services.dart';
+import '../../features/service/domain/usecases/create_merchant_service.dart';
+import '../../features/service/domain/usecases/update_merchant_service.dart';
+import '../../features/service/domain/usecases/delete_merchant_service.dart';
+import '../../features/service/presentation/bloc/service_bloc.dart';
+import '../../features/service/presentation/bloc/merchant_service_bloc.dart';
+import '../../features/category/data/datasources/category_remote_datasource.dart';
+import '../../features/category/data/repositories/category_repository_impl.dart';
+import '../../features/category/domain/repositories/category_repository.dart';
+import '../../features/category/domain/usecases/get_categories.dart';
+import '../../features/category/presentation/bloc/category_bloc.dart';
+import '../../features/reviews/data/datasources/review_remote_datasource.dart';
+import '../../features/reviews/data/repositories/review_repository_impl.dart';
+import '../../features/reviews/domain/repositories/review_repository.dart';
+import '../../features/reviews/domain/usecases/get_reviews.dart';
+import '../../features/reviews/domain/usecases/create_review.dart';
+import '../../features/reviews/domain/usecases/update_review.dart';
+import '../../features/reviews/domain/usecases/delete_review.dart';
+import '../../features/reviews/presentation/bloc/review_bloc.dart';
 
 /// Service locator instance
 final getIt = GetIt.instance;
@@ -63,5 +89,77 @@ Future<void> init() async {
 
   getIt.registerFactory(
     () => ProfileBloc(getProfileUseCase: getIt(), updateProfileUseCase: getIt(), uploadAvatarUseCase: getIt()),
+  );
+
+  // Service data sources
+  getIt.registerLazySingleton<ServiceRemoteDataSource>(() => createServiceRemoteDataSource());
+
+  // Service repositories
+  getIt.registerLazySingleton<ServiceRepository>(() => ServiceRepositoryImpl(remoteDataSource: getIt()));
+
+  // Service use cases
+  getIt.registerLazySingleton(() => GetServices(getIt()));
+  getIt.registerLazySingleton(() => GetServiceById(getIt()));
+  getIt.registerLazySingleton(() => InteractWithService(getIt()));
+  getIt.registerLazySingleton(() => GetSavedServices(getIt()));
+
+  // Merchant service use cases
+  getIt.registerLazySingleton(() => GetMerchantServices(getIt()));
+  getIt.registerLazySingleton(() => CreateMerchantService(getIt()));
+  getIt.registerLazySingleton(() => UpdateMerchantService(getIt()));
+  getIt.registerLazySingleton(() => DeleteMerchantService(getIt()));
+
+  // Service BLoC
+  getIt.registerFactory(
+    () => ServiceBloc(
+      getServicesUseCase: getIt(),
+      getServiceByIdUseCase: getIt(),
+      interactWithServiceUseCase: getIt(),
+      getSavedServicesUseCase: getIt(),
+    ),
+  );
+
+  // Merchant Service BLoC
+  getIt.registerFactory(
+    () => MerchantServiceBloc(
+      getMerchantServices: getIt(),
+      createMerchantService: getIt(),
+      updateMerchantService: getIt(),
+      deleteMerchantService: getIt(),
+    ),
+  );
+
+  // Category data sources
+  getIt.registerLazySingleton<CategoryRemoteDataSource>(() => createCategoryRemoteDataSource());
+
+  // Category repositories
+  getIt.registerLazySingleton<CategoryRepository>(() => CategoryRepositoryImpl(remoteDataSource: getIt()));
+
+  // Category use cases
+  getIt.registerLazySingleton(() => GetCategories(getIt()));
+
+  // Category BLoC
+  getIt.registerFactory(() => CategoryBloc(getCategoriesUseCase: getIt()));
+
+  // Review data sources
+  getIt.registerLazySingleton<ReviewRemoteDataSource>(() => createReviewRemoteDataSource());
+
+  // Review repositories
+  getIt.registerLazySingleton<ReviewRepository>(() => ReviewRepositoryImpl(remoteDataSource: getIt()));
+
+  // Review use cases
+  getIt.registerLazySingleton(() => GetReviews(getIt()));
+  getIt.registerLazySingleton(() => CreateReview(getIt()));
+  getIt.registerLazySingleton(() => UpdateReview(getIt()));
+  getIt.registerLazySingleton(() => DeleteReview(getIt()));
+
+  // Review BLoC
+  getIt.registerFactory(
+    () => ReviewBloc(
+      getReviewsUseCase: getIt(),
+      createReviewUseCase: getIt(),
+      updateReviewUseCase: getIt(),
+      deleteReviewUseCase: getIt(),
+    ),
   );
 }
