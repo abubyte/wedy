@@ -128,29 +128,49 @@ class PaymeMerchantAPI:
         """
         try:
             import base64
+            import logging
+            
+            logger = logging.getLogger(__name__)
             
             # Extract merchant_id and signature from Authorization header
             if not authorization.startswith("Basic "):
+                logger.debug("Authorization header doesn't start with 'Basic '")
                 return False
             
             auth_string = authorization[6:]  # Remove "Basic "
             decoded = base64.b64decode(auth_string).decode()
             
             if ":" not in decoded:
+                logger.debug("Authorization header doesn't contain ':' separator")
                 return False
             
             merchant_id, signature = decoded.split(":", 1)
             
             # Calculate expected signature using raw body (exact format)
+            # Payme uses the raw request body as-is for signature calculation
             expected_signature = hmac.new(
                 self.secret_key.encode(),
                 raw_body.encode('utf-8'),
                 hashlib.sha256
             ).hexdigest()
             
-            return hmac.compare_digest(signature, expected_signature)
+            is_valid = hmac.compare_digest(signature, expected_signature)
             
-        except Exception:
+            if not is_valid:
+                logger.debug(
+                    f"Signature mismatch. "
+                    f"Merchant ID: {merchant_id}, "
+                    f"Expected: {expected_signature[:16]}..., "
+                    f"Received: {signature[:16]}..., "
+                    f"Body length: {len(raw_body)}"
+                )
+            
+            return is_valid
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Exception in verify_request_with_raw_body: {str(e)}")
             return False
     
     async def handle_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
