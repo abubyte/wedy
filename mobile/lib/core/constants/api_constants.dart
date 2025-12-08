@@ -9,18 +9,23 @@ class ApiConstants {
   // Auth endpoints
   static String get sendOtp => '$apiVersion/auth/send-otp';
   static String get verifyOtp => '$apiVersion/auth/verify-otp';
-  static String get completeRegistration =>
-      '$apiVersion/auth/complete-registration';
+  static String get completeRegistration => '$apiVersion/auth/complete-registration';
   static String get refreshToken => '$apiVersion/auth/refresh';
 
   // User endpoints
   static String get userProfile => '$apiVersion/users/profile';
   static String get uploadAvatar => '$apiVersion/users/avatar';
+  static String get userInteractions => '$apiVersion/users/interactions';
 
   // Services endpoints
   static String get services => '$apiVersion/services';
-  static String get serviceCategories => '$apiVersion/services/categories';
   static String get featuredServices => '$apiVersion/services/featured';
+
+  // Categories endpoints
+  static String get categories => '$apiVersion/categories';
+
+  // Reviews endpoints
+  static String get reviews => '$apiVersion/reviews';
 
   // Merchant endpoints
   static String get merchantProfile => '$apiVersion/merchants/profile';

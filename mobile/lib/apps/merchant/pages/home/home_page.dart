@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
-import 'package:wedy/features/service/presentation/screens/service/service_page.dart';
 import 'package:wedy/apps/merchant/widgets/tariff_status.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 import 'package:wedy/shared/widgets/section_header.dart';
@@ -9,6 +8,7 @@ import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
 import 'package:wedy/shared/widgets/primary_button.dart';
+import 'package:wedy/shared/widgets/service_reviews.dart';
 
 class MerchantHomePage extends StatefulWidget {
   const MerchantHomePage({super.key});
@@ -38,6 +38,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

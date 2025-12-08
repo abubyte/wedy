@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:wedy/core/errors/failures.dart';
-import 'package:wedy/core/network/api_client.dart';
 import 'package:wedy/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:wedy/features/auth/domain/entities/user.dart';
 import 'package:wedy/features/profile/data/datasources/profile_remote_datasource.dart';
@@ -205,14 +204,14 @@ void main() {
   });
 
   group('uploadAvatar', () {
-    const tImagePath = '/path/to/image.jpg';
+    const _ = '/path/to/image.jpg';
     const tAvatarUrl = 'https://example.com/new-avatar.jpg';
 
     test('should return avatar URL when upload is successful', () async {
       // Arrange
       // Mock Dio for file upload
-      final mockDio = MockDio();
-      final mockResponse = Response(
+      final _ = MockDio();
+      final _ = Response(
         requestOptions: RequestOptions(path: ''),
         statusCode: 200,
         data: {'success': true, 'message': 'Avatar uploaded', 's3_url': tAvatarUrl},

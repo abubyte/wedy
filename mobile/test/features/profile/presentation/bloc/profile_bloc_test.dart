@@ -161,7 +161,7 @@ void main() {
           when(() => mockGetProfile()).thenAnswer((_) async => Right(tUser));
           return bloc;
         },
-        act: (bloc) => bloc.add(UploadAvatarEvent(tImagePath)),
+        act: (bloc) => bloc.add(const UploadAvatarEvent(tImagePath)),
         expect: () => [const ProfileLoading(), AvatarUploaded(avatarUrl: tAvatarUrl, user: tUser)],
         verify: (_) {
           verify(() => mockUploadAvatar(tImagePath)).called(1);
@@ -175,7 +175,7 @@ void main() {
           when(() => mockUploadAvatar(tImagePath)).thenAnswer((_) async => const Left(NetworkFailure('Upload failed')));
           return bloc;
         },
-        act: (bloc) => bloc.add(UploadAvatarEvent(tImagePath)),
+        act: (bloc) => bloc.add(const UploadAvatarEvent(tImagePath)),
         expect: () => [const ProfileLoading(), const ProfileError('Upload failed')],
         verify: (_) {
           verify(() => mockUploadAvatar(tImagePath)).called(1);
@@ -190,7 +190,7 @@ void main() {
           when(() => mockGetProfile()).thenAnswer((_) async => const Left(NetworkFailure('Failed to reload profile')));
           return bloc;
         },
-        act: (bloc) => bloc.add(UploadAvatarEvent(tImagePath)),
+        act: (bloc) => bloc.add(const UploadAvatarEvent(tImagePath)),
         expect: () => [const ProfileLoading(), const ProfileError('Failed to reload profile')],
         verify: (_) {
           verify(() => mockUploadAvatar(tImagePath)).called(1);
