@@ -48,8 +48,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - "8000:8000"  # Expose for local development (can be removed in production)
     expose:
-      - "8000"
+      - "8000"  # Also expose for nginx
     depends_on:
       postgres:
         condition: service_healthy
