@@ -1,8 +1,24 @@
-part of '../home_page.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:wedy/core/theme/app_colors.dart';
+import 'package:wedy/core/constants/app_dimensions.dart';
+import 'package:wedy/core/theme/app_text_styles.dart';
+import 'package:wedy/features/service/domain/entities/service.dart';
+import 'package:wedy/shared/navigation/route_names.dart';
+import '../../../widgets/service_card.dart';
 
-class _HotOffersBanner extends StatelessWidget {
+/// Widget that displays featured services in a banner
+class HotOffersBannerWidget extends StatelessWidget {
+  const HotOffersBannerWidget({super.key, required this.services});
+
+  final List<ServiceListItem> services;
+
   @override
   Widget build(BuildContext context) {
+    if (services.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return GestureDetector(
       onTap: () {
         context.pushNamed(RouteNames.hotOffers);
@@ -63,7 +79,6 @@ class _HotOffersBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppDimensions.spacingS),
-
             Padding(
               padding: const EdgeInsets.only(bottom: AppDimensions.spacingS),
               child: SizedBox(
@@ -71,27 +86,28 @@ class _HotOffersBanner extends StatelessWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
-                  itemCount: _hotOffers.length,
+                  itemCount: services.length,
                   separatorBuilder: (context, index) {
                     return const SizedBox(width: AppDimensions.spacingS);
                   },
                   itemBuilder: (context, index) {
-                    final offer = _hotOffers[index];
+                    final service = services[index];
                     return Center(
                       child: Padding(
                         padding: EdgeInsets.only(
                           left: index == 0 ? AppDimensions.spacingS : 0,
-                          right: index == _hotOffers.length - 1 ? AppDimensions.spacingS : 0,
+                          right: index == services.length - 1 ? AppDimensions.spacingS : 0,
                         ),
                         child: AspectRatio(
                           aspectRatio: .7,
                           child: ClientServiceCard(
-                            imageUrl: offer.imageUrl,
-                            title: offer.title,
-                            price: offer.price,
-                            location: offer.location,
-                            category: offer.category,
-                            rating: offer.rating,
+                            imageUrl: service.mainImageUrl ?? '',
+                            title: service.name,
+                            price: service.price.toStringAsFixed(0),
+                            location: service.locationRegion,
+                            category: service.categoryName,
+                            rating: service.overallRating,
+                            onTap: () => context.push('${RouteNames.serviceDetails}?id=${service.id}'),
                           ),
                         ),
                       ),

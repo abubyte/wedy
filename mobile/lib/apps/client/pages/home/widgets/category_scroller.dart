@@ -3,10 +3,14 @@ part of '../home_page.dart';
 class _CategoryScroller extends StatelessWidget {
   const _CategoryScroller({required this.categories});
 
-  final List<ClientCategory> categories;
+  final List<ServiceCategory> categories;
 
   @override
   Widget build(BuildContext context) {
+    if (categories.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return SizedBox(
       height: 100,
       child: ListView.separated(
@@ -22,22 +26,36 @@ class _CategoryScroller extends StatelessWidget {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: category.backgroundColor,
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
                   ),
                   child: Center(
-                    child: Image.asset(
-                      'assets/images/ct${index + 1}.png',
-                      height: 60,
-                      width: 60,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(category.icon, color: category.iconColor, size: 28),
-                    ),
+                    child: category.iconUrl != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                            child: Image.network(
+                              category.iconUrl!,
+                              height: 60,
+                              width: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(IconsaxPlusLinear.category, color: AppColors.primary, size: 28),
+                            ),
+                          )
+                        : const Icon(IconsaxPlusLinear.category, color: AppColors.primary, size: 28),
                   ),
                 ),
                 const SizedBox(height: AppDimensions.spacingS),
-                Text(category.label, style: AppTextStyles.categoryCaption),
+                SizedBox(
+                  width: 72,
+                  child: Text(
+                    category.name,
+                    style: AppTextStyles.categoryCaption,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           );
