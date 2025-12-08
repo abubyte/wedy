@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 import 'package:wedy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:wedy/features/auth/presentation/bloc/auth_event.dart';
@@ -24,11 +25,26 @@ class ClientProfilePage extends StatefulWidget {
 }
 
 class _ClientProfilePageState extends State<ClientProfilePage> {
+  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+
   @override
   void initState() {
     super.initState();
     // Load profile when page opens
     context.read<ProfileBloc>().add(const LoadProfileEvent());
+  }
+
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    super.dispose();
+  }
+
+  void _onRefresh() {
+    // Refresh profile data
+    context.read<ProfileBloc>().add(const LoadProfileEvent());
+    // Also refresh auth status to get latest user data
+    context.read<AuthBloc>().add(const CheckAuthStatusEvent());
   }
 
   @override
@@ -49,6 +65,13 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
 
           return BlocListener<ProfileBloc, ProfileState>(
             listener: (context, state) {
+              // Handle refresh completion
+              if (state is ProfileLoaded && _refreshController.isRefresh) {
+                _refreshController.refreshCompleted();
+              } else if (state is ProfileError && _refreshController.isRefresh) {
+                _refreshController.refreshFailed();
+              }
+
               if (state is ProfileError) {
                 ScaffoldMessenger.of(
                   context,
@@ -64,164 +87,267 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
             child: Scaffold(
               backgroundColor: AppColors.background,
               body: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppDimensions.spacingL),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (!isAuthenticated) ...[
-                        // Header
-                        Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [Text('Profil', style: AppTextStyles.headline2)],
-                        ),
-                        const SizedBox(height: AppDimensions.spacingL),
+                child: SmartRefresher(
+                  controller: _refreshController,
+                  onRefresh: _onRefresh,
+                  enablePullDown: true,
+                  enablePullUp: false,
+                  header: const ClassicHeader(
+                    refreshingText: 'Yangilanmoqda...',
+                    completeText: 'Yangilandi!',
+                    idleText: 'Yangilash uchun torting',
+                    releaseText: 'Yangilash uchun qo\'yib yuboring',
+                    textStyle: TextStyle(color: AppColors.primary),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppDimensions.spacingL),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (!isAuthenticated) ...[
+                          // Header
+                          Row(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [Text('Profil', style: AppTextStyles.headline2)],
+                          ),
+                          const SizedBox(height: AppDimensions.spacingL),
 
-                        // Login button
-                        GestureDetector(
-                          onTap: () => context.pushNamed(RouteNames.auth),
-                          child: Container(
-                            height: 43,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                              border: Border.all(color: const Color(0xFF1E4ED8), width: .5),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimensions.spacingM,
-                              vertical: AppDimensions.spacingS,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Icon(IconsaxPlusLinear.profile, color: AppColors.surface, size: 24),
-                                const SizedBox(width: AppDimensions.spacingM),
-                                Expanded(
-                                  child: Text(
-                                    'Kirish',
-                                    style: AppTextStyles.bodyRegular.copyWith(color: AppColors.surface),
+                          // Login button
+                          GestureDetector(
+                            onTap: () => context.pushNamed(RouteNames.auth),
+                            child: Container(
+                              height: 43,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                border: Border.all(color: const Color(0xFF1E4ED8), width: .5),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimensions.spacingM,
+                                vertical: AppDimensions.spacingS,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Icon(IconsaxPlusLinear.profile, color: AppColors.surface, size: 24),
+                                  const SizedBox(width: AppDimensions.spacingM),
+                                  Expanded(
+                                    child: Text(
+                                      'Kirish',
+                                      style: AppTextStyles.bodyRegular.copyWith(color: AppColors.surface),
+                                    ),
                                   ),
-                                ),
-                                const Icon(IconsaxPlusLinear.arrow_right_3, color: AppColors.surface, size: 16),
-                              ],
+                                  const Icon(IconsaxPlusLinear.arrow_right_3, color: AppColors.surface, size: 16),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingM),
-                      ],
+                          const SizedBox(height: AppDimensions.spacingM),
+                        ],
 
-                      if (isAuthenticated && authenticatedUser != null) ...[
-                        BlocBuilder<ProfileBloc, ProfileState>(
-                          builder: (context, state) {
-                            final user = authenticatedUser;
-                            final isLoading = state is ProfileLoading;
+                        if (isAuthenticated && authenticatedUser != null) ...[
+                          BlocBuilder<ProfileBloc, ProfileState>(
+                            builder: (context, state) {
+                              final user = authenticatedUser;
+                              final isLoading = state is ProfileLoading;
 
-                            return Column(
-                              children: [
-                                // Avatar
-                                Stack(
-                                  children: [
-                                    GestureDetector(
-                                      onTap: isLoading ? null : _showAvatarEditOptions,
-                                      child: Container(
-                                        width: 100,
-                                        height: 100,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surface,
-                                          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-                                          border: Border.all(color: AppColors.border, width: .5),
-                                        ),
-                                        child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-                                            ? ClipRRect(
-                                                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-                                                child: CachedNetworkImage(
-                                                  imageUrl: user.avatarUrl!,
-                                                  fit: BoxFit.cover,
-                                                  placeholder: (context, url) =>
-                                                      const Center(child: CircularProgressIndicator()),
-                                                  errorWidget: (context, url, error) => const Icon(
-                                                    IconsaxPlusLinear.profile,
-                                                    size: 70,
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                              )
-                                            : const Icon(IconsaxPlusLinear.profile, size: 70, color: Colors.black),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: GestureDetector(
+                              return Column(
+                                children: [
+                                  // Avatar
+                                  Stack(
+                                    children: [
+                                      GestureDetector(
                                         onTap: isLoading ? null : _showAvatarEditOptions,
                                         child: Container(
-                                          width: 27,
-                                          height: 27,
+                                          width: 100,
+                                          height: 100,
                                           decoration: BoxDecoration(
                                             color: AppColors.surface,
                                             borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
                                             border: Border.all(color: AppColors.border, width: .5),
                                           ),
-                                          child: const Icon(IconsaxPlusLinear.edit_2, size: 16, color: Colors.black),
+                                          child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                                                  child: CachedNetworkImage(
+                                                    imageUrl: user.avatarUrl!,
+                                                    fit: BoxFit.cover,
+                                                    placeholder: (context, url) =>
+                                                        const Center(child: CircularProgressIndicator()),
+                                                    errorWidget: (context, url, error) => const Icon(
+                                                      IconsaxPlusLinear.profile,
+                                                      size: 70,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                )
+                                              : const Icon(IconsaxPlusLinear.profile, size: 70, color: Colors.black),
                                         ),
                                       ),
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: GestureDetector(
+                                          onTap: isLoading ? null : _showAvatarEditOptions,
+                                          child: Container(
+                                            width: 27,
+                                            height: 27,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.surface,
+                                              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                                              border: Border.all(color: AppColors.border, width: .5),
+                                            ),
+                                            child: const Icon(IconsaxPlusLinear.edit_2, size: 16, color: Colors.black),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppDimensions.spacingS),
+
+                                  Text(
+                                    user.name,
+                                    style: AppTextStyles.title2.copyWith(fontSize: 20, fontWeight: FontWeight.bold),
+                                  ),
+
+                                  Text(
+                                    'ID: ${user.id.substring(0, 8)}',
+                                    style: AppTextStyles.caption.copyWith(fontSize: 12, color: AppColors.textMuted),
+                                  ),
+
+                                  const SizedBox(height: AppDimensions.spacingM),
+
+                                  // Edit Profile Button
+                                  GestureDetector(
+                                    onTap: isLoading ? null : () => _showEditProfileDialog(context, user),
+                                    child: Container(
+                                      height: 43,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
+                                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                        border: Border.all(color: AppColors.border, width: .5),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppDimensions.spacingM,
+                                        vertical: AppDimensions.spacingS,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(IconsaxPlusLinear.profile, size: 24, color: Colors.black),
+                                          const SizedBox(width: AppDimensions.spacingM),
+                                          Text(
+                                            'Akkount',
+                                            style: AppTextStyles.bodyRegular.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
+                                        ],
+                                      ),
                                     ),
+                                  ),
+                                  const SizedBox(height: AppDimensions.spacingM),
+                                ],
+                              );
+                            },
+                          ),
+
+                          // Profile items
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                              border: Border.all(color: AppColors.border, width: .5),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimensions.spacingM,
+                              vertical: AppDimensions.spacingS,
+                            ),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: AppDimensions.spacingXS),
+                                Row(
+                                  children: [
+                                    const Icon(IconsaxPlusLinear.message_question, size: 24, color: Colors.black),
+                                    const SizedBox(width: AppDimensions.spacingM),
+                                    Text(
+                                      'Fikrlar',
+                                      style: AppTextStyles.bodyRegular.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
                                   ],
                                 ),
                                 const SizedBox(height: AppDimensions.spacingS),
-
-                                Text(
-                                  user.name,
-                                  style: AppTextStyles.title2.copyWith(fontSize: 20, fontWeight: FontWeight.bold),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
+                                  child: Divider(height: 1, color: AppColors.border),
                                 ),
-
-                                Text(
-                                  'ID: ${user.id.substring(0, 8)}',
-                                  style: AppTextStyles.caption.copyWith(fontSize: 12, color: AppColors.textMuted),
+                                const SizedBox(height: AppDimensions.spacingS),
+                                Row(
+                                  children: [
+                                    const Icon(IconsaxPlusLinear.heart, size: 24, color: Colors.black),
+                                    const SizedBox(width: AppDimensions.spacingM),
+                                    Text(
+                                      'Sevimlilar',
+                                      style: AppTextStyles.bodyRegular.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
+                                  ],
                                 ),
+                                const SizedBox(height: AppDimensions.spacingXS),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.spacingM),
 
-                                const SizedBox(height: AppDimensions.spacingM),
-
-                                // Edit Profile Button
-                                GestureDetector(
-                                  onTap: isLoading ? null : () => _showEditProfileDialog(context, user),
-                                  child: Container(
-                                    height: 43,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surface,
-                                      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                                      border: Border.all(color: AppColors.border, width: .5),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppDimensions.spacingM,
-                                      vertical: AppDimensions.spacingS,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(IconsaxPlusLinear.profile, size: 24, color: Colors.black),
-                                        const SizedBox(width: AppDimensions.spacingM),
-                                        Text(
-                                          'Akkount',
-                                          style: AppTextStyles.bodyRegular.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                                      ],
+                          // Logout Button
+                          GestureDetector(
+                            onTap: () => _showLogoutDialog(context),
+                            child: Container(
+                              height: 43,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                border: Border.all(color: AppColors.border, width: .5),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimensions.spacingM,
+                                vertical: AppDimensions.spacingS,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(IconsaxPlusLinear.logout, size: 24, color: Colors.red),
+                                  const SizedBox(width: AppDimensions.spacingM),
+                                  Text(
+                                    'Chiqish',
+                                    style: AppTextStyles.bodyRegular.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: Colors.red,
                                     ),
                                   ),
-                                ),
-                                const SizedBox(height: AppDimensions.spacingM),
-                              ],
-                            );
-                          },
-                        ),
+                                  const Spacer(),
+                                  const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.red),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.spacingM),
+                        ],
 
-                        // Profile items
+                        // Help items
                         Container(
                           decoration: BoxDecoration(
                             color: AppColors.surface,
@@ -240,7 +366,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                                   const Icon(IconsaxPlusLinear.message_question, size: 24, color: Colors.black),
                                   const SizedBox(width: AppDimensions.spacingM),
                                   Text(
-                                    'Fikrlar',
+                                    'Yordam',
                                     style: AppTextStyles.bodyRegular.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -258,10 +384,52 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                               const SizedBox(height: AppDimensions.spacingS),
                               Row(
                                 children: [
-                                  const Icon(IconsaxPlusLinear.heart, size: 24, color: Colors.black),
+                                  const Icon(IconsaxPlusLinear.document_text_1, size: 24, color: Colors.black),
                                   const SizedBox(width: AppDimensions.spacingM),
                                   Text(
-                                    'Sevimlilar',
+                                    'Foydalanish shartlari / Maxfiylik siyosati',
+                                    style: AppTextStyles.bodyRegular.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
+                                ],
+                              ),
+                              const SizedBox(height: AppDimensions.spacingS),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
+                                child: Divider(height: 1, color: AppColors.border),
+                              ),
+                              const SizedBox(height: AppDimensions.spacingS),
+                              Row(
+                                children: [
+                                  const Icon(IconsaxPlusLinear.like_tag, size: 24, color: Colors.black),
+                                  const SizedBox(width: AppDimensions.spacingM),
+                                  Text(
+                                    'Ilovani baxolash',
+                                    style: AppTextStyles.bodyRegular.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
+                                ],
+                              ),
+                              const SizedBox(height: AppDimensions.spacingS),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
+                                child: Divider(height: 1, color: AppColors.border),
+                              ),
+                              const SizedBox(height: AppDimensions.spacingS),
+                              Row(
+                                children: [
+                                  const Icon(IconsaxPlusLinear.sms_tracking, size: 24, color: Colors.black),
+                                  const SizedBox(width: AppDimensions.spacingM),
+                                  Text(
+                                    'Fikr bildirish',
                                     style: AppTextStyles.bodyRegular.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
@@ -277,154 +445,34 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                         ),
                         const SizedBox(height: AppDimensions.spacingM),
 
-                        // Logout Button
-                        GestureDetector(
-                          onTap: () => _showLogoutDialog(context),
-                          child: Container(
-                            height: 43,
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                              border: Border.all(color: AppColors.border, width: .5),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimensions.spacingM,
-                              vertical: AppDimensions.spacingS,
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(IconsaxPlusLinear.logout, size: 24, color: Colors.red),
-                                const SizedBox(width: AppDimensions.spacingM),
-                                Text(
-                                  'Chiqish',
-                                  style: AppTextStyles.bodyRegular.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                                const Spacer(),
-                                const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.red),
-                              ],
-                            ),
+                        // Wedy Biznes Button
+                        Container(
+                          height: 43,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                            border: Border.all(color: AppColors.border, width: .5),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimensions.spacingM,
+                            vertical: AppDimensions.spacingS,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(IconsaxPlusLinear.status_up, size: 24, color: Colors.black),
+                              const SizedBox(width: AppDimensions.spacingM),
+                              Text(
+                                'Wedy Biznes',
+                                style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                              const Spacer(),
+                              const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: AppDimensions.spacingM),
+                        const SizedBox(height: AppDimensions.spacingS),
                       ],
-
-                      // Help items
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                          border: Border.all(color: AppColors.border, width: .5),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingM,
-                          vertical: AppDimensions.spacingS,
-                        ),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: AppDimensions.spacingXS),
-                            Row(
-                              children: [
-                                const Icon(IconsaxPlusLinear.message_question, size: 24, color: Colors.black),
-                                const SizedBox(width: AppDimensions.spacingM),
-                                Text(
-                                  'Yordam',
-                                  style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-                                ),
-                                const Spacer(),
-                                const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
-                              child: Divider(height: 1, color: AppColors.border),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                            Row(
-                              children: [
-                                const Icon(IconsaxPlusLinear.document_text_1, size: 24, color: Colors.black),
-                                const SizedBox(width: AppDimensions.spacingM),
-                                Text(
-                                  'Foydalanish shartlari / Maxfiylik siyosati',
-                                  style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-                                ),
-                                const Spacer(),
-                                const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
-                              child: Divider(height: 1, color: AppColors.border),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                            Row(
-                              children: [
-                                const Icon(IconsaxPlusLinear.like_tag, size: 24, color: Colors.black),
-                                const SizedBox(width: AppDimensions.spacingM),
-                                Text(
-                                  'Ilovani baxolash',
-                                  style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-                                ),
-                                const Spacer(),
-                                const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
-                              child: Divider(height: 1, color: AppColors.border),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingS),
-                            Row(
-                              children: [
-                                const Icon(IconsaxPlusLinear.sms_tracking, size: 24, color: Colors.black),
-                                const SizedBox(width: AppDimensions.spacingM),
-                                Text(
-                                  'Fikr bildirish',
-                                  style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-                                ),
-                                const Spacer(),
-                                const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimensions.spacingXS),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.spacingM),
-
-                      // Wedy Biznes Button
-                      Container(
-                        height: 43,
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                          border: Border.all(color: AppColors.border, width: .5),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingM,
-                          vertical: AppDimensions.spacingS,
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(IconsaxPlusLinear.status_up, size: 24, color: Colors.black),
-                            const SizedBox(width: AppDimensions.spacingM),
-                            Text(
-                              'Wedy Biznes',
-                              style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                            const Spacer(),
-                            const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.spacingS),
-                    ],
+                    ),
                   ),
                 ),
               ),

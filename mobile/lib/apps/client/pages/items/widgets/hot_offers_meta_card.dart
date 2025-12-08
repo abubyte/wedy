@@ -1,55 +1,74 @@
 part of '../items_page.dart';
 
 class _HotOffersMetaCard extends StatelessWidget {
-  const _HotOffersMetaCard({required this.category});
-
-  // ignore: prefer_typing_uninitialized_variables, strict_top_level_inference
-  final category;
+  const _HotOffersMetaCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 82,
+      height: 75,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        border: Border.all(color: AppColors.border, width: .5),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: .5),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL, vertical: AppDimensions.spacingS),
-      child: Stack(
-        children: [
-          Image.asset(
-            'assets/images/ct1.png',
-            height: 60,
-            width: 60,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => Container(
-              color: AppColors.surfaceMuted,
-              alignment: Alignment.center,
-              child: const Icon(IconsaxPlusLinear.image, color: AppColors.textMuted),
-            ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingS),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2563EB), Color(0xFFD3E3FD)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(width: 65, height: 82),
-
-              Expanded(
-                child: Text(
-                  category.label,
-                  style: AppTextStyles.bodyRegular.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
-                    overflow: TextOverflow.ellipsis,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          border: Border.all(color: const Color(0xFFE0E0E0), width: .5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Qaynoq takliflar!',
+                      style: AppTextStyles.title1.copyWith(
+                        color: AppColors.textInverse,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
+                  const SizedBox(width: AppDimensions.spacingM),
+                  Container(
+                    height: 24,
+                    width: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                      border: Border.all(color: AppColors.primaryDark, width: .5),
+                    ),
+                    child: const Center(child: Icon(IconsaxPlusLinear.lamp_on, color: AppColors.textInverse, size: 12)),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
+              child: Text(
+                'Eng yaxshi xizmat va mahsulotlar shu yerda.',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textInverse,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: AppDimensions.spacingS),
+          ],
+        ),
       ),
     );
   }
