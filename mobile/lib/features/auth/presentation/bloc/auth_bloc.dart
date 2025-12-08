@@ -98,14 +98,57 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onCheckAuthStatus(CheckAuthStatusEvent event, Emitter<AuthState> emit) async {
     // Check if access token exists (more reliable than isLoggedIn flag)
     final accessToken = await localDataSource.getAccessToken();
-    final isLoggedIn = accessToken != null && accessToken.isNotEmpty;
 
-    if (isLoggedIn) {
-      // Fetch user profile
-      await _fetchUserProfile(emit);
-    } else {
+    if (accessToken == null || accessToken.isEmpty) {
+      // No access token - user is not logged in
       emit(const Unauthenticated());
+      return;
     }
+
+    // We have an access token - try to fetch profile
+    // The auth interceptor will handle token refresh automatically if token is expired
+    final result = await authRepository.getProfile();
+
+    await result.fold(
+      (failure) async {
+        // Profile fetch failed - check if tokens were cleared by interceptor
+        // (interceptor clears tokens if refresh fails)
+        final remainingAccessToken = await localDataSource.getAccessToken();
+        final remainingRefreshToken = await localDataSource.getRefreshToken();
+
+        if (remainingAccessToken == null || remainingAccessToken.isEmpty) {
+          // Tokens were cleared (likely by interceptor after failed refresh)
+          // User is not authenticated
+          emit(const Unauthenticated());
+          return;
+        }
+
+        // Tokens still exist but profile fetch failed - try manual refresh
+        if (remainingRefreshToken != null && remainingRefreshToken.isNotEmpty) {
+          final refreshResult = await refreshTokenUseCase(remainingRefreshToken);
+
+          await refreshResult.fold(
+            (refreshFailure) async {
+              // Refresh failed - clear auth data and emit unauthenticated
+              await localDataSource.clearAuthData();
+              emit(const Unauthenticated());
+            },
+            (_) async {
+              // Token refreshed successfully - fetch user profile again
+              await _fetchUserProfile(emit);
+            },
+          );
+        } else {
+          // No refresh token - clear auth data and emit unauthenticated
+          await localDataSource.clearAuthData();
+          emit(const Unauthenticated());
+        }
+      },
+      (user) {
+        // Profile fetched successfully - user is authenticated
+        emit(Authenticated(user));
+      },
+    );
   }
 
   Future<void> _fetchUserProfile(Emitter<AuthState> emit) async {
