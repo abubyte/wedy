@@ -138,18 +138,34 @@ class PaymeMerchantAPI:
                 return False
             
             auth_string = authorization[6:]  # Remove "Basic "
-            decoded = base64.b64decode(auth_string).decode()
+            try:
+                decoded = base64.b64decode(auth_string).decode('utf-8')
+            except Exception as e:
+                logger.warning(f"Failed to decode Authorization header: {str(e)}")
+                return False
             
             if ":" not in decoded:
-                logger.debug("Authorization header doesn't contain ':' separator")
+                logger.warning(f"Authorization header doesn't contain ':' separator. Decoded: {decoded[:50]}...")
                 return False
             
             merchant_id, signature = decoded.split(":", 1)
             
+            # Log the extracted values for debugging
+            logger.debug(
+                f"Extracted from Authorization: merchant_id='{merchant_id}', "
+                f"signature_length={len(signature)}, signature_preview={signature[:20]}..."
+            )
+            
             # Calculate expected signature using raw body (exact format)
             # Payme uses the raw request body as-is for signature calculation
+            # The secret key should be a separate credential, not the merchant_id
+            logger.debug(
+                f"Calculating signature with secret_key length: {len(self.secret_key) if self.secret_key else 0}, "
+                f"raw_body length: {len(raw_body)}"
+            )
+            
             expected_signature = hmac.new(
-                self.secret_key.encode(),
+                self.secret_key.encode('utf-8'),
                 raw_body.encode('utf-8'),
                 hashlib.sha256
             ).hexdigest()
@@ -161,8 +177,10 @@ class PaymeMerchantAPI:
                 logger.warning(
                     f"Payme signature mismatch. "
                     f"Merchant ID: {merchant_id}, "
-                    f"Expected signature (first 16 chars): {expected_signature[:16]}..., "
-                    f"Received signature (first 16 chars): {signature[:16]}..., "
+                    f"Secret key length: {len(self.secret_key) if self.secret_key else 0}, "
+                    f"Secret key preview: {self.secret_key[:10] if self.secret_key and len(self.secret_key) > 10 else self.secret_key}..., "
+                    f"Expected signature (first 32 chars): {expected_signature[:32]}, "
+                    f"Received signature (first 32 chars): {signature[:32]}, "
                     f"Body length: {len(raw_body)}, "
                     f"Body preview: {raw_body[:100]}..."
                 )
