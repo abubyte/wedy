@@ -181,7 +181,7 @@ flutter run \
 The `AppConfig` class automatically sets the following based on environment:
 
 ### Development
-- Base URL: `http://api.abubyte.uz`
+- Base URL: `http://api.wedy.uz`
 - Logging: Enabled
 - Analytics: Disabled
 
