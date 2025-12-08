@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wedy/apps/client/pages/chats/chats_page.dart';
+import 'package:wedy/apps/merchant/pages/account/account_page.dart';
 import 'package:wedy/apps/merchant/pages/boost/boost_page.dart';
 import 'package:wedy/apps/merchant/pages/chats/chats_page.dart';
 import 'package:wedy/apps/merchant/pages/edit/edit_page.dart';
+import 'package:wedy/apps/merchant/pages/services/services_page.dart';
 import 'package:wedy/apps/merchant/pages/settings/settings_page.dart';
-import 'package:wedy/features/reviews/presentation/screens/reviews_page.dart';
+import 'package:wedy/features/category/domain/entities/category.dart';
+import 'package:wedy/features/service/domain/entities/service.dart';
 import 'package:wedy/shared/navigation/navigation_shell.dart';
 import 'package:wedy/apps/client/pages/favorites/favorites_page.dart';
 import 'package:wedy/apps/client/pages/home/home_page.dart';
 import 'package:wedy/apps/client/pages/items/items_page.dart';
 import 'package:wedy/apps/client/pages/profile/profile_page.dart';
+import 'package:wedy/apps/client/pages/search/search_page.dart';
+import 'package:wedy/features/reviews/presentation/screens/reviews_page.dart';
 import 'package:wedy/features/service/presentation/screens/service/service_page.dart';
 import 'package:wedy/apps/merchant/pages/home/home_page.dart';
 import 'package:wedy/features/auth/presentation/screens/auth_screen.dart';
@@ -68,7 +73,13 @@ class AppRouter {
       },
       routes: [
         GoRoute(path: RouteNames.auth, name: RouteNames.auth, builder: (context, state) => const AuthScreen()),
-        GoRoute(path: RouteNames.serviceDetails, builder: (context, state) => const WedyServicePage()),
+        GoRoute(
+          path: RouteNames.serviceDetails,
+          builder: (context, state) {
+            final serviceId = state.uri.queryParameters['id'];
+            return WedyServicePage(serviceId: serviceId);
+          },
+        ),
         StatefulShellRoute.indexedStack(
           builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) =>
               NavigationShell(child: navigationShell),
@@ -88,12 +99,32 @@ class AppRouter {
                     GoRoute(
                       path: RouteNames.items,
                       name: RouteNames.items,
-                      builder: (context, state) => const ClientItemsPage(),
+                      builder: (context, state) {
+                        final extra = state.extra;
+                        final category = extra is ServiceCategory ? extra : null;
+                        return ClientItemsPage(category: category);
+                      },
                     ),
                     GoRoute(
                       path: RouteNames.hotOffers,
                       name: RouteNames.hotOffers,
                       builder: (context, state) => const ClientItemsPage(hotOffers: true),
+                    ),
+                    GoRoute(
+                      path: RouteNames.search,
+                      name: RouteNames.search,
+                      builder: (context, state) {
+                        final query = state.uri.queryParameters['q'];
+                        return ClientSearchPage(initialQuery: query);
+                      },
+                    ),
+                    GoRoute(
+                      path: RouteNames.reviews,
+                      name: RouteNames.reviews,
+                      builder: (context, state) {
+                        final serviceId = state.uri.queryParameters['serviceId'];
+                        return ReviewsPage(serviceId: serviceId);
+                      },
                     ),
                   ],
                 ),
@@ -155,10 +186,46 @@ class AppRouter {
       debugLogDiagnostics: true,
       navigatorKey: _merchantRootNavigatorKey,
       initialLocation: RouteNames.home,
+      redirect: (context, state) async {
+        final localDataSource = getIt<AuthLocalDataSource>();
+        // Check if access token exists (more reliable than isLoggedIn flag)
+        final accessToken = await localDataSource.getAccessToken();
+        final isLoggedIn = accessToken != null && accessToken.isNotEmpty;
+        final isAuthRoute = state.matchedLocation == RouteNames.auth;
+
+        // If not logged in and not on auth route, redirect to auth
+        if (!isLoggedIn && !isAuthRoute) {
+          return RouteNames.auth;
+        }
+
+        // If logged in and on auth route, redirect to home
+        if (isLoggedIn && isAuthRoute) {
+          return RouteNames.home;
+        }
+
+        return null; // No redirect needed
+      },
       routes: [
         GoRoute(path: RouteNames.auth, builder: (context, state) => const AuthScreen()),
-        GoRoute(path: RouteNames.edit, builder: (context, state) => const MerchantEditPage()),
+        GoRoute(
+          path: RouteNames.edit,
+          builder: (context, state) {
+            final service = state.extra is MerchantService ? state.extra as MerchantService : null;
+            return MerchantEditPage(service: service);
+          },
+        ),
         GoRoute(path: RouteNames.boost, builder: (context, state) => const BoostPage()),
+        GoRoute(
+          path: RouteNames.services,
+          name: RouteNames.services,
+          builder: (context, state) => const MerchantServicesPage(),
+        ),
+        GoRoute(
+          path: RouteNames.account,
+          name: RouteNames.account,
+          builder: (context, state) => const MerchantAccountPage(),
+        ),
+        GoRoute(path: RouteNames.tariff, name: RouteNames.tariff, builder: (context, state) => const Scaffold()),
         StatefulShellRoute.indexedStack(
           builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) =>
               NavigationShell(client: false, child: navigationShell),
@@ -178,7 +245,10 @@ class AppRouter {
                     GoRoute(
                       path: RouteNames.reviews,
                       name: RouteNames.reviews,
-                      builder: (context, state) => const ReviewsPage(),
+                      builder: (context, state) {
+                        final serviceId = state.uri.queryParameters['serviceId'];
+                        return ReviewsPage(serviceId: serviceId);
+                      },
                     ),
                   ],
                 ),
@@ -194,7 +264,7 @@ class AppRouter {
                   pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
                     context: context,
                     state: state,
-                    child: const WedyServicePage(isMerchant: true),
+                    child: const MerchantServicesPage(),
                   ),
                 ),
               ],
