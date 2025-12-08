@@ -66,9 +66,9 @@ class PaymentService:
         # Apply discounts based on duration
         if duration_days >= 91:  # 91-365 days: 30% discount
             discount = 0.30
-        elif duration_days >= 21:  # 21-90 days: 20% discount
+        elif duration_days >= 31:  # 31-90 days: 20% discount
             discount = 0.20
-        elif duration_days >= 8:  # 8-20 days: 10% discount
+        elif duration_days >= 8:  # 8-30 days: 10% discount
             discount = 0.10
         else:  # 1-7 days: no discount
             discount = 0.0

@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:8000"] #
 
     # Documentation
-    ENABLE_DOCS: bool = False
+    ENABLE_DOCS: bool = True  # Enable docs in development (set to False in production via env var)
 
     # Database
     DATABASE_URL: str
