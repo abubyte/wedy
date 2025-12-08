@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wedy/core/config/app_config.dart';
 import 'package:wedy/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wedy/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
+import 'package:wedy/features/category/presentation/bloc/category_bloc.dart';
 
 import '../../core/di/injection_container.dart';
 import '../../core/theme/app_theme.dart';
@@ -23,7 +25,9 @@ class WedyClientApp extends StatelessWidget {
         return MultiBlocProvider(
           providers: [
             BlocProvider(create: (_) => getIt<AuthBloc>()..add(const CheckAuthStatusEvent())),
+            BlocProvider(create: (_) => getIt<ServiceBloc>()),
             BlocProvider(create: (_) => getIt<ProfileBloc>()),
+            BlocProvider(create: (_) => getIt<CategoryBloc>()),
           ],
           child: MaterialApp.router(
             title: AppConfig.instance.appName,

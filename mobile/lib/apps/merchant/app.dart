@@ -8,6 +8,9 @@ import '../../core/di/injection_container.dart';
 import '../../core/theme/app_theme.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/service/presentation/bloc/merchant_service_bloc.dart';
+import '../../features/category/presentation/bloc/category_bloc.dart';
+import '../../features/category/presentation/bloc/category_event.dart';
 import '../../shared/navigation/app_router.dart';
 
 class WedyMerchantApp extends StatelessWidget {
@@ -24,6 +27,8 @@ class WedyMerchantApp extends StatelessWidget {
           providers: [
             BlocProvider(create: (_) => getIt<AuthBloc>()..add(const CheckAuthStatusEvent())),
             BlocProvider(create: (_) => getIt<ProfileBloc>()),
+            BlocProvider(create: (_) => getIt<MerchantServiceBloc>()),
+            BlocProvider(create: (_) => getIt<CategoryBloc>()..add(const LoadCategoriesEvent())),
           ],
           child: MaterialApp.router(
             title: AppConfig.instance.appName,
