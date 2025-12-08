@@ -157,12 +157,14 @@ class PaymeMerchantAPI:
             is_valid = hmac.compare_digest(signature, expected_signature)
             
             if not is_valid:
-                logger.debug(
-                    f"Signature mismatch. "
+                # Use warning level for signature mismatches to help debug Sandbox issues
+                logger.warning(
+                    f"Payme signature mismatch. "
                     f"Merchant ID: {merchant_id}, "
-                    f"Expected: {expected_signature[:16]}..., "
-                    f"Received: {signature[:16]}..., "
-                    f"Body length: {len(raw_body)}"
+                    f"Expected signature (first 16 chars): {expected_signature[:16]}..., "
+                    f"Received signature (first 16 chars): {signature[:16]}..., "
+                    f"Body length: {len(raw_body)}, "
+                    f"Body preview: {raw_body[:100]}..."
                 )
             
             return is_valid

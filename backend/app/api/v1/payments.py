@@ -202,12 +202,24 @@ async def payment_webhook(
                 # Log for debugging (remove in production or use proper logging)
                 import logging
                 logger = logging.getLogger(__name__)
+                
+                # Log more details for debugging
                 logger.warning(
                     f"Payme authorization failed. "
                     f"Merchant ID: {merchant_id}, "
                     f"Tried {len(secret_keys_to_try)} secret keys, "
-                    f"Errors: {verification_errors}"
+                    f"Errors: {verification_errors}, "
+                    f"Request method: {webhook_data.get('method')}, "
+                    f"Request ID: {webhook_data.get('id')}, "
+                    f"Body length: {len(raw_body)}"
                 )
+                
+                # Log debug info about secret keys (without exposing actual keys)
+                if secret_keys_to_try:
+                    logger.debug(
+                        f"Secret keys configured: {len(secret_keys_to_try)} keys, "
+                        f"First key length: {len(secret_keys_to_try[0]) if secret_keys_to_try[0] else 0}"
+                    )
                 
                 return {
                     "id": webhook_data.get("id"),
