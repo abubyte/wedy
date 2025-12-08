@@ -111,8 +111,13 @@ async def payment_webhook(
     and routes to the Merchant API handler.
     """
     try:
-        # Get request body
-        webhook_data = await request.json()
+        # Get raw request body for signature verification
+        raw_body_bytes = await request.body()
+        raw_body = raw_body_bytes.decode('utf-8') if raw_body_bytes else ''
+        
+        # Parse JSON for processing
+        import json as json_lib
+        webhook_data = json_lib.loads(raw_body) if raw_body else {}
         
         # Check if this is a Payme JSON-RPC 2.0 Merchant API request
         if method.lower() == "payme" and _is_jsonrpc_request(webhook_data):
@@ -175,19 +180,35 @@ async def payment_webhook(
             # Try each secret key until one works
             authorization_valid = False
             valid_secret_key = None
+            verification_errors = []
             
             for secret_key in secret_keys_to_try:
-                merchant_api = PaymeMerchantAPI(
-                    session=session,
-                    secret_key=secret_key
-                )
-                
-                if merchant_api.verify_request(webhook_data, authorization):
-                    authorization_valid = True
-                    valid_secret_key = secret_key
-                    break
+                try:
+                    merchant_api = PaymeMerchantAPI(
+                        session=session,
+                        secret_key=secret_key
+                    )
+                    
+                    # Use raw body for signature verification to match exact format
+                    if merchant_api.verify_request_with_raw_body(raw_body, authorization):
+                        authorization_valid = True
+                        valid_secret_key = secret_key
+                        break
+                except Exception as e:
+                    verification_errors.append(str(e))
+                    continue
             
             if not authorization_valid:
+                # Log for debugging (remove in production or use proper logging)
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"Payme authorization failed. "
+                    f"Merchant ID: {merchant_id}, "
+                    f"Tried {len(secret_keys_to_try)} secret keys, "
+                    f"Errors: {verification_errors}"
+                )
+                
                 return {
                     "id": webhook_data.get("id"),
                     "result": None,

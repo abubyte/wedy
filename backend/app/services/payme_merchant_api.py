@@ -74,6 +74,9 @@ class PaymeMerchantAPI:
         Authorization: Basic base64(merchant_id:signature)
         
         Signature is calculated as HMAC-SHA256 of the request body.
+        
+        Note: This method re-serializes the JSON, which might not match exactly.
+        Use verify_request_with_raw_body for exact signature matching.
         """
         try:
             import base64
@@ -92,10 +95,56 @@ class PaymeMerchantAPI:
             
             # Calculate expected signature
             # Payme uses HMAC-SHA256 of the request body
+            # Try with sorted keys first (standard JSON-RPC format)
             request_json = json.dumps(request_data, separators=(',', ':'), ensure_ascii=False, sort_keys=True)
             expected_signature = hmac.new(
                 self.secret_key.encode(),
-                request_json.encode(),
+                request_json.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+            
+            if hmac.compare_digest(signature, expected_signature):
+                return True
+            
+            # If sorted doesn't work, try without sorting (some implementations don't sort)
+            request_json_no_sort = json.dumps(request_data, separators=(',', ':'), ensure_ascii=False)
+            expected_signature_no_sort = hmac.new(
+                self.secret_key.encode(),
+                request_json_no_sort.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+            
+            return hmac.compare_digest(signature, expected_signature_no_sort)
+            
+        except Exception:
+            return False
+    
+    def verify_request_with_raw_body(self, raw_body: str, authorization: str) -> bool:
+        """
+        Verify Payme request using raw request body (exact format as sent).
+        
+        This method uses the exact request body as received, which ensures
+        the signature matches exactly what Payme calculated.
+        """
+        try:
+            import base64
+            
+            # Extract merchant_id and signature from Authorization header
+            if not authorization.startswith("Basic "):
+                return False
+            
+            auth_string = authorization[6:]  # Remove "Basic "
+            decoded = base64.b64decode(auth_string).decode()
+            
+            if ":" not in decoded:
+                return False
+            
+            merchant_id, signature = decoded.split(":", 1)
+            
+            # Calculate expected signature using raw body (exact format)
+            expected_signature = hmac.new(
+                self.secret_key.encode(),
+                raw_body.encode('utf-8'),
                 hashlib.sha256
             ).hexdigest()
             
