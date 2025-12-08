@@ -118,9 +118,25 @@ async def payment_webhook(
         if method.lower() == "payme" and _is_jsonrpc_request(webhook_data):
             # This is a Merchant API request - handle with proper authorization
             settings = get_settings()
+            # Use tariff secret key as default, fallback to service boost
+            # For authorization validation, we can use any configured secret key
+            secret_key = settings.PAYME_TARIFF_SECRET_KEY or settings.PAYME_SERVICE_BOOST_SECRET_KEY
+            
+            if not secret_key:
+                # If no secret key configured, return authorization error
+                return {
+                    "id": webhook_data.get("id"),
+                    "result": None,
+                    "error": {
+                        "code": -32504,
+                        "message": "Неверная авторизация",
+                        "data": {}
+                    }
+                }
+            
             merchant_api = PaymeMerchantAPI(
                 session=session,
-                secret_key=settings.PAYME_SECRET_KEY
+                secret_key=secret_key
             )
             
             # Verify authorization
