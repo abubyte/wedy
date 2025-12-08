@@ -2,7 +2,12 @@ name: Deploy to Server
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'infra/**'
+      - 'docker-compose.yml'
 
 jobs:
   deploy:
