@@ -1,13 +1,16 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Header
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.core.database import get_db_session
+from app.core.config import get_settings
 from app.api.deps import get_current_user
 from app.models.user_model import User
 from app.models.payment_model import PaymentMethod
 from app.services.payment_service import PaymentService, PaymentError, SubscriptionError
 from app.services.payment_providers import get_payment_providers
+from app.services.payme_merchant_api import PaymeMerchantAPI
 from app.schemas.payment_schema import (
     PaymentResponse, SubscriptionResponse,
     TariffPaymentRequest, FeaturedServicePaymentRequest,
@@ -88,15 +91,66 @@ async def create_featured_service_payment(
         raise HTTPException(status_code=500, detail=f"Failed to create featured service payment: {str(e)}")
 
 
-@router.post("/webhook/{method}", response_model=PaymentWebhookResponse)
+@router.post("/webhook/{method}")
 async def payment_webhook(
     method: str,
-    webhook_data: dict,
-    background_tasks: BackgroundTasks,
-    payment_service: PaymentService = Depends(get_payment_service)
+    request: Request,
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    payment_service: PaymentService = Depends(get_payment_service),
+    session: AsyncSession = Depends(get_db_session)
 ):
-    """Handle payment webhooks from providers."""
+    """
+    Handle payment webhooks from providers.
+    
+    For Payme, this endpoint handles both:
+    1. JSON-RPC 2.0 Merchant API requests (CheckPerformTransaction, etc.)
+    2. Webhook notifications
+    
+    If the request is a JSON-RPC 2.0 request, it validates authorization
+    and routes to the Merchant API handler.
+    """
     try:
+        # Get request body
+        webhook_data = await request.json()
+        
+        # Check if this is a Payme JSON-RPC 2.0 Merchant API request
+        if method.lower() == "payme" and _is_jsonrpc_request(webhook_data):
+            # This is a Merchant API request - handle with proper authorization
+            settings = get_settings()
+            merchant_api = PaymeMerchantAPI(
+                session=session,
+                secret_key=settings.PAYME_SECRET_KEY
+            )
+            
+            # Verify authorization
+            if not authorization:
+                return {
+                    "id": webhook_data.get("id"),
+                    "result": None,
+                    "error": {
+                        "code": -32504,
+                        "message": "Неверная авторизация",
+                        "data": {}
+                    }
+                }
+            
+            if not merchant_api.verify_request(webhook_data, authorization):
+                return {
+                    "id": webhook_data.get("id"),
+                    "result": None,
+                    "error": {
+                        "code": -32504,
+                        "message": "Неверная авторизация",
+                        "data": {}
+                    }
+                }
+            
+            # Handle Merchant API request
+            response = await merchant_api.handle_request(webhook_data)
+            return response
+        
+        # Regular webhook notification handling
         # Validate payment method
         try:
             payment_method = PaymentMethod(method.lower())
@@ -122,10 +176,31 @@ async def payment_webhook(
     except HTTPException:
         raise
     except Exception as e:
+        # If it's a JSON-RPC request, return JSON-RPC error format
+        if method.lower() == "payme" and _is_jsonrpc_request(webhook_data if 'webhook_data' in locals() else {}):
+            return {
+                "id": webhook_data.get("id") if 'webhook_data' in locals() else None,
+                "result": None,
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}",
+                    "data": {}
+                }
+            }
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to process webhook: {str(e)}"
         )
+
+
+def _is_jsonrpc_request(data: dict) -> bool:
+    """Check if the request is a JSON-RPC 2.0 request."""
+    return (
+        isinstance(data, dict) and
+        "jsonrpc" in data and
+        "method" in data and
+        "id" in data
+    )
 
 
 async def _process_webhook_background(
