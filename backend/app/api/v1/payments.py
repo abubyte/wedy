@@ -118,12 +118,24 @@ async def payment_webhook(
         if method.lower() == "payme" and _is_jsonrpc_request(webhook_data):
             # This is a Merchant API request - handle with proper authorization
             settings = get_settings()
-            # Use tariff secret key as default, fallback to service boost
-            # For authorization validation, we can use any configured secret key
-            secret_key = settings.PAYME_TARIFF_SECRET_KEY or settings.PAYME_SERVICE_BOOST_SECRET_KEY
+            
+            # Verify authorization
+            if not authorization:
+                return {
+                    "id": webhook_data.get("id"),
+                    "result": None,
+                    "error": {
+                        "code": -32504,
+                        "message": "Неверная авторизация",
+                        "data": {}
+                    }
+                }
+            
+            # Extract merchant_id from Authorization header to determine which secret key to use
+            secret_key = _get_payme_secret_key_from_auth(authorization, settings)
             
             if not secret_key:
-                # If no secret key configured, return authorization error
+                # No matching merchant ID found or no secret key configured
                 return {
                     "id": webhook_data.get("id"),
                     "result": None,
@@ -138,18 +150,6 @@ async def payment_webhook(
                 session=session,
                 secret_key=secret_key
             )
-            
-            # Verify authorization
-            if not authorization:
-                return {
-                    "id": webhook_data.get("id"),
-                    "result": None,
-                    "error": {
-                        "code": -32504,
-                        "message": "Неверная авторизация",
-                        "data": {}
-                    }
-                }
             
             if not merchant_api.verify_request(webhook_data, authorization):
                 return {
@@ -217,6 +217,40 @@ def _is_jsonrpc_request(data: dict) -> bool:
         "method" in data and
         "id" in data
     )
+
+
+def _get_payme_secret_key_from_auth(authorization: str, settings) -> Optional[str]:
+    """
+    Extract merchant_id from Authorization header and return corresponding secret key.
+    
+    Authorization format: Basic base64(merchant_id:signature)
+    """
+    try:
+        import base64
+        
+        if not authorization.startswith("Basic "):
+            return None
+        
+        auth_string = authorization[6:]  # Remove "Basic "
+        decoded = base64.b64decode(auth_string).decode()
+        
+        if ":" not in decoded:
+            return None
+        
+        merchant_id, _ = decoded.split(":", 1)
+        
+        # Match merchant_id to configured terminals
+        if settings.PAYME_TARIFF_MERCHANT_ID and merchant_id == settings.PAYME_TARIFF_MERCHANT_ID:
+            return settings.PAYME_TARIFF_SECRET_KEY
+        elif settings.PAYME_SERVICE_BOOST_MERCHANT_ID and merchant_id == settings.PAYME_SERVICE_BOOST_MERCHANT_ID:
+            return settings.PAYME_SERVICE_BOOST_SECRET_KEY
+        else:
+            # Fallback: try both secret keys if merchant_id doesn't match
+            # (for testing or if merchant_id is not critical)
+            return settings.PAYME_TARIFF_SECRET_KEY or settings.PAYME_SERVICE_BOOST_SECRET_KEY
+            
+    except Exception:
+        return None
 
 
 async def _process_webhook_background(
