@@ -1,7 +1,22 @@
 part of '../service_page.dart';
 
 class ServicePriceButton extends StatelessWidget {
-  const ServicePriceButton({super.key});
+  final double price;
+
+  const ServicePriceButton({super.key, required this.price});
+
+  String _formatPrice(double price) {
+    // Format price with thousand separators
+    final priceStr = price.toStringAsFixed(0);
+    final buffer = StringBuffer();
+    for (int i = 0; i < priceStr.length; i++) {
+      if (i > 0 && (priceStr.length - i) % 3 == 0) {
+        buffer.write(' ');
+      }
+      buffer.write(priceStr[i]);
+    }
+    return '${buffer.toString()} so\'m';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +30,7 @@ class ServicePriceButton extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          "1 soati 300 000 so'm",
+          _formatPrice(price),
           style: AppTextStyles.bodyLarge.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 16,

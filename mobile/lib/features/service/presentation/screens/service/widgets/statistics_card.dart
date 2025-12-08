@@ -1,7 +1,31 @@
 part of '../service_page.dart';
 
 class ServiceStatisticsCard extends StatelessWidget {
-  const ServiceStatisticsCard({super.key});
+  final int viewCount;
+  final int likeCount;
+  final int saveCount;
+  final int shareCount;
+  final double rating;
+  final int reviewCount;
+
+  const ServiceStatisticsCard({
+    super.key,
+    required this.viewCount,
+    required this.likeCount,
+    required this.saveCount,
+    required this.shareCount,
+    required this.rating,
+    required this.reviewCount,
+  });
+
+  String _formatNumber(int number) {
+    if (number >= 1000000) {
+      return '${(number / 1000000).toStringAsFixed(1)}M';
+    } else if (number >= 1000) {
+      return '${(number / 1000).toStringAsFixed(1)}K';
+    }
+    return number.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +44,7 @@ class ServiceStatisticsCard extends StatelessWidget {
             children: [
               const Icon(IconsaxPlusLinear.star_1, size: 24, color: Colors.black),
               Text(
-                '4.7',
+                rating.toStringAsFixed(1),
                 style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.black),
               ),
             ],
@@ -37,7 +61,7 @@ class ServiceStatisticsCard extends StatelessWidget {
             children: [
               const Icon(IconsaxPlusLinear.eye, size: 24, color: Colors.black),
               Text(
-                '10 000',
+                _formatNumber(viewCount),
                 style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
               ),
             ],
@@ -54,7 +78,7 @@ class ServiceStatisticsCard extends StatelessWidget {
             children: [
               const Icon(IconsaxPlusLinear.message, size: 24, color: Colors.black),
               Text(
-                '48',
+                _formatNumber(reviewCount),
                 style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
               ),
             ],

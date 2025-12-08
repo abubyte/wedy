@@ -1,7 +1,10 @@
 part of '../service_page.dart';
 
 class ServiceMetaTile extends StatelessWidget {
-  const ServiceMetaTile({super.key});
+  final String locationRegion;
+  final String categoryName;
+
+  const ServiceMetaTile({super.key, required this.locationRegion, required this.categoryName});
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +13,7 @@ class ServiceMetaTile extends StatelessWidget {
       children: [
         // Region
         Text(
-          "Qoraqalpog'iston",
+          locationRegion,
           style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.primary),
         ),
         const SizedBox(width: AppDimensions.spacingXS),
@@ -25,7 +28,7 @@ class ServiceMetaTile extends StatelessWidget {
 
         // Category
         Text(
-          'Dekoratsiya',
+          categoryName,
           style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.primary),
         ),
       ],

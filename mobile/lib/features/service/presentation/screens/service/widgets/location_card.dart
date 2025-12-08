@@ -1,7 +1,11 @@
 part of '../service_page.dart';
 
 class ServiceLocationCard extends StatelessWidget {
-  const ServiceLocationCard({super.key});
+  final String locationRegion;
+  final double? latitude;
+  final double? longitude;
+
+  const ServiceLocationCard({super.key, required this.locationRegion, this.latitude, this.longitude});
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +29,9 @@ class ServiceLocationCard extends StatelessWidget {
               child: Image(
                 image: NetworkImage(
                   MapsUtils.buildStaticMapUrlWithMarker(
-                    center: '39.6542,66.9597',
-                    lat: 39.6542,
-                    lng: 66.9597,
+                    center: latitude != null && longitude != null ? '$latitude,$longitude' : '39.6542,66.9597',
+                    lat: latitude ?? 39.6542,
+                    lng: longitude ?? 66.9597,
                     zoom: 14,
                     size: '600x300',
                     markerColor: 'red',
