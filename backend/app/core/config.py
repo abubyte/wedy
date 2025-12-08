@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     PAYME_TARIFF_MERCHANT_ID: Optional[str] = None
     PAYME_SERVICE_BOOST_SECRET_KEY: Optional[str] = None
     PAYME_SERVICE_BOOST_MERCHANT_ID: Optional[str] = None
+    PAYME_SANDBOX_SECRET_KEY: Optional[str] = "Paycom"  # For Payme Sandbox testing
     PAYME_API_URL: str = "https://checkout.paycom.uz"
     PAYME_TEST_API_URL: str = "https://test.paycom.uz"
 

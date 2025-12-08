@@ -96,6 +96,7 @@ async def payment_webhook(
     method: str,
     request: Request,
     authorization: Optional[str] = Header(None, alias="Authorization"),
+    test_operation: Optional[str] = Header(None, alias="Test-Operation"),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     payment_service: PaymentService = Depends(get_payment_service),
     session: AsyncSession = Depends(get_db_session)
@@ -140,27 +141,37 @@ async def payment_webhook(
             # For Payme Sandbox, we need to try both secret keys since merchant_id might not match
             secret_keys_to_try = []
             
+            # Check if this is a Sandbox test request (Payme Sandbox sends "Test-Operation: Paycom" header)
+            is_sandbox = test_operation and test_operation.lower() == "paycom"
+            
             # Get merchant_id from authorization
             merchant_id = _extract_merchant_id_from_auth(authorization)
             
-            if merchant_id:
+            # If Sandbox request, prioritize Sandbox secret key
+            if is_sandbox and settings.PAYME_SANDBOX_SECRET_KEY:
+                secret_keys_to_try = [settings.PAYME_SANDBOX_SECRET_KEY]
+            elif merchant_id:
                 # Try to match merchant_id to configured terminals
                 if settings.PAYME_TARIFF_MERCHANT_ID and merchant_id == settings.PAYME_TARIFF_MERCHANT_ID:
                     secret_keys_to_try = [settings.PAYME_TARIFF_SECRET_KEY]
                 elif settings.PAYME_SERVICE_BOOST_MERCHANT_ID and merchant_id == settings.PAYME_SERVICE_BOOST_MERCHANT_ID:
                     secret_keys_to_try = [settings.PAYME_SERVICE_BOOST_SECRET_KEY]
                 else:
-                    # Merchant ID doesn't match - try both (for Sandbox/testing)
-                    secret_keys_to_try = [
+                    # Merchant ID doesn't match - try Sandbox key first, then both production keys
+                    if settings.PAYME_SANDBOX_SECRET_KEY:
+                        secret_keys_to_try = [settings.PAYME_SANDBOX_SECRET_KEY]
+                    secret_keys_to_try.extend([
                         settings.PAYME_TARIFF_SECRET_KEY,
                         settings.PAYME_SERVICE_BOOST_SECRET_KEY
-                    ]
+                    ])
             else:
-                # Can't extract merchant_id - try both secret keys
-                secret_keys_to_try = [
+                # Can't extract merchant_id - try Sandbox key first, then both production keys
+                if settings.PAYME_SANDBOX_SECRET_KEY:
+                    secret_keys_to_try = [settings.PAYME_SANDBOX_SECRET_KEY]
+                secret_keys_to_try.extend([
                     settings.PAYME_TARIFF_SECRET_KEY,
                     settings.PAYME_SERVICE_BOOST_SECRET_KEY
-                ]
+                ])
             
             # Filter out None values
             secret_keys_to_try = [sk for sk in secret_keys_to_try if sk]
@@ -207,6 +218,7 @@ async def payment_webhook(
                 logger.warning(
                     f"Payme authorization failed. "
                     f"Merchant ID: {merchant_id}, "
+                    f"Is Sandbox: {is_sandbox}, "
                     f"Tried {len(secret_keys_to_try)} secret keys, "
                     f"Errors: {verification_errors}, "
                     f"Request method: {webhook_data.get('method')}, "
