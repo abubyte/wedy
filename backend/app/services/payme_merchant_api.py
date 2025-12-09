@@ -632,8 +632,15 @@ class PaymeMerchantAPI:
         if existing_payme_id:
             if existing_payme_id == transaction_id:
                 # Same transaction, return existing state
+                # Use stored payme_create_time from metadata to ensure consistency with CheckTransaction
+                stored_create_time = payment_metadata.get("payme_create_time")
+                if stored_create_time is not None:
+                    create_time = int(stored_create_time)
+                else:
+                    # Fallback to payment.created_at if metadata doesn't have it
+                    create_time = int(payment.created_at.timestamp() * 1000)
                 return {
-                    "create_time": int(payment.created_at.timestamp() * 1000),
+                    "create_time": create_time,
                     "transaction": str(payment.id),
                     "state": self.STATE_CREATED
                 }
@@ -703,8 +710,12 @@ class PaymeMerchantAPI:
             f"Stored Payme ID={stored_transaction_id}, Full metadata={stored_metadata}"
         )
         
+        # Use time_param (stored as payme_create_time) to ensure consistency with CheckTransaction
+        # This ensures CreateTransaction and CheckTransaction return the same create_time
+        create_time = time_param if time_param is not None else int(payment.created_at.timestamp() * 1000)
+        
         return {
-            "create_time": int(payment.created_at.timestamp() * 1000),
+            "create_time": create_time,
             "transaction": str(payment.id),
             "state": self.STATE_CREATED
         }
@@ -981,8 +992,17 @@ class PaymeMerchantAPI:
             state = self.STATE_CREATED
         
         # Get timestamps
-        create_time = payment_metadata.get("payme_create_time",
-                                          int(payment.created_at.timestamp() * 1000))
+        # Use stored payme_create_time from metadata to ensure consistency with CreateTransaction
+        stored_create_time = payment_metadata.get("payme_create_time")
+        if stored_create_time is not None:
+            try:
+                create_time = int(stored_create_time)
+            except (ValueError, TypeError):
+                # If conversion fails, fallback to payment.created_at
+                create_time = int(payment.created_at.timestamp() * 1000)
+        else:
+            # Fallback to payment.created_at if metadata doesn't have it
+            create_time = int(payment.created_at.timestamp() * 1000)
         
         # Get perform_time - use metadata if available, otherwise fallback to completed_at
         # For cancelled transactions that were completed, we should still show perform_time
