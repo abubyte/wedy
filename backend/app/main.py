@@ -7,7 +7,7 @@ import logging
 from app.core.config import settings
 from app.core.database import create_db_and_tables, close_db_connection
 from app.core.exceptions import WedyException, map_exception_to_http
-from app.api.v1 import auth, categories, users, services, merchants, merchants_cover_image, merchants_gallery, merchants_contacts, payments, reviews, tariffs, payme_merchant
+from app.api.v1 import auth, categories, users, services, merchants, merchants_cover_image, merchants_gallery, merchants_contacts, payments, reviews, tariffs
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +45,7 @@ app = FastAPI(
     # Enable docs when in DEBUG or when explicitly allowed via ENABLE_DOCS
     docs_url="/docs" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
     redoc_url="/redoc" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
+    redirect_slashes=False,  # Disable automatic trailing slash redirects
 )
 
 # Add CORS middleware
@@ -199,12 +200,6 @@ app.include_router(
     reviews.router,
     prefix=settings.API_V1_STR + "/reviews",
     tags=["Reviews"]
-)
-
-app.include_router(
-    payme_merchant.router,
-    prefix=settings.API_V1_STR,
-    tags=["Payme Merchant API"]
 )
 
 
