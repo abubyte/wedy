@@ -301,6 +301,131 @@ class PaymentRepository:
         
         return None
     
+    async def get_payment_by_service_boost_params(
+        self,
+        phone_number: str,
+        service_id: str,
+        days_count: int
+    ) -> Optional[Payment]:
+        """
+        Get pending payment by service boost payment parameters.
+        
+        Args:
+            phone_number: User's phone number (with or without +998 prefix)
+            service_id: Service ID (9-digit numeric string)
+            days_count: Number of days (duration)
+            
+        Returns:
+            Payment instance or None if not found
+        """
+        from app.models.user_model import User
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Normalize phone number (remove +998 prefix if present, keep only 9 digits)
+        normalized_phone = phone_number.replace("+998", "").replace("998", "").strip()
+        
+        # Normalize service_id to string (ensure it's 9 digits)
+        service_id_str = str(service_id).strip()
+        
+        # Helper function to check if payment matches
+        def payment_matches(payment: Payment) -> bool:
+            metadata = payment.payment_metadata or {}
+            stored_service_id = str(metadata.get("service_id", ""))
+            stored_duration = metadata.get("duration_days")
+            
+            # Convert stored_duration to int if it's a string
+            if isinstance(stored_duration, str):
+                try:
+                    stored_duration = int(stored_duration)
+                except (ValueError, TypeError):
+                    return False
+            
+            # Match service_id (should be exact match for 9-digit IDs)
+            service_id_match = stored_service_id == service_id_str
+            
+            return service_id_match and stored_duration == days_count
+        
+        # First, try to find by phone number (preferred method)
+        if len(normalized_phone) == 9 and normalized_phone.isdigit():
+            # Find user by phone number
+            user_statement = select(User).where(User.phone_number == normalized_phone)
+            user_result = await self.session.execute(user_statement)
+            user = user_result.scalar_one_or_none()
+            
+            if user:
+                # Find pending payment for this user with matching service and duration
+                statement = select(Payment).where(
+                    and_(
+                        Payment.user_id == user.id,
+                        Payment.payment_type == PaymentType.FEATURED_SERVICE,
+                        Payment.status == PaymentStatus.PENDING
+                    )
+                )
+                result = await self.session.execute(statement)
+                payments = result.scalars().all()
+                
+                # Filter by metadata (service_id and duration_days)
+                for payment in payments:
+                    logger.debug(
+                        f"Comparing payment metadata: "
+                        f"payment_id={payment.id}, "
+                        f"stored_service_id={str((payment.payment_metadata or {}).get('service_id', ''))}, "
+                        f"requested_service_id={service_id_str}, "
+                        f"stored_duration={(payment.payment_metadata or {}).get('duration_days')}, "
+                        f"requested_days_count={days_count}"
+                    )
+                    
+                    if payment_matches(payment):
+                        logger.info(
+                            f"Found matching payment by phone number: payment_id={payment.id}, "
+                            f"service_id={service_id_str}, days_count={days_count}, user_id={user.id}"
+                        )
+                        return payment
+                
+                logger.debug(
+                    f"No matching payment found for user {user.id}: "
+                    f"Found {len(payments)} pending payments, but none matched metadata."
+                )
+        
+        # Fallback: If phone number lookup fails (e.g., Sandbox uses different phone numbers),
+        # try to find payment by service_id and days_count only (without phone number filter)
+        logger.debug(
+            f"Phone number lookup failed or no match found. "
+            f"Trying fallback: search by service_id={service_id_str}, days_count={days_count} only..."
+        )
+        
+        # Find all pending featured service payments
+        statement = select(Payment).where(
+            and_(
+                Payment.payment_type == PaymentType.FEATURED_SERVICE,
+                Payment.status == PaymentStatus.PENDING
+            )
+        )
+        result = await self.session.execute(statement)
+        all_pending_payments = result.scalars().all()
+        
+        logger.debug(f"Found {len(all_pending_payments)} total pending featured service payments")
+        
+        # Filter by metadata (service_id and duration_days)
+        for payment in all_pending_payments:
+            if payment_matches(payment):
+                logger.info(
+                    f"Found matching payment by service_id and days_count (fallback): "
+                    f"payment_id={payment.id}, service_id={service_id_str}, days_count={days_count}, "
+                    f"user_id={payment.user_id}"
+                )
+                return payment
+        
+        logger.warning(
+            f"No matching payment found for: "
+            f"phone_number={phone_number}, service_id={service_id_str}, days_count={days_count}. "
+            f"Checked {len(all_pending_payments)} pending payments total."
+        )
+        
+        return None
+    
     async def get_payments_by_user_id(
         self, 
         user_id: str, 

@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import get_settings
-from app.models.payment_model import Payment, PaymentStatus, PaymentMethod
+from app.models.payment_model import Payment, PaymentStatus, PaymentMethod, PaymentType
 from app.repositories.payment_repository import PaymentRepository
 from app.services.payment_providers import PaymentProviderError
 
@@ -288,18 +288,25 @@ class PaymeMerchantAPI:
                 {"reason": "amount"}
             )
         
-        # Validate account - support both formats:
+        # Validate account - support multiple formats:
         # 1. Legacy: order_id
-        # 2. New: phone_number, tariff_id, month_count (for tariff payments)
+        # 2. Tariff: phone_number, tariff_id, month_count (for tariff payments)
+        # 3. Boost: phone_number, service_id, days_count (for service boost payments)
         order_id = account.get("order_id")
         phone_number = account.get("phone_number")
         tariff_id = account.get("tariff_id")
         month_count = account.get("month_count")
+        service_id = account.get("service_id")
+        days_count = account.get("days_count")
+        
+        # Determine which format is being used
+        is_tariff_format = phone_number or tariff_id or month_count
+        is_boost_format = phone_number or service_id or days_count
         
         # Validate account parameters format
-        # For new format, all three fields are required
-        if phone_number or tariff_id or month_count:
-            # If any of the new format fields are provided, all must be provided
+        # For tariff format, all three fields are required
+        if is_tariff_format:
+            # If any of the tariff format fields are provided, all must be provided
             if not (phone_number and tariff_id and month_count):
                 raise PaymeMerchantAPIError(
                     self.ERROR_ACCOUNT_ERROR_MIN,
@@ -348,6 +355,59 @@ class PaymeMerchantAPI:
                     {
                         "reason": "invalid_month_count",
                         "message": "month_count must be a positive integer"
+                    }
+                )
+        
+        # Validate boost service format
+        if is_boost_format:
+            # If any of the boost format fields are provided, all must be provided
+            if not (phone_number and service_id and days_count):
+                raise PaymeMerchantAPIError(
+                    self.ERROR_ACCOUNT_ERROR_MIN,
+                    "Неверный формат данных в поле account",
+                    {
+                        "reason": "invalid_account_format",
+                        "message": "phone_number, service_id, and days_count must all be provided together"
+                    }
+                )
+            
+            # Validate phone_number format (reuse validation from tariff format if not already validated)
+            if not is_tariff_format:
+                normalized_phone = phone_number.replace("+998", "").replace("998", "").strip()
+                if not normalized_phone or len(normalized_phone) != 9 or not normalized_phone.isdigit():
+                    raise PaymeMerchantAPIError(
+                        self.ERROR_ACCOUNT_ERROR_MIN,
+                        "Неверный формат данных в поле account",
+                        {
+                            "reason": "invalid_phone_number",
+                            "message": "phone_number must be a valid 9-digit number (with or without +998 prefix)"
+                        }
+                    )
+            
+            # Validate service_id format (should be a 9-digit numeric string)
+            service_id_str = str(service_id).strip()
+            if not service_id_str or len(service_id_str) != 9 or not service_id_str.isdigit():
+                raise PaymeMerchantAPIError(
+                    self.ERROR_ACCOUNT_ERROR_MIN,
+                    "Неверный формат данных в поле account",
+                    {
+                        "reason": "invalid_service_id",
+                        "message": "service_id must be a valid 9-digit numeric string"
+                    }
+                )
+            
+            # Validate days_count format (should be a positive integer, 1-365)
+            try:
+                days_count_int = int(days_count) if isinstance(days_count, str) else days_count
+                if days_count_int <= 0 or days_count_int > 365:
+                    raise ValueError("days_count must be between 1 and 365")
+            except (ValueError, TypeError):
+                raise PaymeMerchantAPIError(
+                    self.ERROR_ACCOUNT_ERROR_MIN,
+                    "Неверный формат данных в поле account",
+                    {
+                        "reason": "invalid_days_count",
+                        "message": "days_count must be a positive integer between 1 and 365"
                     }
                 )
         
@@ -433,6 +493,85 @@ class PaymeMerchantAPI:
                     logger.debug(f"Could not validate tariff plan: {str(e)}")
                     # Fall through to payment not found error
         
+        elif phone_number and service_id and days_count:
+            # Boost service format: find payment by service boost parameters
+            days_count_int = int(days_count) if isinstance(days_count, str) else days_count
+            payment = await self.payment_repo.get_payment_by_service_boost_params(
+                phone_number=phone_number,
+                service_id=str(service_id),
+                days_count=days_count_int
+            )
+            
+            # If payment not found, try to validate account parameters and calculate expected amount
+            if not payment:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(
+                    f"Payment not found for service boost params. "
+                    f"Validating account parameters and calculating expected amount..."
+                )
+                
+                # Validate account parameters by checking if service exists
+                try:
+                    from app.models.service_model import Service
+                    service_stmt = select(Service).where(Service.id == str(service_id))
+                    service_result = await self.session.execute(service_stmt)
+                    service = service_result.scalar_one_or_none()
+                    
+                    if service:
+                        # Calculate expected amount based on featured service pricing
+                        # Use the same discount logic as PaymentService
+                        base_daily_price = 1500.0  # 1500 UZS per day (should match PaymentService)
+                        total_base = base_daily_price * days_count_int
+                        
+                        # Apply discounts based on duration
+                        if days_count_int >= 91:  # 91-365 days: 30% discount
+                            discount = 0.30
+                        elif days_count_int >= 31:  # 31-90 days: 20% discount
+                            discount = 0.20
+                        elif days_count_int >= 8:  # 8-30 days: 10% discount
+                            discount = 0.10
+                        else:  # 1-7 days: no discount
+                            discount = 0.0
+                        
+                        expected_amount = total_base * (1 - discount)
+                        expected_amount_tiyins = int(expected_amount * 100)
+                        
+                        # If amount doesn't match, return -31001 (invalid amount)
+                        if amount != expected_amount_tiyins:
+                            logger.warning(
+                                f"Amount mismatch in CheckPerformTransaction (no payment found): "
+                                f"Expected: {expected_amount_tiyins}, Received: {amount}, "
+                                f"Service ID: {service_id}, Days: {days_count_int}, "
+                                f"Base price: {base_daily_price}, Discount: {discount*100}%"
+                            )
+                            raise PaymeMerchantAPIError(
+                                self.ERROR_INVALID_AMOUNT,
+                                "Неверная сумма платежа",
+                                {
+                                    "reason": "amount",
+                                    "expected": expected_amount_tiyins,
+                                    "received": amount
+                                }
+                            )
+                        # If amount matches but payment doesn't exist, return payment not found
+                    else:
+                        # Service not found - invalid account parameter
+                        raise PaymeMerchantAPIError(
+                            self.ERROR_ACCOUNT_ERROR_MIN,
+                            "Неверный формат данных в поле account",
+                            {
+                                "reason": "service_not_found",
+                                "message": f"Service with ID {service_id} not found"
+                            }
+                        )
+                except PaymeMerchantAPIError:
+                    # Re-raise Payme errors (amount validation, account errors, etc.)
+                    raise
+                except Exception as e:
+                    logger.debug(f"Could not validate service: {str(e)}")
+                    # Fall through to payment not found error
+        
         elif order_id:
             # Legacy format: find payment by transaction_id
             payment = await self.payment_repo.get_payment_by_transaction_id(str(order_id))
@@ -441,7 +580,7 @@ class PaymeMerchantAPI:
             raise PaymeMerchantAPIError(
                 self.ERROR_ACCOUNT_ERROR_MIN,
                 "Неверный формат данных в поле account",
-                {"reason": "missing_fields", "required": "order_id OR (phone_number, tariff_id, month_count)"}
+                {"reason": "missing_fields", "required": "order_id OR (phone_number, tariff_id, month_count) OR (phone_number, service_id, days_count)"}
             )
         
         if not payment:
@@ -531,13 +670,16 @@ class PaymeMerchantAPI:
                 {"reason": "amount"}
             )
         
-        # Support both formats:
+        # Support multiple formats:
         # 1. Legacy: order_id
-        # 2. New: phone_number, tariff_id, month_count (for tariff payments)
+        # 2. Tariff: phone_number, tariff_id, month_count (for tariff payments)
+        # 3. Boost: phone_number, service_id, days_count (for service boost payments)
         order_id = account.get("order_id")
         phone_number = account.get("phone_number")
         tariff_id = account.get("tariff_id")
         month_count = account.get("month_count")
+        service_id = account.get("service_id")
+        days_count = account.get("days_count")
         
         payment = None
         
@@ -570,6 +712,35 @@ class PaymeMerchantAPI:
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Invalid month_count format: {month_count}, error: {str(e)}")
         
+        elif phone_number and service_id and days_count:
+            # Boost service format: find payment by service boost parameters
+            try:
+                days_count_int = int(days_count) if isinstance(days_count, str) else days_count
+                payment = await self.payment_repo.get_payment_by_service_boost_params(
+                    phone_number=phone_number,
+                    service_id=str(service_id),
+                    days_count=days_count_int
+                )
+                import logging
+                logger = logging.getLogger(__name__)
+                if payment:
+                    payment_metadata_check = payment.payment_metadata or {}
+                    existing_payme_id_check = None
+                    if payment.transaction_id and len(payment.transaction_id) == 24 and all(c in '0123456789abcdef' for c in payment.transaction_id.lower()):
+                        existing_payme_id_check = payment.transaction_id
+                    if not existing_payme_id_check and "payme_transaction_id" in payment_metadata_check:
+                        existing_payme_id_check = payment_metadata_check.get("payme_transaction_id")
+                    logger.debug(
+                        f"Found payment for CreateTransaction (boost): payment_id={payment.id}, "
+                        f"status={payment.status}, existing_payme_id={existing_payme_id_check}, "
+                        f"new_transaction_id={transaction_id}, phone={phone_number}, "
+                        f"service_id={service_id}, days_count={days_count_int}"
+                    )
+            except (ValueError, TypeError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Invalid days_count format: {days_count}, error: {str(e)}")
+        
         elif order_id:
             # Legacy format: find payment by transaction_id
             payment = await self.payment_repo.get_payment_by_transaction_id(str(order_id))
@@ -578,7 +749,7 @@ class PaymeMerchantAPI:
             raise PaymeMerchantAPIError(
                 self.ERROR_ACCOUNT_ERROR_MIN,
                 "Неверный формат данных в поле account",
-                {"reason": "missing_fields", "required": "order_id OR (phone_number, tariff_id, month_count)"}
+                {"reason": "missing_fields", "required": "order_id OR (phone_number, tariff_id, month_count) OR (phone_number, service_id, days_count)"}
             )
         
         if not payment:
