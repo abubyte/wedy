@@ -237,16 +237,16 @@ class PaymeMerchantAPI:
                     f"Method not found: {method}"
                 )
             
+            # JSON-RPC 2.0: Success response should only include id and result (no error field)
             return {
                 "id": request_id,
-                "result": result,
-                "error": None
+                "result": result
             }
             
         except PaymeMerchantAPIError as e:
+            # JSON-RPC 2.0: Error response should only include id and error (no result field)
             return {
                 "id": request_id,
-                "result": None,
                 "error": {
                     "code": e.code,
                     "message": e.message,
@@ -254,9 +254,9 @@ class PaymeMerchantAPI:
                 }
             }
         except Exception as e:
+            # JSON-RPC 2.0: Error response should only include id and error (no result field)
             return {
                 "id": request_id,
-                "result": None,
                 "error": {
                     "code": -32603,
                     "message": f"Internal error: {str(e)}",

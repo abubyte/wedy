@@ -163,11 +163,11 @@ async def payment_webhook(
             # Verify authorization
             if not authorization:
                 logger.info(f"Authorization not found")
+                # JSON-RPC 2.0: Error response should only include id and error (no result field)
                 return JSONResponse(
                     status_code=200,
                     content={
                         "id": webhook_data.get("id"),
-                        "result": None,
                         "error": {
                             "code": -32504,
                             "message": "Неверная авторизация",
@@ -221,11 +221,11 @@ async def payment_webhook(
             
             if not secret_keys_to_try:
                 # No secret key configured
+                # JSON-RPC 2.0: Error response should only include id and error (no result field)
                 return JSONResponse(
                     status_code=200,
                     content={
                         "id": webhook_data.get("id"),
-                        "result": None,
                         "error": {
                             "code": -32504,
                             "message": "Неверная авторизация",
@@ -299,11 +299,11 @@ async def payment_webhook(
                         f"First key length: {len(secret_keys_to_try[0]) if secret_keys_to_try[0] else 0}"
                     )
                 
+                # JSON-RPC 2.0: Error response should only include id and error (no result field)
                 return JSONResponse(
                     status_code=200,
                     content={
                         "id": webhook_data.get("id"),
-                        "result": None,
                         "error": {
                             "code": -32504,
                             "message": "Неверная авторизация",
@@ -367,11 +367,11 @@ async def payment_webhook(
         
         # If it's a JSON-RPC request, return JSON-RPC error format
         if method.lower() == "payme" and _is_jsonrpc_request(webhook_data):
+            # JSON-RPC 2.0: Error response should only include id and error (no result field)
             return JSONResponse(
                 status_code=200,
                 content={
                     "id": webhook_data.get("id"),
-                    "result": None,
                     "error": {
                         "code": -32603,
                         "message": f"Internal error: {str(e)}",
