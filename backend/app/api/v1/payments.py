@@ -1,5 +1,7 @@
+import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request, Header
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -51,6 +53,9 @@ async def create_tariff_payment(
         payment = await payment_service.create_tariff_payment(current_user.id, request)
         return payment
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (they're already properly formatted)
+        raise
     except PaymentError as e:
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail=str(e))
@@ -58,9 +63,11 @@ async def create_tariff_payment(
             raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         import traceback
+        import logging
+        logger = logging.getLogger(__name__)
         error_details = traceback.format_exc()
-        print(f"API Error in create_tariff_payment: {str(e)}")
-        print(f"Traceback: {error_details}")
+        logger.error(f"API Error in create_tariff_payment: {str(e)}")
+        logger.error(f"Traceback: {error_details}")
         raise HTTPException(status_code=500, detail=f"Failed to create payment: {str(e)}")
 
 
@@ -82,16 +89,30 @@ async def create_featured_service_payment(
         payment = await payment_service.create_featured_service_payment(current_user.id, request)
         return payment
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (they're already properly formatted)
+        raise
     except PaymentError as e:
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail=str(e))
         else:
             raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        import traceback
+        import logging
+        logger = logging.getLogger(__name__)
+        error_details = traceback.format_exc()
+        logger.error(f"API Error in create_featured_service_payment: {str(e)}")
+        logger.error(f"Traceback: {error_details}")
         raise HTTPException(status_code=500, detail=f"Failed to create featured service payment: {str(e)}")
 
 
-@router.post("/webhook/{method}")
+@router.post(
+    "/webhook/{method}",
+    status_code=200,
+    response_class=JSONResponse,
+    include_in_schema=False  # Don't include in OpenAPI schema to avoid any path issues
+)
 async def payment_webhook(
     method: str,
     request: Request,
@@ -111,51 +132,72 @@ async def payment_webhook(
     If the request is a JSON-RPC 2.0 request, it validates authorization
     and routes to the Merchant API handler.
     """
+    # Initialize webhook_data early to avoid issues in exception handler
+    webhook_data = {}
     try:
+        logger = logging.getLogger(__name__)
+        
+        # Log request details for debugging
+        logger.info(f"Request URL: {request.url}")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Request headers: {dict(request.headers)}")
+        
         # Get raw request body for signature verification
         raw_body_bytes = await request.body()
+        logger.info(f"Raw body bytes: {raw_body_bytes}")
         raw_body = raw_body_bytes.decode('utf-8') if raw_body_bytes else ''
-        
+        logger.info(f"Raw body: {raw_body}")
         # Parse JSON for processing
         import json as json_lib
-        webhook_data = json_lib.loads(raw_body) if raw_body else {}
-        
+        try:
+            webhook_data = json_lib.loads(raw_body) if raw_body else {}
+        except json_lib.JSONDecodeError as e:
+            logger.warning(f"Failed to parse JSON body: {str(e)}")
+            webhook_data = {}
+        logger.info(f"Webhook data: {webhook_data}")
         # Check if this is a Payme JSON-RPC 2.0 Merchant API request
         if method.lower() == "payme" and _is_jsonrpc_request(webhook_data):
             # This is a Merchant API request - handle with proper authorization
             settings = get_settings()
-            
+            logger.info(f"Settings: {settings}")
             # Verify authorization
             if not authorization:
-                return {
-                    "id": webhook_data.get("id"),
-                    "result": None,
-                    "error": {
-                        "code": -32504,
-                        "message": "Неверная авторизация",
-                        "data": {}
+                logger.info(f"Authorization not found")
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "id": webhook_data.get("id"),
+                        "result": None,
+                        "error": {
+                            "code": -32504,
+                            "message": "Неверная авторизация",
+                            "data": {}
+                        }
                     }
-                }
-            
+                )
+            logger.info(f"Authorization found")
             # Extract merchant_id from Authorization header to determine which secret key to use
             # For Payme Sandbox, we need to try both secret keys since merchant_id might not match
             secret_keys_to_try = []
-            
+            logger.info(f"Secret keys to try: {secret_keys_to_try}")
             # Check if this is a Sandbox test request (Payme Sandbox sends "Test-Operation: Paycom" header)
             is_sandbox = test_operation and test_operation.lower() == "paycom"
-            
+            logger.info(f"Is sandbox: {is_sandbox}")
             # Get merchant_id from authorization
             merchant_id = _extract_merchant_id_from_auth(authorization)
-            
+            logger.info(f"Merchant ID: {merchant_id}")
             # If Sandbox request, prioritize Sandbox secret key
             if is_sandbox and settings.PAYME_SANDBOX_SECRET_KEY:
                 secret_keys_to_try = [settings.PAYME_SANDBOX_SECRET_KEY]
+                logger.info(f"Secret keys to try: {secret_keys_to_try}")
             elif merchant_id:
                 # Try to match merchant_id to configured terminals
                 if settings.PAYME_TARIFF_MERCHANT_ID and merchant_id == settings.PAYME_TARIFF_MERCHANT_ID:
                     secret_keys_to_try = [settings.PAYME_TARIFF_SECRET_KEY]
+                    logger.info(f"Secret keys to try: {secret_keys_to_try}")
                 elif settings.PAYME_SERVICE_BOOST_MERCHANT_ID and merchant_id == settings.PAYME_SERVICE_BOOST_MERCHANT_ID:
                     secret_keys_to_try = [settings.PAYME_SERVICE_BOOST_SECRET_KEY]
+                    logger.info(f"Secret keys to try: {secret_keys_to_try}")
                 else:
                     # Merchant ID doesn't match - try Sandbox key first, then both production keys
                     if settings.PAYME_SANDBOX_SECRET_KEY:
@@ -164,6 +206,7 @@ async def payment_webhook(
                         settings.PAYME_TARIFF_SECRET_KEY,
                         settings.PAYME_SERVICE_BOOST_SECRET_KEY
                     ])
+                    logger.info(f"Secret keys to try: {secret_keys_to_try}")
             else:
                 # Can't extract merchant_id - try Sandbox key first, then both production keys
                 if settings.PAYME_SANDBOX_SECRET_KEY:
@@ -178,42 +221,65 @@ async def payment_webhook(
             
             if not secret_keys_to_try:
                 # No secret key configured
-                return {
-                    "id": webhook_data.get("id"),
-                    "result": None,
-                    "error": {
-                        "code": -32504,
-                        "message": "Неверная авторизация",
-                        "data": {}
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "id": webhook_data.get("id"),
+                        "result": None,
+                        "error": {
+                            "code": -32504,
+                            "message": "Неверная авторизация",
+                            "data": {}
+                        }
                     }
-                }
+                )
             
             # Try each secret key until one works
             authorization_valid = False
             valid_secret_key = None
             verification_errors = []
             
-            for secret_key in secret_keys_to_try:
+            # For Sandbox, check if the Authorization header contains a secret key directly
+            # Payme Sandbox sometimes sends merchant_id:secret_key instead of merchant_id:signature
+            if is_sandbox:
+                import base64
                 try:
-                    merchant_api = PaymeMerchantAPI(
-                        session=session,
-                        secret_key=secret_key
-                    )
-                    
-                    # Use raw body for signature verification to match exact format
-                    if merchant_api.verify_request_with_raw_body(raw_body, authorization):
-                        authorization_valid = True
-                        valid_secret_key = secret_key
-                        break
+                    auth_string = authorization[6:] if authorization.startswith("Basic ") else authorization
+                    decoded = base64.b64decode(auth_string).decode('utf-8')
+                    if ":" in decoded:
+                        _, received_key = decoded.split(":", 1)
+                        # Check if the received key matches any of our configured secret keys
+                        for secret_key in secret_keys_to_try:
+                            if received_key == secret_key:
+                                logger.info(
+                                    f"Payme Sandbox: Authorization header contains matching secret key. "
+                                    f"Merchant ID: {merchant_id}"
+                                )
+                                authorization_valid = True
+                                valid_secret_key = secret_key
+                                break
                 except Exception as e:
-                    verification_errors.append(str(e))
-                    continue
+                    logger.debug(f"Failed to check Sandbox secret key in Authorization: {str(e)}")
+            
+            # If not already validated (or not Sandbox), try signature verification
+            if not authorization_valid:
+                for secret_key in secret_keys_to_try:
+                    try:
+                        merchant_api = PaymeMerchantAPI(
+                            session=session,
+                            secret_key=secret_key
+                        )
+                        
+                        # Use raw body for signature verification to match exact format
+                        if merchant_api.verify_request_with_raw_body(raw_body, authorization):
+                            authorization_valid = True
+                            valid_secret_key = secret_key
+                            break
+                    except Exception as e:
+                        verification_errors.append(str(e))
+                        continue
             
             if not authorization_valid:
-                # Log for debugging (remove in production or use proper logging)
-                import logging
-                logger = logging.getLogger(__name__)
-                
                 # Log more details for debugging
                 logger.warning(
                     f"Payme authorization failed. "
@@ -233,15 +299,18 @@ async def payment_webhook(
                         f"First key length: {len(secret_keys_to_try[0]) if secret_keys_to_try[0] else 0}"
                     )
                 
-                return {
-                    "id": webhook_data.get("id"),
-                    "result": None,
-                    "error": {
-                        "code": -32504,
-                        "message": "Неверная авторизация",
-                        "data": {}
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "id": webhook_data.get("id"),
+                        "result": None,
+                        "error": {
+                            "code": -32504,
+                            "message": "Неверная авторизация",
+                            "data": {}
+                        }
                     }
-                }
+                )
             
             # Use the valid secret key for the API handler
             merchant_api = PaymeMerchantAPI(
@@ -251,7 +320,18 @@ async def payment_webhook(
             
             # Handle Merchant API request
             response = await merchant_api.handle_request(webhook_data)
-            return response
+            # Explicitly set media_type and headers to ensure JSON response and prevent redirects
+            return JSONResponse(
+                status_code=200,
+                content=response,
+                media_type="application/json",
+                headers={
+                    "Content-Type": "application/json",
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                }
+            )
         
         # Regular webhook notification handling
         # Validate payment method
@@ -279,17 +359,27 @@ async def payment_webhook(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        logger = logging.getLogger(__name__)
+        error_details = traceback.format_exc()
+        logger.error(f"Exception in payment_webhook: {str(e)}")
+        logger.error(f"Traceback: {error_details}")
+        
         # If it's a JSON-RPC request, return JSON-RPC error format
-        if method.lower() == "payme" and _is_jsonrpc_request(webhook_data if 'webhook_data' in locals() else {}):
-            return {
-                "id": webhook_data.get("id") if 'webhook_data' in locals() else None,
-                "result": None,
-                "error": {
-                    "code": -32603,
-                    "message": f"Internal error: {str(e)}",
-                    "data": {}
-                }
-            }
+        if method.lower() == "payme" and _is_jsonrpc_request(webhook_data):
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "id": webhook_data.get("id"),
+                    "result": None,
+                    "error": {
+                        "code": -32603,
+                        "message": f"Internal error: {str(e)}",
+                        "data": {}
+                    }
+                },
+                media_type="application/json"
+            )
         raise HTTPException(
             status_code=500, 
             detail=f"Failed to process webhook: {str(e)}"
