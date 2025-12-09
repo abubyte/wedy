@@ -172,6 +172,135 @@ class PaymentRepository:
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
     
+    async def get_payment_by_tariff_params(
+        self,
+        phone_number: str,
+        tariff_id: str,
+        month_count: int
+    ) -> Optional[Payment]:
+        """
+        Get pending payment by tariff payment parameters.
+        
+        Args:
+            phone_number: User's phone number (with or without +998 prefix)
+            tariff_id: Tariff plan ID (UUID string)
+            month_count: Number of months (duration)
+            
+        Returns:
+            Payment instance or None if not found
+        """
+        from app.models.user_model import User
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Normalize phone number (remove +998 prefix if present, keep only 9 digits)
+        normalized_phone = phone_number.replace("+998", "").replace("998", "").strip()
+        
+        # Helper function to check if payment matches
+        def payment_matches(payment: Payment) -> bool:
+            metadata = payment.payment_metadata or {}
+            stored_tariff_id = str(metadata.get("tariff_plan_id", ""))
+            stored_duration = metadata.get("duration_months")
+            
+            # Convert stored_duration to int if it's a string
+            if isinstance(stored_duration, str):
+                try:
+                    stored_duration = int(stored_duration)
+                except (ValueError, TypeError):
+                    return False
+            
+            # Match tariff_id - handle both full UUID and truncated versions
+            # Payme might send truncated UUID, so check if stored_tariff_id starts with tariff_id
+            # or if tariff_id starts with stored_tariff_id
+            tariff_id_match = (
+                stored_tariff_id == str(tariff_id) or
+                stored_tariff_id.startswith(str(tariff_id)) or
+                str(tariff_id).startswith(stored_tariff_id)
+            )
+            
+            return tariff_id_match and stored_duration == month_count
+        
+        # First, try to find by phone number (preferred method)
+        if len(normalized_phone) == 9 and normalized_phone.isdigit():
+            # Find user by phone number
+            user_statement = select(User).where(User.phone_number == normalized_phone)
+            user_result = await self.session.execute(user_statement)
+            user = user_result.scalar_one_or_none()
+            
+            if user:
+                # Find pending payment for this user with matching tariff plan and duration
+                statement = select(Payment).where(
+                    and_(
+                        Payment.user_id == user.id,
+                        Payment.payment_type == PaymentType.TARIFF_SUBSCRIPTION,
+                        Payment.status == PaymentStatus.PENDING
+                    )
+                )
+                result = await self.session.execute(statement)
+                payments = result.scalars().all()
+                
+                # Filter by metadata (tariff_plan_id and duration_months)
+                for payment in payments:
+                    logger.debug(
+                        f"Comparing payment metadata: "
+                        f"payment_id={payment.id}, "
+                        f"stored_tariff_id={str((payment.payment_metadata or {}).get('tariff_plan_id', ''))}, "
+                        f"requested_tariff_id={tariff_id}, "
+                        f"stored_duration={(payment.payment_metadata or {}).get('duration_months')}, "
+                        f"requested_month_count={month_count}"
+                    )
+                    
+                    if payment_matches(payment):
+                        logger.info(
+                            f"Found matching payment by phone number: payment_id={payment.id}, "
+                            f"tariff_id={tariff_id}, month_count={month_count}, user_id={user.id}"
+                        )
+                        return payment
+                
+                logger.debug(
+                    f"No matching payment found for user {user.id}: "
+                    f"Found {len(payments)} pending payments, but none matched metadata."
+                )
+        
+        # Fallback: If phone number lookup fails (e.g., Sandbox uses different phone numbers),
+        # try to find payment by tariff_id and month_count only (without phone number filter)
+        # This is useful for Sandbox testing where Payme might use test phone numbers
+        logger.debug(
+            f"Phone number lookup failed or no match found. "
+            f"Trying fallback: search by tariff_id={tariff_id}, month_count={month_count} only..."
+        )
+        
+        # Find all pending tariff subscription payments
+        statement = select(Payment).where(
+            and_(
+                Payment.payment_type == PaymentType.TARIFF_SUBSCRIPTION,
+                Payment.status == PaymentStatus.PENDING
+            )
+        )
+        result = await self.session.execute(statement)
+        all_pending_payments = result.scalars().all()
+        
+        logger.debug(f"Found {len(all_pending_payments)} total pending tariff payments")
+        
+        # Filter by metadata (tariff_plan_id and duration_months)
+        for payment in all_pending_payments:
+            if payment_matches(payment):
+                logger.info(
+                    f"Found matching payment by tariff_id and month_count (fallback): "
+                    f"payment_id={payment.id}, tariff_id={tariff_id}, month_count={month_count}, "
+                    f"user_id={payment.user_id}"
+                )
+                return payment
+        
+        logger.warning(
+            f"No matching payment found for: "
+            f"phone_number={phone_number}, tariff_id={tariff_id}, month_count={month_count}. "
+            f"Checked {len(all_pending_payments)} pending payments total."
+        )
+        
+        return None
+    
     async def get_payments_by_user_id(
         self, 
         user_id: str, 
