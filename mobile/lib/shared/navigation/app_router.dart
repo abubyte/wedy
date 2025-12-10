@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wedy/apps/client/pages/chats/chats_page.dart';
 import 'package:wedy/apps/merchant/pages/account/account_page.dart';
+import 'package:wedy/apps/merchant/pages/profile/profile_page.dart';
 import 'package:wedy/apps/merchant/pages/boost/boost_page.dart';
 import 'package:wedy/apps/merchant/pages/chats/chats_page.dart';
 import 'package:wedy/apps/merchant/pages/edit/edit_page.dart';
@@ -264,7 +265,7 @@ class AppRouter {
                   pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
                     context: context,
                     state: state,
-                    child: const MerchantServicesPage(),
+                    child: const MerchantProfilePage(),
                   ),
                 ),
               ],
