@@ -45,7 +45,6 @@ app = FastAPI(
     # Enable docs when in DEBUG or when explicitly allowed via ENABLE_DOCS
     docs_url="/docs" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
     redoc_url="/redoc" if (settings.DEBUG or settings.ENABLE_DOCS) else None,
-    redirect_slashes=False,  # Disable automatic trailing slash redirects
 )
 
 # Add CORS middleware
