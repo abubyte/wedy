@@ -45,7 +45,7 @@ abstract class ServiceRemoteDataSource {
   Future<UserInteractionsResponseDto> getUserInteractions();
 
   /// Get merchant's services
-  @GET('/api/v1/merchants/services')
+  @GET('/api/v1/services/my')
   Future<MerchantServicesResponseDto> getMerchantServices();
 
   /// Create a new service
