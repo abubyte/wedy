@@ -36,10 +36,25 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
       backgroundColor: AppColors.background,
       body: BlocConsumer<MerchantServiceBloc, MerchantServiceState>(
         listener: (context, state) {
-          if (state is MerchantServiceError) {
+          if (state is ServiceCreated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+              const SnackBar(content: Text('Xizmat muvaffaqiyatli yaratildi'), backgroundColor: AppColors.success),
             );
+            // Service list will be automatically reloaded by the bloc
+          } else if (state is ServiceUpdated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Xizmat muvaffaqiyatli yangilandi'), backgroundColor: AppColors.success),
+            );
+            // Service list will be automatically reloaded by the bloc
+          } else if (state is ServiceDeleted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Xizmat muvaffaqiyatli o\'chirildi'), backgroundColor: AppColors.success),
+            );
+            // Service list will be automatically reloaded by the bloc
+          } else if (state is MerchantServiceError) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
           }
         },
         builder: (context, state) {
@@ -47,15 +62,18 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
             return const Center(child: CircularProgressIndicator());
           } else if (state is MerchantServicesLoaded) {
             final services = state.servicesResponse.services;
-            
+
             // Show empty state if no services
             if (services.isEmpty) {
               return _buildEmptyState();
             }
-            
+
             // Show first service (only one service per merchant for this release)
             final service = services.first;
             return _buildServiceProfile(service);
+          } else if (state is ServiceCreated || state is ServiceUpdated) {
+            // Show loading while services are being reloaded after create/update
+            return const Center(child: CircularProgressIndicator());
           } else if (state is MerchantServiceError) {
             return _buildErrorState(state.message);
           }
@@ -78,10 +96,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
               subtitle: 'Hozircha sizda xizmat mavjud emas. Yangi xizmat qo\'shish uchun quyidagi tugmani bosing.',
             ),
             const SizedBox(height: AppDimensions.spacingXL),
-            WedyPrimaryButton(
-              label: 'Yangi xizmat qo\'shish',
-              onPressed: () => context.pushNamed(RouteNames.edit),
-            ),
+            WedyPrimaryButton(label: 'Yangi xizmat qo\'shish', onPressed: () => context.pushNamed(RouteNames.edit)),
           ],
         ),
       ),
@@ -119,7 +134,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
           children: [
             // Header with back button, service image, and edit buttons
             _buildHeader(service),
-            
+
             // Service title and category
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
@@ -127,17 +142,11 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: AppDimensions.spacingM),
-                  Text(
-                    service.name,
-                    style: AppTextStyles.headline1.copyWith(fontWeight: FontWeight.bold),
-                  ),
+                  Text(service.name, style: AppTextStyles.headline1.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: AppDimensions.spacingXS),
-                  Text(
-                    service.categoryName,
-                    style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted),
-                  ),
+                  Text(service.categoryName, style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted)),
                   const SizedBox(height: AppDimensions.spacingM),
-                  
+
                   // Price button
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -150,20 +159,17 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                     ),
                     child: Text(
                       '${_formatPrice(service.price)} so\'m/kun',
-                      style: AppTextStyles.bodyRegular.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTextStyles.bodyRegular.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: AppDimensions.spacingXL),
                 ],
               ),
             ),
-            
+
             // Gallery section
             _buildGallerySection(service),
-            
+
             // Description
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
@@ -181,10 +187,10 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                 ],
               ),
             ),
-            
+
             // Statistics
             _buildStatistics(service),
-            
+
             // Share button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
@@ -196,21 +202,17 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                 },
               ),
             ),
-            
+
             const SizedBox(height: AppDimensions.spacingL),
-            
+
             // Contact buttons
             _buildContactButtons(),
-            
+
             const SizedBox(height: AppDimensions.spacingL),
-            
+
             // Reviews section
-            ServiceReviews(
-              serviceId: service.id,
-              vertical: false,
-              showHeader: true,
-            ),
-            
+            ServiceReviews(serviceId: service.id, vertical: false, showHeader: true),
+
             const SizedBox(height: AppDimensions.spacingXL),
           ],
         ),
@@ -246,7 +248,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
             color: AppColors.surface,
             child: const Icon(IconsaxPlusLinear.image, size: 48, color: AppColors.textMuted),
           ),
-        
+
         // Header buttons
         Positioned(
           top: AppDimensions.spacingM,
@@ -267,6 +269,8 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                 icon: IconsaxPlusLinear.edit_2,
                 onTap: () => context.pushNamed(RouteNames.edit, extra: service),
               ),
+              const SizedBox(width: AppDimensions.spacingS),
+              WedyCircularButton(icon: IconsaxPlusLinear.trash, onTap: () => _showDeleteDialog(context, service)),
             ],
           ),
         ),
@@ -400,17 +404,11 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacingS,
-          vertical: AppDimensions.spacingS,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS, vertical: AppDimensions.spacingS),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: 0.5,
-          ),
+          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: 0.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -435,17 +433,31 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
   }
 
   String _formatPrice(double price) {
-    return price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]} ',
-    );
+    return price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
   }
 
   String _formatNumber(int number) {
-    return number.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]} ',
+    return number.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+  }
+
+  void _showDeleteDialog(BuildContext context, service) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xizmatni o\'chirish'),
+        content: Text('${service.name} xizmatini o\'chirishni xohlaysizmi?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Bekor qilish')),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<MerchantServiceBloc>().add(DeleteServiceEvent(service.id));
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('O\'chirish'),
+          ),
+        ],
+      ),
     );
   }
 }
-
