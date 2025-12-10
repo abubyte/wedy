@@ -312,6 +312,12 @@ class MerchantManager:
             # Count images for this service
             images_count = await self.merchant_repo.count_service_images(service.id)
             
+            # Get main image (first image by display_order)
+            main_image_url = None
+            service_images = await self.service_repo.get_service_images(service.id)
+            if service_images:
+                main_image_url = service_images[0].s3_url
+            
             # Check if featured
             is_featured, featured_until = await self.service_repo.is_service_featured(service.id)
             
@@ -335,6 +341,7 @@ class MerchantManager:
                 category_id=category.id,
                 category_name=category.name,
                 images_count=images_count,
+                main_image_url=main_image_url,
                 is_featured=is_featured,
                 featured_until=featured_until
             )

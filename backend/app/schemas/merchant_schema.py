@@ -167,6 +167,9 @@ class MerchantServiceResponse(BaseModel):
     # Images count
     images_count: int = 0
     
+    # Main image URL (first image by display_order)
+    main_image_url: Optional[str] = None
+    
     # Featured status
     is_featured: bool = False
     featured_until: Optional[datetime] = None
