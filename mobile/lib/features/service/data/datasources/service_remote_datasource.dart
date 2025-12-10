@@ -49,15 +49,15 @@ abstract class ServiceRemoteDataSource {
   Future<MerchantServicesResponseDto> getMerchantServices();
 
   /// Create a new service
-  @POST('/api/v1/merchants/services')
+  @POST('/api/v1/services/')
   Future<ServiceDetailDto> createService(@Body() Map<String, dynamic> body);
 
   /// Update a service
-  @PUT('/api/v1/merchants/services/{serviceId}')
+  @PUT('/api/v1/services/{serviceId}')
   Future<ServiceDetailDto> updateService(@Path('serviceId') String serviceId, @Body() Map<String, dynamic> body);
 
   /// Delete a service
-  @DELETE('/api/v1/merchants/services/{serviceId}')
+  @DELETE('/api/v1/services/{serviceId}')
   Future<void> deleteService(@Path('serviceId') String serviceId);
 }
 
