@@ -197,7 +197,7 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/v1/merchants/services',
+          '/api/v1/services/my',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -218,20 +218,20 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
   }
 
   @override
-  Future<ServiceDetailDto> createService(Map<String, dynamic> body) async {
+  Future<MerchantServiceDto> createService(Map<String, dynamic> body) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body);
-    final _options = _setStreamType<ServiceDetailDto>(Options(
+    final _options = _setStreamType<MerchantServiceDto>(Options(
       method: 'POST',
       headers: _headers,
       extra: _extra,
     )
         .compose(
           _dio.options,
-          '/api/v1/merchants/services',
+          '/api/v1/services/',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -241,9 +241,9 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
           baseUrl,
         )));
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late ServiceDetailDto _value;
+    late MerchantServiceDto _value;
     try {
-      _value = ServiceDetailDto.fromJson(_result.data!);
+      _value = MerchantServiceDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;
@@ -252,7 +252,7 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
   }
 
   @override
-  Future<ServiceDetailDto> updateService(
+  Future<MerchantServiceDto> updateService(
     String serviceId,
     Map<String, dynamic> body,
   ) async {
@@ -261,14 +261,14 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body);
-    final _options = _setStreamType<ServiceDetailDto>(Options(
+    final _options = _setStreamType<MerchantServiceDto>(Options(
       method: 'PUT',
       headers: _headers,
       extra: _extra,
     )
         .compose(
           _dio.options,
-          '/api/v1/merchants/services/${serviceId}',
+          '/api/v1/services/${serviceId}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -278,9 +278,9 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
           baseUrl,
         )));
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late ServiceDetailDto _value;
+    late MerchantServiceDto _value;
     try {
-      _value = ServiceDetailDto.fromJson(_result.data!);
+      _value = MerchantServiceDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;
@@ -301,7 +301,7 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/v1/merchants/services/${serviceId}',
+          '/api/v1/services/${serviceId}',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -311,6 +311,57 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
           baseUrl,
         )));
     await _dio.fetch<void>(_options);
+  }
+
+  @override
+  Future<ImageUploadResponseDto> getServiceImageUploadUrl(
+    String serviceId,
+    String fileName,
+    String contentType,
+    int displayOrder,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = FormData();
+    _data.fields.add(MapEntry(
+      'file_name',
+      fileName,
+    ));
+    _data.fields.add(MapEntry(
+      'content_type',
+      contentType,
+    ));
+    _data.fields.add(MapEntry(
+      'display_order',
+      displayOrder.toString(),
+    ));
+    final _options = _setStreamType<ImageUploadResponseDto>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+      contentType: 'multipart/form-data',
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/services/${serviceId}/images',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ImageUploadResponseDto _value;
+    try {
+      _value = ImageUploadResponseDto.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
   }
 
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {

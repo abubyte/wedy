@@ -50,15 +50,25 @@ abstract class ServiceRemoteDataSource {
 
   /// Create a new service
   @POST('/api/v1/services/')
-  Future<ServiceDetailDto> createService(@Body() Map<String, dynamic> body);
+  Future<MerchantServiceDto> createService(@Body() Map<String, dynamic> body);
 
   /// Update a service
   @PUT('/api/v1/services/{serviceId}')
-  Future<ServiceDetailDto> updateService(@Path('serviceId') String serviceId, @Body() Map<String, dynamic> body);
+  Future<MerchantServiceDto> updateService(@Path('serviceId') String serviceId, @Body() Map<String, dynamic> body);
 
   /// Delete a service
   @DELETE('/api/v1/services/{serviceId}')
   Future<void> deleteService(@Path('serviceId') String serviceId);
+
+  /// Get presigned URL for service image upload
+  @POST('/api/v1/services/{serviceId}/images')
+  @MultiPart()
+  Future<ImageUploadResponseDto> getServiceImageUploadUrl(
+    @Path('serviceId') String serviceId,
+    @Part(name: 'file_name') String fileName,
+    @Part(name: 'content_type') String contentType,
+    @Part(name: 'display_order') int displayOrder,
+  );
 }
 
 /// Factory function to create ServiceRemoteDataSource instance

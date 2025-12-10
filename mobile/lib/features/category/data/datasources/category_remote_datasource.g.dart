@@ -34,7 +34,7 @@ class _CategoryRemoteDataSource implements CategoryRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/v1/categories',
+          '/api/v1/categories/',
           queryParameters: queryParameters,
           data: _data,
         )

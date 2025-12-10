@@ -29,9 +29,12 @@ class ApiConstants {
 
   // Merchant endpoints
   static String get merchantProfile => '$apiVersion/merchants/profile';
-  static String get merchantServices => '$apiVersion/merchants/services';
+  static String get merchantServices => '$apiVersion/services/my';
+
+  // Tariff endpoints
+  static String get tariffs => '$apiVersion/tariffs/';
+  static String get subscription => '$apiVersion/merchants/subscription';
 
   // Payment endpoints
-  static String get tariffs => '$apiVersion/payments/tariffs';
-  static String get createPayment => '$apiVersion/payments/tariff';
+  static String get createTariffPayment => '$apiVersion/payments/tariff';
 }

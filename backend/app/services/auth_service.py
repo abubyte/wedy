@@ -1,9 +1,10 @@
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
+from dateutil.relativedelta import relativedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -20,7 +21,11 @@ from app.core.exceptions import (
     NotFoundError,
     ConflictError
 )
-from app.models import User, UserType, Merchant, ServiceCategory
+from app.models import (
+    User, UserType, Merchant, ServiceCategory,
+    TariffPlan, MerchantSubscription, SubscriptionStatus
+)
+from app.repositories.payment_repository import PaymentRepository
 from app.schemas.auth_schema import (
     SendOTPResponse, 
     VerifyOTPResponse, 
@@ -202,7 +207,7 @@ class AuthService:
         await self.db.commit()
         await self.db.refresh(user)
         
-        # For merchants, create merchant profile
+        # For merchants, create merchant profile and activate start tariff
         if user_type == UserType.MERCHANT:
             merchant = Merchant(
                 user_id=user.id,
@@ -211,6 +216,14 @@ class AuthService:
             )
             
             self.db.add(merchant)
+            await self.db.flush()  # Flush to get merchant.id without committing
+            await self.db.refresh(merchant)
+            
+            # Automatically activate start tariff for 2 months (bypassing payment)
+            # This should happen before the final commit to ensure it's in the same transaction
+            await self._activate_start_tariff(merchant.id)
+            
+            # Now commit both merchant and subscription together
             await self.db.commit()
         
         # Generate tokens
@@ -277,3 +290,58 @@ class AuthService:
             str: 6-digit OTP code
         """
         return ''.join(random.choices(string.digits, k=6))
+    
+    async def _activate_start_tariff(self, merchant_id: UUID) -> None:
+        """
+        Automatically activate start tariff for 2 months for new merchants.
+        This bypasses payment requirements.
+        
+        Args:
+            merchant_id: UUID of the merchant
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            payment_repo = PaymentRepository(self.db)
+            
+            # Try to get the "Start" tariff plan first
+            start_tariff = await payment_repo.get_tariff_plan_by_name("Start")
+            
+            # If "Start" doesn't exist, try "Basic" (entry-level plan from seed script)
+            if not start_tariff:
+                logger.info(f"'Start' tariff plan not found, trying 'Basic'...")
+                start_tariff = await payment_repo.get_tariff_plan_by_name("Basic")
+            
+            # If still not found, get the first active plan (sorted by price, lowest first)
+            if not start_tariff:
+                logger.info(f"'Basic' tariff plan not found, getting first active plan...")
+                active_plans = await payment_repo.get_active_tariff_plans()
+                if not active_plans:
+                    logger.warning(f"No active tariff plans found. Cannot activate subscription for merchant {merchant_id}")
+                    return
+                # Sort by price and get the cheapest plan
+                active_plans.sort(key=lambda p: p.price_per_month)
+                start_tariff = active_plans[0]
+                logger.info(f"Using tariff plan '{start_tariff.name}' (ID: {start_tariff.id}) for auto-activation")
+            
+            # Calculate dates for 2 months
+            start_date = date.today()
+            end_date = start_date + relativedelta(months=2)
+            
+            # Create subscription without payment (payment_id is None)
+            subscription = MerchantSubscription(
+                merchant_id=merchant_id,
+                tariff_plan_id=start_tariff.id,
+                payment_id=None,  # No payment required for auto-activation
+                start_date=start_date,
+                end_date=end_date,
+                status=SubscriptionStatus.ACTIVE
+            )
+            
+            await payment_repo.create_subscription(subscription)
+            logger.info(f"Successfully activated '{start_tariff.name}' tariff for merchant {merchant_id} until {end_date}")
+        except Exception as e:
+            # Log error but don't fail registration if subscription activation fails
+            # This ensures merchants can still register even if there's an issue with tariff activation
+            logger.error(f"Failed to activate start tariff for merchant {merchant_id}: {str(e)}", exc_info=True)

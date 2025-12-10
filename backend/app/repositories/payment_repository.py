@@ -482,7 +482,7 @@ class PaymentRepository:
     async def create_subscription(self, subscription: MerchantSubscription) -> MerchantSubscription:
         """Create a new merchant subscription."""
         self.session.add(subscription)
-        await self.session.commit()
+        await self.session.flush()  # Flush instead of commit to allow parent transaction to commit
         await self.session.refresh(subscription)
         return subscription
     

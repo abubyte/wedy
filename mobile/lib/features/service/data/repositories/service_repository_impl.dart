@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
@@ -114,7 +115,7 @@ class ServiceRepositoryImpl implements ServiceRepository {
         longitude: longitude,
       );
       final response = await remoteDataSource.createService(requestDto.toJson());
-      return Right(response.toEntity());
+      return Right(response.toServiceEntity());
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
@@ -147,7 +148,7 @@ class ServiceRepositoryImpl implements ServiceRepository {
       final requestBody = requestDto.toJson();
       requestBody.removeWhere((key, value) => value == null);
       final response = await remoteDataSource.updateService(serviceId, requestBody);
-      return Right(response.toEntity());
+      return Right(response.toServiceEntity());
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
@@ -160,6 +161,45 @@ class ServiceRepositoryImpl implements ServiceRepository {
     try {
       await remoteDataSource.deleteService(serviceId);
       return const Right(null);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> uploadServiceImage({
+    required String serviceId,
+    required String imagePath,
+    required String fileName,
+    required String contentType,
+    int displayOrder = 0,
+  }) async {
+    try {
+      // Get presigned URL from backend
+      final response = await remoteDataSource.getServiceImageUploadUrl(serviceId, fileName, contentType, displayOrder);
+
+      if (response.presignedUrl == null) {
+        return const Left(ServerFailure('No presigned URL received'));
+      }
+
+      // Upload file to S3 using presigned URL
+      final file = File(imagePath);
+      if (!await file.exists()) {
+        return const Left(ValidationFailure('Image file does not exist'));
+      }
+
+      final dio = Dio();
+      final fileBytes = await file.readAsBytes();
+
+      await dio.put(
+        response.presignedUrl!,
+        data: fileBytes,
+        options: Options(headers: {'Content-Type': contentType}),
+      );
+
+      return Right(response.s3Url ?? '');
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {

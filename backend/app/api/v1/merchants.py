@@ -20,7 +20,11 @@ from app.schemas.merchant_schema import (
     MerchantAnalyticsResponse,
     MerchantFeaturedServicesResponse,
     FeaturedServiceResponse,
-    ImageUploadResponse
+    ImageUploadResponse,
+    MerchantServicesResponse,
+    ServiceCreateRequest,
+    ServiceUpdateRequest,
+    MerchantServiceResponse
 )
 from app.schemas.payment_schema import SubscriptionResponse, SubscriptionWithLimitsResponse
 from app.schemas.common_schema import SuccessResponse
@@ -186,6 +190,243 @@ async def check_subscription_limit(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check subscription limit: {str(e)}"
+        )
+
+
+@router.get("/services", response_model=MerchantServicesResponse)
+async def get_merchant_services(
+    current_user: User = Depends(get_current_merchant_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Get all services for the current merchant with analytics.
+    
+    Args:
+        current_user: Current authenticated merchant user
+        db: Database session
+        
+    Returns:
+        MerchantServicesResponse: Merchant services with statistics
+    """
+    try:
+        merchant_manager = MerchantManager(db)
+        return await merchant_manager.get_merchant_services(current_user.id)
+    
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+
+
+@router.post("/services", response_model=MerchantServiceResponse)
+async def create_merchant_service(
+    service_data: ServiceCreateRequest,
+    current_user: User = Depends(get_current_merchant_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Create a new service for the current merchant with tariff limit validation.
+    
+    Args:
+        service_data: Service creation data
+        current_user: Current authenticated merchant user
+        db: Database session
+        
+    Returns:
+        MerchantServiceResponse: Created service
+    """
+    try:
+        merchant_manager = MerchantManager(db)
+        return await merchant_manager.create_merchant_service(current_user.id, service_data)
+    
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except PaymentRequiredError as e:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=str(e)
+        )
+    except ForbiddenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.put("/services/{service_id}", response_model=MerchantServiceResponse)
+async def update_merchant_service(
+    service_id: str,
+    service_data: ServiceUpdateRequest,
+    current_user: User = Depends(get_current_merchant_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Update a service. Only the merchant who owns the service can update it.
+    
+    Args:
+        service_id: 9-digit numeric string ID of the service to update
+        service_data: Service update data
+        current_user: Current authenticated merchant user
+        db: Database session
+        
+    Returns:
+        MerchantServiceResponse: Updated service
+    """
+    try:
+        from app.repositories.service_repository import ServiceRepository
+        from app.models import ServiceCategory
+        from sqlalchemy import select
+        
+        merchant_manager = MerchantManager(db)
+        merchant_repo = merchant_manager.merchant_repo
+        service_repo = ServiceRepository(db)
+        
+        # Get merchant
+        merchant = await merchant_repo.get_merchant_by_user_id(current_user.id)
+        if not merchant:
+            raise NotFoundError("Merchant profile not found")
+        
+        # Get service and verify ownership
+        service = await service_repo.get_by_id(service_id)
+        if not service:
+            raise NotFoundError("Service not found")
+        
+        if service.merchant_id != merchant.id:
+            raise ForbiddenError("You don't have permission to update this service")
+        
+        # Update service fields
+        if service_data.name is not None:
+            service.name = service_data.name
+        if service_data.description is not None:
+            service.description = service_data.description
+        if service_data.category_id is not None:
+            # Validate category exists
+            category_stmt = select(ServiceCategory).where(ServiceCategory.id == service_data.category_id)
+            category_result = await db.execute(category_stmt)
+            category = category_result.scalar_one_or_none()
+            if not category:
+                raise NotFoundError("Service category not found")
+            service.category_id = service_data.category_id
+        if service_data.price is not None:
+            service.price = service_data.price
+        if service_data.location_region is not None:
+            from app.utils.constants import UZBEKISTAN_REGIONS
+            if service_data.location_region not in UZBEKISTAN_REGIONS:
+                raise ValidationError(f"Invalid region: {service_data.location_region}")
+            service.location_region = service_data.location_region
+        if service_data.latitude is not None:
+            service.latitude = service_data.latitude
+        if service_data.longitude is not None:
+            service.longitude = service_data.longitude
+        
+        # Save updates
+        updated_service = await service_repo.update(service)
+        
+        # Get category for response
+        category_stmt = select(ServiceCategory).where(ServiceCategory.id == updated_service.category_id)
+        category_result = await db.execute(category_stmt)
+        category = category_result.scalar_one_or_none()
+        
+        # Count images for this service
+        images_count = await merchant_repo.count_service_images(updated_service.id)
+        
+        return MerchantServiceResponse(
+            id=updated_service.id,
+            name=updated_service.name,
+            description=updated_service.description,
+            category_id=updated_service.category_id,
+            category_name=category.name if category else "",
+            price=updated_service.price,
+            location_region=updated_service.location_region,
+            latitude=updated_service.latitude,
+            longitude=updated_service.longitude,
+            is_active=updated_service.is_active,
+            images_count=images_count,
+            created_at=updated_service.created_at,
+            updated_at=updated_service.updated_at
+        )
+    
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ForbiddenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.delete("/services/{service_id}", response_model=SuccessResponse)
+async def delete_merchant_service(
+    service_id: str,
+    current_user: User = Depends(get_current_merchant_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Delete (soft delete) a service. Only the merchant who owns the service can delete it.
+    
+    Args:
+        service_id: 9-digit numeric string ID of the service to delete
+        current_user: Current authenticated merchant user
+        db: Database session
+        
+    Returns:
+        SuccessResponse: Confirmation of deletion
+    """
+    try:
+        from app.repositories.service_repository import ServiceRepository
+        
+        merchant_manager = MerchantManager(db)
+        merchant_repo = merchant_manager.merchant_repo
+        service_repo = ServiceRepository(db)
+        
+        # Get merchant
+        merchant = await merchant_repo.get_merchant_by_user_id(current_user.id)
+        if not merchant:
+            raise NotFoundError("Merchant profile not found")
+        
+        # Get service and verify ownership
+        service = await service_repo.get_by_id(service_id)
+        if not service:
+            raise NotFoundError("Service not found")
+        
+        if service.merchant_id != merchant.id:
+            raise ForbiddenError("You don't have permission to delete this service")
+        
+        # Soft delete service
+        service.is_active = False
+        await service_repo.update(service)
+        
+        return SuccessResponse(
+            success=True,
+            message="Service deleted successfully"
+        )
+    
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ForbiddenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
         )
 
 

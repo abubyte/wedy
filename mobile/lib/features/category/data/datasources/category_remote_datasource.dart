@@ -12,7 +12,7 @@ abstract class CategoryRemoteDataSource {
   factory CategoryRemoteDataSource(Dio dio, {String baseUrl}) = _CategoryRemoteDataSource;
 
   /// Get all active service categories with service counts
-  @GET('/api/v1/categories')
+  @GET('/api/v1/categories/')
   Future<CategoriesResponseDto> getCategories();
 }
 

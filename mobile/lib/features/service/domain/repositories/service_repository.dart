@@ -49,6 +49,15 @@ abstract class ServiceRepository {
 
   /// Delete a service
   Future<Either<Failure, void>> deleteService(String serviceId);
+
+  /// Upload service image
+  Future<Either<Failure, String>> uploadServiceImage({
+    required String serviceId,
+    required String imagePath,
+    required String fileName,
+    required String contentType,
+    int displayOrder = 0,
+  });
 }
 
 /// Service interaction response

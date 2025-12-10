@@ -49,7 +49,7 @@ class MerchantSettingsPage extends StatelessWidget {
                     // Tariff section
                     if (isLoggedIn) ...[
                       tariffActive
-                          ? const WedyTariffStatus(settingsPage: true, status: TariffStatus.active)
+                          ? const WedyTariffStatus(settingsPage: true)
                           : GestureDetector(
                               onTap: () => context.pushNamed(RouteNames.tariff),
                               child: Container(

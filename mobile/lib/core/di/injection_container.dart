@@ -41,6 +41,13 @@ import '../../features/reviews/domain/usecases/create_review.dart';
 import '../../features/reviews/domain/usecases/update_review.dart';
 import '../../features/reviews/domain/usecases/delete_review.dart';
 import '../../features/reviews/presentation/bloc/review_bloc.dart';
+import '../../features/tariff/data/datasources/tariff_remote_datasource.dart';
+import '../../features/tariff/data/repositories/tariff_repository_impl.dart';
+import '../../features/tariff/domain/repositories/tariff_repository.dart';
+import '../../features/tariff/domain/usecases/get_tariff_plans.dart';
+import '../../features/tariff/domain/usecases/get_subscription.dart';
+import '../../features/tariff/domain/usecases/create_tariff_payment.dart';
+import '../../features/tariff/presentation/bloc/tariff_bloc.dart';
 
 /// Service locator instance
 final getIt = GetIt.instance;
@@ -161,5 +168,21 @@ Future<void> init() async {
       updateReviewUseCase: getIt(),
       deleteReviewUseCase: getIt(),
     ),
+  );
+
+  // Tariff data sources
+  getIt.registerLazySingleton<TariffRemoteDataSource>(() => createTariffRemoteDataSource());
+
+  // Tariff repositories
+  getIt.registerLazySingleton<TariffRepository>(() => TariffRepositoryImpl(remoteDataSource: getIt()));
+
+  // Tariff use cases
+  getIt.registerLazySingleton(() => GetTariffPlans(getIt()));
+  getIt.registerLazySingleton(() => GetSubscription(getIt()));
+  getIt.registerLazySingleton(() => CreateTariffPayment(getIt()));
+
+  // Tariff BLoC
+  getIt.registerFactory(
+    () => TariffBloc(getTariffPlans: getIt(), getSubscription: getIt(), createTariffPayment: getIt()),
   );
 }

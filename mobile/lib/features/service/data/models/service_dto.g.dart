@@ -245,9 +245,13 @@ MerchantServiceDto _$MerchantServiceDtoFromJson(Map<String, dynamic> json) =>
       viewCount: (json['view_count'] as num).toInt(),
       likeCount: (json['like_count'] as num).toInt(),
       saveCount: (json['save_count'] as num).toInt(),
+      shareCount: (json['share_count'] as num?)?.toInt() ?? 0,
       overallRating: (json['overall_rating'] as num).toDouble(),
       totalReviews: (json['total_reviews'] as num).toInt(),
       mainImageUrl: json['main_image_url'] as String?,
+      imagesCount: (json['images_count'] as num?)?.toInt() ?? 0,
+      isFeatured: json['is_featured'] as bool? ?? false,
+      featuredUntil: json['featured_until'] as String?,
       createdAt: json['created_at'] as String,
       updatedAt: json['updated_at'] as String,
     );
@@ -267,11 +271,35 @@ Map<String, dynamic> _$MerchantServiceDtoToJson(MerchantServiceDto instance) =>
       'view_count': instance.viewCount,
       'like_count': instance.likeCount,
       'save_count': instance.saveCount,
+      'share_count': instance.shareCount,
       'overall_rating': instance.overallRating,
       'total_reviews': instance.totalReviews,
       'main_image_url': instance.mainImageUrl,
+      'images_count': instance.imagesCount,
+      'is_featured': instance.isFeatured,
+      'featured_until': instance.featuredUntil,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
+    };
+
+ImageUploadResponseDto _$ImageUploadResponseDtoFromJson(
+        Map<String, dynamic> json) =>
+    ImageUploadResponseDto(
+      success: json['success'] as bool,
+      message: json['message'] as String,
+      imageId: json['image_id'] as String?,
+      s3Url: json['s3_url'] as String?,
+      presignedUrl: json['presigned_url'] as String?,
+    );
+
+Map<String, dynamic> _$ImageUploadResponseDtoToJson(
+        ImageUploadResponseDto instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'message': instance.message,
+      'image_id': instance.imageId,
+      's3_url': instance.s3Url,
+      'presigned_url': instance.presignedUrl,
     };
 
 MerchantServicesResponseDto _$MerchantServicesResponseDtoFromJson(

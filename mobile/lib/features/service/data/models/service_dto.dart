@@ -368,12 +368,20 @@ class MerchantServiceDto {
   final int likeCount;
   @JsonKey(name: 'save_count')
   final int saveCount;
+  @JsonKey(name: 'share_count')
+  final int shareCount;
   @JsonKey(name: 'overall_rating')
   final double overallRating;
   @JsonKey(name: 'total_reviews')
   final int totalReviews;
   @JsonKey(name: 'main_image_url')
   final String? mainImageUrl;
+  @JsonKey(name: 'images_count')
+  final int imagesCount;
+  @JsonKey(name: 'is_featured')
+  final bool isFeatured;
+  @JsonKey(name: 'featured_until')
+  final String? featuredUntil;
   @JsonKey(name: 'created_at')
   final String createdAt;
   @JsonKey(name: 'updated_at')
@@ -393,9 +401,13 @@ class MerchantServiceDto {
     required this.viewCount,
     required this.likeCount,
     required this.saveCount,
+    this.shareCount = 0,
     required this.overallRating,
     required this.totalReviews,
     this.mainImageUrl,
+    this.imagesCount = 0,
+    this.isFeatured = false,
+    this.featuredUntil,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -425,6 +437,61 @@ class MerchantServiceDto {
       updatedAt: DateTime.parse(updatedAt),
     );
   }
+
+  /// Convert to Service entity (for create/update responses)
+  /// Uses default values for merchant and images since they're not in MerchantServiceResponse
+  Service toServiceEntity() {
+    return Service(
+      id: id,
+      name: name,
+      description: description,
+      price: price,
+      locationRegion: locationRegion,
+      latitude: latitude,
+      longitude: longitude,
+      viewCount: viewCount,
+      likeCount: likeCount,
+      saveCount: saveCount,
+      shareCount: shareCount,
+      overallRating: overallRating,
+      totalReviews: totalReviews,
+      isActive: isActive,
+      createdAt: DateTime.parse(createdAt),
+      updatedAt: DateTime.parse(updatedAt),
+      merchant: MerchantBasicInfo(
+        id: '', // Not available in MerchantServiceResponse
+        businessName: '',
+        overallRating: 0.0,
+        totalReviews: 0,
+        locationRegion: locationRegion,
+        isVerified: false,
+        avatarUrl: null,
+      ),
+      categoryId: categoryId,
+      categoryName: categoryName,
+      images: [], // Images are uploaded separately
+      isFeatured: isFeatured,
+      featuredUntil: (featuredUntil != null && featuredUntil!.isNotEmpty) ? DateTime.parse(featuredUntil!) : null,
+    );
+  }
+}
+
+/// Response DTO for image upload
+@JsonSerializable()
+class ImageUploadResponseDto {
+  final bool success;
+  final String message;
+  @JsonKey(name: 'image_id')
+  final String? imageId;
+  @JsonKey(name: 's3_url')
+  final String? s3Url;
+  @JsonKey(name: 'presigned_url')
+  final String? presignedUrl;
+
+  ImageUploadResponseDto({required this.success, required this.message, this.imageId, this.s3Url, this.presignedUrl});
+
+  factory ImageUploadResponseDto.fromJson(Map<String, dynamic> json) => _$ImageUploadResponseDtoFromJson(json);
+  Map<String, dynamic> toJson() => _$ImageUploadResponseDtoToJson(this);
 }
 
 /// Response DTO for merchant services list

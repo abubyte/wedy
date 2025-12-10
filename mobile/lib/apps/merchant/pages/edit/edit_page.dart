@@ -9,11 +9,13 @@ import 'package:wedy/core/constants/uzbekistan_data.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
+import 'package:wedy/core/di/injection_container.dart' as di;
 import 'package:wedy/features/category/domain/entities/category.dart';
 import 'package:wedy/features/category/presentation/bloc/category_bloc.dart';
 import 'package:wedy/features/category/presentation/bloc/category_event.dart';
 import 'package:wedy/features/category/presentation/bloc/category_state.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
+import 'package:wedy/features/service/domain/repositories/service_repository.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_bloc.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_event.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_state.dart';
@@ -52,6 +54,8 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
 
   bool get isEditMode => widget.service != null;
 
+  ServiceRepository get _serviceRepository => di.getIt<ServiceRepository>();
+
   @override
   void initState() {
     super.initState();
@@ -88,15 +92,25 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
         elevation: 0,
       ),
       body: BlocConsumer<MerchantServiceBloc, MerchantServiceState>(
-        listener: (context, state) {
-          if (state is ServiceCreated || state is ServiceUpdated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isEditMode ? 'Xizmat muvaffaqiyatli yangilandi' : 'Xizmat muvaffaqiyatli yaratildi'),
-                backgroundColor: AppColors.success,
-              ),
-            );
-            context.pop();
+        listener: (context, state) async {
+          if (state is ServiceCreated) {
+            // Upload images after service creation
+            await _uploadImages(state.service.id);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Xizmat muvaffaqiyatli yaratildi'), backgroundColor: AppColors.success),
+              );
+              context.pop();
+            }
+          } else if (state is ServiceUpdated) {
+            // Upload images after service update
+            await _uploadImages(state.service.id);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Xizmat muvaffaqiyatli yangilandi'), backgroundColor: AppColors.success),
+              );
+              context.pop();
+            }
           } else if (state is MerchantServiceError) {
             ScaffoldMessenger.of(
               context,
@@ -507,6 +521,78 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
           longitude: longitude,
         ),
       );
+    }
+  }
+
+  Future<void> _uploadImages(String serviceId) async {
+    try {
+      // Upload main image first (display_order = 0)
+      if (pickedFile != null) {
+        final contentType = _getContentType(pickedFile!.path);
+        final fileName = pickedFile!.path.split('/').last;
+        final result = await _serviceRepository.uploadServiceImage(
+          serviceId: serviceId,
+          imagePath: pickedFile!.path,
+          fileName: fileName,
+          contentType: contentType,
+          displayOrder: 0,
+        );
+        result.fold((failure) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Asosiy rasm yuklashda xatolik: ${failure.toString()}'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        }, (_) {});
+      }
+
+      // Upload gallery images
+      for (int i = 0; i < galleryImages.length; i++) {
+        final image = galleryImages[i];
+        final contentType = _getContentType(image.path);
+        final fileName = image.path.split('/').last;
+        final result = await _serviceRepository.uploadServiceImage(
+          serviceId: serviceId,
+          imagePath: image.path,
+          fileName: fileName,
+          contentType: contentType,
+          displayOrder: i + 1, // Start from 1 since main image is 0
+        );
+        result.fold((failure) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Rasm yuklashda xatolik: ${failure.toString()}'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        }, (_) {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Rasmlarni yuklashda xatolik: $e'), backgroundColor: AppColors.error));
+      }
+    }
+  }
+
+  String _getContentType(String filePath) {
+    final extension = filePath.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
     }
   }
 }

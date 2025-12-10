@@ -8,6 +8,7 @@ import 'package:wedy/apps/merchant/pages/chats/chats_page.dart';
 import 'package:wedy/apps/merchant/pages/edit/edit_page.dart';
 import 'package:wedy/apps/merchant/pages/services/services_page.dart';
 import 'package:wedy/apps/merchant/pages/settings/settings_page.dart';
+import 'package:wedy/apps/merchant/pages/tariff/tariff_page.dart';
 import 'package:wedy/features/category/domain/entities/category.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
 import 'package:wedy/shared/navigation/navigation_shell.dart';
@@ -210,6 +211,7 @@ class AppRouter {
         GoRoute(path: RouteNames.auth, builder: (context, state) => const AuthScreen()),
         GoRoute(
           path: RouteNames.edit,
+          name: RouteNames.edit,
           builder: (context, state) {
             final service = state.extra is MerchantService ? state.extra as MerchantService : null;
             return MerchantEditPage(service: service);
@@ -226,7 +228,7 @@ class AppRouter {
           name: RouteNames.account,
           builder: (context, state) => const MerchantAccountPage(),
         ),
-        GoRoute(path: RouteNames.tariff, name: RouteNames.tariff, builder: (context, state) => const Scaffold()),
+        GoRoute(path: RouteNames.tariff, name: RouteNames.tariff, builder: (context, state) => const TariffPage()),
         StatefulShellRoute.indexedStack(
           builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) =>
               NavigationShell(client: false, child: navigationShell),
