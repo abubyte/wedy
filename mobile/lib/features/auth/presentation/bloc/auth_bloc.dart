@@ -1,11 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/config/app_config.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/send_otp.dart';
 import '../../domain/usecases/verify_otp.dart';
 import '../../domain/usecases/register_user.dart';
 import '../../domain/usecases/refresh_token.dart';
 import '../../data/datasources/auth_local_datasource.dart';
+import '../../domain/entities/user.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -145,7 +147,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       },
       (user) {
-        // Profile fetched successfully - user is authenticated
+        // Profile fetched successfully - check user type if merchant app
+        if (AppConfig.instance.appType == AppType.merchant) {
+          if (user.type != UserType.merchant) {
+            // User is not a merchant - clear auth data and show error
+            localDataSource.clearAuthData();
+            emit(const AuthError('Bu telefon raqam client akkaunt bilan ro\'yxatdan o\'tgan. Merchant akkaunt kerak.'));
+            return;
+          }
+        }
+        // User type is valid - user is authenticated
         emit(Authenticated(user));
       },
     );
@@ -158,7 +169,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // If profile fetch fails, clear auth data and emit unauthenticated
       localDataSource.clearAuthData();
       emit(const Unauthenticated());
-    }, (user) => emit(Authenticated(user)));
+    }, (user) {
+      // If this is merchant app, verify user is a merchant
+      if (AppConfig.instance.appType == AppType.merchant) {
+        if (user.type != UserType.merchant) {
+          // User is not a merchant - clear auth data and show error
+          localDataSource.clearAuthData();
+          emit(const AuthError('Bu telefon raqam client akkaunt bilan ro\'yxatdan o\'tgan. Merchant akkaunt kerak.'));
+          return;
+        }
+      }
+      // User type is valid - emit authenticated
+      emit(Authenticated(user));
+    });
   }
 
   String _getErrorMessage(Failure failure) {
