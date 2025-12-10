@@ -19,7 +19,7 @@ class MerchantServiceLoading extends MerchantServiceState {
   const MerchantServiceLoading();
 }
 
-/// Services loaded successfully
+/// Services loaded successfully (for backward compatibility)
 class MerchantServicesLoaded extends MerchantServiceState {
   final MerchantServicesResponse servicesResponse;
 
@@ -27,6 +27,16 @@ class MerchantServicesLoaded extends MerchantServiceState {
 
   @override
   List<Object?> get props => [servicesResponse];
+}
+
+/// Single merchant service loaded successfully (nullable - null means no service)
+class MerchantServiceLoaded extends MerchantServiceState {
+  final MerchantService? service;
+
+  const MerchantServiceLoaded(this.service);
+
+  @override
+  List<Object?> get props => [service];
 }
 
 /// Service created successfully

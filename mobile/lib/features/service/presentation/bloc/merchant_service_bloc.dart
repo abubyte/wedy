@@ -30,10 +30,11 @@ class MerchantServiceBloc extends Bloc<MerchantServiceEvent, MerchantServiceStat
   Future<void> _onLoadMerchantServices(LoadMerchantServicesEvent event, Emitter<MerchantServiceState> emit) async {
     emit(const MerchantServiceLoading());
     final result = await getMerchantServices();
-    result.fold(
-      (failure) => emit(MerchantServiceError(_mapFailureToMessage(failure))),
-      (servicesResponse) => emit(MerchantServicesLoaded(servicesResponse)),
-    );
+    result.fold((failure) => emit(MerchantServiceError(_mapFailureToMessage(failure))), (servicesResponse) {
+      // Extract first service (only one service per merchant for now)
+      final service = servicesResponse.services.isNotEmpty ? servicesResponse.services.first : null;
+      emit(MerchantServiceLoaded(service));
+    });
   }
 
   Future<void> _onCreateService(CreateServiceEvent event, Emitter<MerchantServiceState> emit) async {

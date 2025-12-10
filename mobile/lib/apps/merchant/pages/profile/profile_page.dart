@@ -60,19 +60,18 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
         builder: (context, state) {
           if (state is MerchantServiceLoading || state is MerchantServiceInitial) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is MerchantServicesLoaded) {
-            final services = state.servicesResponse.services;
+          } else if (state is MerchantServiceLoaded) {
+            final service = state.service;
 
-            // Show empty state if no services
-            if (services.isEmpty) {
+            // Show empty state if no service
+            if (service == null) {
               return _buildEmptyState();
             }
 
-            // Show first service (only one service per merchant for this release)
-            final service = services.first;
+            // Show service
             return _buildServiceProfile(service);
           } else if (state is ServiceCreated || state is ServiceUpdated) {
-            // Show loading while services are being reloaded after create/update
+            // Show loading while service is being reloaded after create/update
             return const Center(child: CircularProgressIndicator());
           } else if (state is MerchantServiceError) {
             return _buildErrorState(state.message);
