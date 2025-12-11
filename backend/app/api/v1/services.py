@@ -195,6 +195,11 @@ async def get_my_services(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get merchant services: {str(e)}"
+        )
 
 
 @router.get("/{service_id}", response_model=ServiceDetailResponse)

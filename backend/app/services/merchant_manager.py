@@ -289,7 +289,7 @@ class MerchantManager:
             created_at=created_contact.created_at
         )
     
-    async def get_merchant_services(self, user_id: UUID) -> MerchantServicesResponse:
+    async def get_merchant_services(self, user_id: str) -> MerchantServicesResponse:
         """
         Get all merchant services with analytics.
         
@@ -309,17 +309,27 @@ class MerchantManager:
         active_count = 0
         
         for service, category in services_with_categories:
-            # Count images for this service
-            images_count = await self.merchant_repo.count_service_images(service.id)
-            
-            # Get main image (first image by display_order)
-            main_image_url = None
-            service_images = await self.service_repo.get_service_images(service.id)
-            if service_images:
-                main_image_url = service_images[0].s3_url
-            
-            # Check if featured
-            is_featured, featured_until = await self.service_repo.is_service_featured(service.id)
+            try:
+                # Count images for this service
+                images_count = await self.merchant_repo.count_service_images(str(service.id))
+                
+                # Get main image (first image by display_order)
+                main_image_url = None
+                service_images = await self.service_repo.get_service_images(str(service.id))
+                if service_images and len(service_images) > 0:
+                    main_image_url = service_images[0].s3_url
+                
+                # Check if featured
+                is_featured, featured_until = await self.service_repo.is_service_featured(str(service.id))
+            except Exception as e:
+                # Log error but continue with default values
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error processing service {service.id}: {str(e)}")
+                images_count = 0
+                main_image_url = None
+                is_featured = False
+                featured_until = None
             
             service_response = MerchantServiceResponse(
                 id=service.id,
