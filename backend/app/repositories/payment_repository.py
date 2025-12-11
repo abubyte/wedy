@@ -602,7 +602,7 @@ class PaymentRepository:
         """Count gallery images for a merchant."""
         statement = select(func.count(Image.id)).where(
             and_(
-                Image.related_id == merchant_id,
+                Image.related_id == str(merchant_id),
                 Image.image_type == ImageType.MERCHANT_GALLERY,
                 Image.is_active == True
             )

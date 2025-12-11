@@ -196,7 +196,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             select(Image)
             .where(
                 and_(
-                    Image.related_id == merchant_id,
+                    Image.related_id == str(merchant_id),
                     Image.image_type == ImageType.MERCHANT_GALLERY,
                     Image.is_active == True
                 )
@@ -220,7 +220,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             select(func.count(Image.id))
             .where(
                 and_(
-                    Image.related_id == merchant_id,
+                    Image.related_id == str(merchant_id),
                     Image.image_type == ImageType.MERCHANT_GALLERY,
                     Image.is_active == True
                 )
@@ -489,7 +489,7 @@ class MerchantRepository(BaseRepository[Merchant]):
             .where(
                 and_(
                     Image.id == image_id,
-                    Image.related_id == merchant_id,
+                    Image.related_id == str(merchant_id),
                     Image.image_type == ImageType.MERCHANT_GALLERY
                 )
             )
