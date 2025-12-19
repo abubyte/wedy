@@ -255,17 +255,13 @@ class AuthService:
         if not payload or payload.get("type") != "refresh":
             raise AuthenticationError("Invalid refresh token")
         
-        user_id = payload.get("sub")
+        user_id = str(payload.get("sub"))
         if not user_id:
             raise AuthenticationError("Invalid token payload")
         
-        try:
-            user_uuid = UUID(user_id)
-        except ValueError:
-            raise AuthenticationError("Invalid user ID in token")
-        
+        # User ID is a 9-digit numeric string, not UUID
         # Verify user exists and is active
-        statement = select(User).where(User.id == user_uuid, User.is_active == True)
+        statement = select(User).where(User.id == user_id, User.is_active == True)
         result = await self.db.execute(statement)
         user = result.scalar_one_or_none()
         

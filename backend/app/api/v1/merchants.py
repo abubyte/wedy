@@ -4,12 +4,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Form, UploadFile, File, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datetime import datetime
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 from app.core.database import get_db_session
 from app.services.merchant_manager import MerchantManager
 from app.services.payment_service import PaymentService
 from app.services.payment_providers import get_payment_providers
 from app.repositories.merchant_repository import MerchantRepository
+from app.repositories.payment_repository import PaymentRepository
 from app.schemas.merchant_schema import (
     MerchantProfileResponse,
     MerchantProfileUpdateRequest,
@@ -29,7 +31,7 @@ from app.schemas.merchant_schema import (
 from app.schemas.payment_schema import SubscriptionResponse, SubscriptionWithLimitsResponse
 from app.schemas.common_schema import SuccessResponse
 from app.api.deps import get_current_merchant_user, get_current_active_merchant
-from app.models import User, Merchant, Image, ImageType
+from app.models import User, Merchant, Image, ImageType, MerchantSubscription, SubscriptionStatus
 from app.core.exceptions import (
     WedyException, 
     NotFoundError, 
@@ -53,6 +55,91 @@ def get_payment_service(
         payment_providers=payment_providers,
         sms_service=None  # SMS service would be injected here # TODO
     )
+
+
+@router.post("/activate-subscription", response_model=SubscriptionWithLimitsResponse, status_code=200)
+async def activate_merchant_subscription(
+    current_user: User = Depends(get_current_merchant_user),
+    payment_service: PaymentService = Depends(get_payment_service),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Manually activate a subscription for the current merchant.
+    This is useful for merchants who registered before auto-activation was implemented.
+    """
+    try:
+        # Check if merchant already has an active subscription
+        existing_subscription = await payment_service.get_merchant_subscription(current_user.id)
+        if existing_subscription:
+            return SubscriptionWithLimitsResponse(
+                message="Merchant already has an active subscription",
+                subscription=existing_subscription
+            )
+        
+        # Get merchant
+        merchant_repo = MerchantRepository(db)
+        merchant = await merchant_repo.get_merchant_by_user_id(current_user.id)
+        if not merchant:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Merchant not found"
+            )
+        
+        # Use the same logic as auto-activation
+        payment_repo = PaymentRepository(db)
+        
+        # Try to get "Start" tariff plan first
+        start_tariff = await payment_repo.get_tariff_plan_by_name("Start")
+        
+        # If "Start" doesn't exist, try "Basic"
+        if not start_tariff:
+            start_tariff = await payment_repo.get_tariff_plan_by_name("Basic")
+        
+        # If still not found, get the first active plan (sorted by price)
+        if not start_tariff:
+            active_plans = await payment_repo.get_active_tariff_plans()
+            if not active_plans:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No active tariff plans found. Please contact support."
+                )
+            # Sort by price and get the cheapest plan
+            active_plans.sort(key=lambda p: p.price_per_month)
+            start_tariff = active_plans[0]
+        
+        # Calculate dates for 2 months
+        start_date = date.today()
+        end_date = start_date + relativedelta(months=2)
+        
+        # Create subscription without payment (payment_id is None)
+        subscription = MerchantSubscription(
+            merchant_id=merchant.id,
+            tariff_plan_id=start_tariff.id,
+            payment_id=None,  # No payment required for auto-activation
+            start_date=start_date,
+            end_date=end_date,
+            status=SubscriptionStatus.ACTIVE
+        )
+        
+        db.add(subscription)
+        await db.commit()
+        await db.refresh(subscription)
+        
+        # Get the full subscription response
+        updated_subscription = await payment_service.get_merchant_subscription(current_user.id)
+        
+        return SubscriptionWithLimitsResponse(
+            message=f"Successfully activated '{start_tariff.name}' subscription for 2 months",
+            subscription=updated_subscription
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to activate subscription: {str(e)}"
+        )
 
 
 @router.get("/subscription", response_model=SubscriptionWithLimitsResponse)
