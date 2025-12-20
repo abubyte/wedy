@@ -188,7 +188,7 @@ async def get_my_services(
     """
     try:
         merchant_manager = MerchantManager(db)
-        return await merchant_manager.get_merchant_services(current_user.id)
+        return await merchant_manager.get_merchant_services(str(current_user.id))
     
     except NotFoundError as e:
         raise HTTPException(
