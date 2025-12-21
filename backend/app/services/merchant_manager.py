@@ -680,6 +680,75 @@ class MerchantManager:
             created_at=created_featured.created_at
         )
     
+    async def create_featured_service_admin(
+        self,
+        service_id: str,
+        duration_days: int = 30,
+        feature_type: FeatureType = FeatureType.MONTHLY_ALLOCATION
+    ) -> FeaturedServiceResponse:
+        """
+        Create featured service as admin (bypasses subscription and ownership checks).
+        
+        Args:
+            service_id: 9-digit numeric string ID of the service to feature
+            duration_days: Duration in days (default: 30)
+            feature_type: Type of feature (default: MONTHLY_ALLOCATION)
+            
+        Returns:
+            Featured service response
+            
+        Raises:
+            NotFoundError: If service not found
+        """
+        from datetime import datetime, timedelta
+        
+        # Get service
+        service_stmt = select(Service).where(Service.id == service_id)
+        service_result = await self.db.execute(service_stmt)
+        service = service_result.scalar_one_or_none()
+        
+        if not service:
+            raise NotFoundError(f"Service with ID {service_id} not found")
+        
+        # Get merchant
+        merchant_stmt = select(Merchant).where(Merchant.id == service.merchant_id)
+        merchant_result = await self.db.execute(merchant_stmt)
+        merchant = merchant_result.scalar_one_or_none()
+        
+        if not merchant:
+            raise NotFoundError(f"Merchant not found for service {service_id}")
+        
+        # Create featured service (admin bypasses all checks)
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=duration_days)
+        
+        featured_service = FeaturedService(
+            service_id=service.id,
+            merchant_id=merchant.id,
+            payment_id=None,  # No payment for admin-created features
+            start_date=start_date,
+            end_date=end_date,
+            days_duration=duration_days,
+            amount_paid=None,
+            feature_type=feature_type,
+            is_active=True
+        )
+        
+        created_featured = await self.merchant_repo.create_featured_service(featured_service)
+        
+        return FeaturedServiceResponse(
+            id=created_featured.id,
+            service_id=service.id,
+            service_name=service.name,
+            start_date=created_featured.start_date,
+            end_date=created_featured.end_date,
+            days_duration=created_featured.days_duration,
+            amount_paid=created_featured.amount_paid,
+            feature_type=created_featured.feature_type.value,
+            is_active=True,
+            created_at=created_featured.created_at
+        )
+    
     async def _ensure_active_subscription(self, merchant_id: UUID) -> tuple:
         """
         Ensure merchant has active subscription.

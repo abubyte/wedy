@@ -21,11 +21,12 @@ from app.schemas.merchant_schema import (
     ServiceUpdateRequest,
     MerchantServiceResponse,
     MerchantServicesResponse,
-    ImageUploadResponse
+    ImageUploadResponse,
+    FeaturedServiceResponse
 )
 from app.schemas.common_schema import PaginationParams, SuccessResponse
-from app.api.deps import get_current_user, get_current_merchant_user
-from app.models import User, Service, Image, ImageType
+from app.api.deps import get_current_user, get_current_merchant_user, get_current_admin
+from app.models import User, Service, Image, ImageType, FeatureType
 from app.repositories.service_repository import ServiceRepository
 from app.repositories.merchant_repository import MerchantRepository
 from app.core.exceptions import (
@@ -188,7 +189,7 @@ async def get_my_services(
     """
     try:
         merchant_manager = MerchantManager(db)
-        return await merchant_manager.get_merchant_services(str(current_user.id))
+        return await merchant_manager.get_merchant_services(current_user.id)
     
     except NotFoundError as e:
         raise HTTPException(
@@ -656,4 +657,59 @@ async def delete_service_image(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete service image: {str(e)}"
+        )
+
+
+@router.post("/admin/feature", response_model=FeaturedServiceResponse)
+async def admin_feature_service(
+    service_id: str = Form(..., description="9-digit numeric string ID of the service to feature"),
+    duration_days: int = Form(30, ge=1, le=365, description="Feature duration in days"),
+    feature_type: str = Form("monthly_allocation", description="Feature type: monthly_allocation or paid_feature"),
+    current_user: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Manually feature a service as admin (bypasses subscription and ownership checks).
+    
+    Args:
+        service_id: 9-digit numeric string ID of the service to feature
+        duration_days: Feature duration in days (1-365, default: 30)
+        feature_type: Feature type - "monthly_allocation" or "paid_feature" (default: monthly_allocation)
+        current_user: Current authenticated admin user
+        db: Database session
+        
+    Returns:
+        FeaturedServiceResponse: Created featured service
+        
+    Raises:
+        HTTPException: If service not found or invalid parameters
+    """
+    try:
+        # Validate feature type
+        try:
+            feature_type_enum = FeatureType(feature_type)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid feature_type: {feature_type}. Must be 'monthly_allocation' or 'paid_feature'"
+            )
+        
+        merchant_manager = MerchantManager(db)
+        result = await merchant_manager.create_featured_service_admin(
+            service_id=service_id,
+            duration_days=duration_days,
+            feature_type=feature_type_enum
+        )
+        
+        return result
+    
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create featured service: {str(e)}"
         )
