@@ -65,6 +65,12 @@ class ServiceInteractionResponse {
   final bool success;
   final String message;
   final int newCount;
+  final bool isActive;
 
-  ServiceInteractionResponse({required this.success, required this.message, required this.newCount});
+  ServiceInteractionResponse({
+    required this.success,
+    required this.message,
+    required this.newCount,
+    this.isActive = true,
+  });
 }

@@ -45,11 +45,17 @@ class ServiceInteractionSuccess extends ServiceState {
   final String message;
   final int newCount;
   final String interactionType;
+  final bool isActive;
 
-  const ServiceInteractionSuccess({required this.message, required this.newCount, required this.interactionType});
+  const ServiceInteractionSuccess({
+    required this.message,
+    required this.newCount,
+    required this.interactionType,
+    this.isActive = true,
+  });
 
   @override
-  List<Object?> get props => [message, newCount, interactionType];
+  List<Object?> get props => [message, newCount, interactionType, isActive];
 }
 
 /// Saved services loaded state

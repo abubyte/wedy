@@ -102,6 +102,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
           message: response.message,
           newCount: response.newCount,
           interactionType: event.interactionType,
+          isActive: response.isActive,
         ),
       ),
     );

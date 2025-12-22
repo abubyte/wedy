@@ -22,6 +22,8 @@ class Service {
   final List<ServiceImage> images;
   final bool isFeatured;
   final DateTime? featuredUntil;
+  final bool isLiked;
+  final bool isSaved;
 
   Service({
     required this.id,
@@ -46,6 +48,8 @@ class Service {
     required this.images,
     this.isFeatured = false,
     this.featuredUntil,
+    this.isLiked = false,
+    this.isSaved = false,
   });
 }
 
@@ -67,6 +71,8 @@ class ServiceListItem {
   final String categoryName;
   final String? mainImageUrl;
   final bool isFeatured;
+  final bool isLiked;
+  final bool isSaved;
 
   ServiceListItem({
     required this.id,
@@ -85,6 +91,8 @@ class ServiceListItem {
     required this.categoryName,
     this.mainImageUrl,
     this.isFeatured = false,
+    this.isLiked = false,
+    this.isSaved = false,
   });
 }
 

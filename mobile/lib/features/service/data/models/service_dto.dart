@@ -97,6 +97,10 @@ class ServiceListItemDto {
   final String? mainImageUrl;
   @JsonKey(name: 'is_featured')
   final bool isFeatured;
+  @JsonKey(name: 'is_liked', defaultValue: false)
+  final bool isLiked;
+  @JsonKey(name: 'is_saved', defaultValue: false)
+  final bool isSaved;
 
   ServiceListItemDto({
     required this.id,
@@ -115,6 +119,8 @@ class ServiceListItemDto {
     required this.categoryName,
     this.mainImageUrl,
     this.isFeatured = false,
+    this.isLiked = false,
+    this.isSaved = false,
   });
 
   factory ServiceListItemDto.fromJson(Map<String, dynamic> json) => _$ServiceListItemDtoFromJson(json);
@@ -138,6 +144,8 @@ class ServiceListItemDto {
       categoryName: categoryName,
       mainImageUrl: mainImageUrl,
       isFeatured: isFeatured,
+      isLiked: isLiked,
+      isSaved: isSaved,
     );
   }
 }
@@ -180,6 +188,10 @@ class ServiceDetailDto {
   final bool isFeatured;
   @JsonKey(name: 'featured_until')
   final String? featuredUntil;
+  @JsonKey(name: 'is_liked', defaultValue: false)
+  final bool isLiked;
+  @JsonKey(name: 'is_saved', defaultValue: false)
+  final bool isSaved;
 
   ServiceDetailDto({
     required this.id,
@@ -204,6 +216,8 @@ class ServiceDetailDto {
     required this.images,
     this.isFeatured = false,
     this.featuredUntil,
+    this.isLiked = false,
+    this.isSaved = false,
   });
 
   factory ServiceDetailDto.fromJson(Map<String, dynamic> json) => _$ServiceDetailDtoFromJson(json);
@@ -233,6 +247,8 @@ class ServiceDetailDto {
       images: images.map((img) => img.toEntity()).toList(),
       isFeatured: isFeatured,
       featuredUntil: featuredUntil != null ? DateTime.parse(featuredUntil!) : null,
+      isLiked: isLiked,
+      isSaved: isSaved,
     );
   }
 }
@@ -279,15 +295,27 @@ class ServiceInteractionResponseDto {
   final String message;
   @JsonKey(name: 'new_count')
   final int newCount;
+  @JsonKey(name: 'is_active', defaultValue: true)
+  final bool isActive;
 
-  ServiceInteractionResponseDto({required this.success, required this.message, required this.newCount});
+  ServiceInteractionResponseDto({
+    required this.success,
+    required this.message,
+    required this.newCount,
+    this.isActive = true,
+  });
 
   factory ServiceInteractionResponseDto.fromJson(Map<String, dynamic> json) =>
       _$ServiceInteractionResponseDtoFromJson(json);
   Map<String, dynamic> toJson() => _$ServiceInteractionResponseDtoToJson(this);
 
   ServiceInteractionResponse toEntity() {
-    return ServiceInteractionResponse(success: success, message: message, newCount: newCount);
+    return ServiceInteractionResponse(
+      success: success,
+      message: message,
+      newCount: newCount,
+      isActive: isActive,
+    );
   }
 }
 
