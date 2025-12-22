@@ -25,7 +25,7 @@ from app.schemas.merchant_schema import (
     FeaturedServiceResponse
 )
 from app.schemas.common_schema import PaginationParams, SuccessResponse
-from app.api.deps import get_current_user, get_current_merchant_user, get_current_admin
+from app.api.deps import get_current_user, get_current_merchant_user, get_current_admin, get_current_user_optional
 from app.models import User, Service, Image, ImageType, FeatureType
 from app.repositories.service_repository import ServiceRepository
 from app.repositories.merchant_repository import MerchantRepository
@@ -67,6 +67,7 @@ async def get_services(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
     
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
@@ -102,10 +103,13 @@ async def get_services(
         service_manager = ServiceManager(db)
         pagination = PaginationParams(page=page, limit=limit)
         
+        # Get user_id if authenticated
+        user_id = current_user.id if current_user else None
+        
         # Featured mode - return only featured services
         if featured:
             # Get all featured services (typically small number)
-            featured_response = await service_manager.get_featured_services(limit=None)
+            featured_response = await service_manager.get_featured_services(limit=None, user_id=user_id)
             total_featured = featured_response.total
             
             # Apply pagination to featured services
@@ -153,13 +157,15 @@ async def get_services(
             
             return await service_manager.search_services(
                 filters=filters,
-                pagination=pagination
+                pagination=pagination,
+                user_id=user_id
             )
         else:
             # Browse mode - simple browsing with optional category filter
             return await service_manager.browse_services(
                 category_id=category_id,
-                pagination=pagination
+                pagination=pagination,
+                user_id=user_id
             )
     
     except ValidationError as e:
@@ -206,6 +212,7 @@ async def get_my_services(
 @router.get("/{service_id}", response_model=ServiceDetailResponse)
 async def get_service_details(
     service_id: str,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
@@ -213,6 +220,7 @@ async def get_service_details(
     
     Args:
         service_id: 9-digit numeric string ID of the service
+        current_user: Optional authenticated user
         db: Database session
         
     Returns:
@@ -223,7 +231,8 @@ async def get_service_details(
     """
     try:
         service_manager = ServiceManager(db)
-        return await service_manager.get_service_details(service_id)
+        user_id = current_user.id if current_user else None
+        return await service_manager.get_service_details(service_id, user_id=user_id)
     
     except NotFoundError as e:
         raise HTTPException(
@@ -266,7 +275,8 @@ async def record_service_interaction(
         return ServiceInteractionResponse(
             success=result["success"],
             message=result["message"],
-            new_count=result["new_count"]
+            new_count=result["new_count"],
+            is_active=result.get("is_active", True)
         )
     
     except (NotFoundError, ValidationError) as e:

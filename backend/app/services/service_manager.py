@@ -59,7 +59,8 @@ class ServiceManager:
     async def browse_services(
         self,
         category_id: Optional[int] = None,
-        pagination: PaginationParams = PaginationParams()
+        pagination: PaginationParams = PaginationParams(),
+        user_id: Optional[str] = None
     ) -> PaginatedServiceResponse:
         """
         Browse services with optional category filter.
@@ -67,6 +68,7 @@ class ServiceManager:
         Args:
             category_id: Optional category filter
             pagination: Pagination parameters
+            user_id: Optional user ID to check if user has liked/saved services
             
         Returns:
             PaginatedServiceResponse with services and pagination info
@@ -89,7 +91,7 @@ class ServiceManager:
         # Convert to response format
         service_items = []
         for service in services:
-            service_item = await self._convert_to_service_list_item(service)
+            service_item = await self._convert_to_service_list_item(service, user_id=user_id)
             service_items.append(service_item)
         
         total_pages = (total + pagination.limit - 1) // pagination.limit
@@ -107,7 +109,8 @@ class ServiceManager:
     async def search_services(
         self,
         filters: ServiceSearchFilters,
-        pagination: PaginationParams = PaginationParams()
+        pagination: PaginationParams = PaginationParams(),
+        user_id: Optional[str] = None
     ) -> PaginatedServiceResponse:
         """
         Search services with filters.
@@ -115,6 +118,7 @@ class ServiceManager:
         Args:
             filters: Search filters
             pagination: Pagination parameters
+            user_id: Optional user ID to check if user has liked/saved services
             
         Returns:
             PaginatedServiceResponse with matching services
@@ -134,7 +138,7 @@ class ServiceManager:
         # Convert to response format
         service_items = []
         for service in services:
-            service_item = await self._convert_to_service_list_item(service)
+            service_item = await self._convert_to_service_list_item(service, user_id=user_id)
             service_items.append(service_item)
         
         total_pages = (total + pagination.limit - 1) // pagination.limit
@@ -149,12 +153,13 @@ class ServiceManager:
             total_pages=total_pages
         )
     
-    async def get_featured_services(self, limit: Optional[int] = None) -> FeaturedServicesResponse:
+    async def get_featured_services(self, limit: Optional[int] = None, user_id: Optional[str] = None) -> FeaturedServicesResponse:
         """
         Get currently active featured services.
         
         Args:
             limit: Optional limit for results
+            user_id: Optional user ID to check if user has liked/saved services
             
         Returns:
             FeaturedServicesResponse with featured services
@@ -164,7 +169,7 @@ class ServiceManager:
         # Convert to response format
         service_items = []
         for service in services:
-            service_item = await self._convert_to_service_list_item(service)
+            service_item = await self._convert_to_service_list_item(service, user_id=user_id)
             service_item.is_featured = True
             service_items.append(service_item)
         
@@ -173,12 +178,13 @@ class ServiceManager:
             total=len(service_items)
         )
     
-    async def get_service_details(self, service_id: str) -> ServiceDetailResponse:
+    async def get_service_details(self, service_id: str, user_id: Optional[str] = None) -> ServiceDetailResponse:
         """
         Get detailed service information.
         
         Args:
             service_id: 9-digit numeric string ID of the service
+            user_id: Optional user ID to check if user has liked/saved the service
             
         Returns:
             ServiceDetailResponse with complete service info
@@ -198,6 +204,18 @@ class ServiceManager:
         
         if not merchant or not category:
             raise NotFoundError("Service data incomplete")
+        
+        # Check user interactions if user_id provided
+        is_liked = False
+        is_saved = False
+        if user_id:
+            from app.models import InteractionType
+            user_interactions = await self.service_repo.get_user_interactions_for_service(user_id, service_id)
+            for interaction in user_interactions:
+                if interaction.interaction_type == InteractionType.LIKE:
+                    is_liked = True
+                elif interaction.interaction_type == InteractionType.SAVE:
+                    is_saved = True
         
         # Convert images
         image_responses = [
@@ -247,7 +265,9 @@ class ServiceManager:
             category_name=category.name,
             images=image_responses,
             is_featured=is_featured,
-            featured_until=featured_until
+            featured_until=featured_until,
+            is_liked=is_liked,
+            is_saved=is_saved
         )
     
     async def record_service_interaction(
@@ -288,8 +308,9 @@ class ServiceManager:
         # Convert string to enum
         interaction_enum = InteractionType(interaction_type)
         
-        # Record interaction (returns True if created, False if already existed)
-        was_created = await self.service_repo.record_user_interaction(
+        # Record interaction (returns True if created/added, False if removed)
+        # For like/save, this toggles the interaction
+        was_added = await self.service_repo.record_user_interaction(
             user_id=user_id,
             service_id=service_id,
             interaction_type=interaction_enum
@@ -308,24 +329,34 @@ class ServiceManager:
         else:  # view
             new_count = updated_service.view_count
         
-        # Return success message - even if interaction already existed
-        if was_created:
-            message = f"Service {interaction_type} recorded successfully"
+        # Return success message
+        if interaction_type in ["like", "save"]:
+            # Toggle message
+            if was_added:
+                message = f"Service {interaction_type}d successfully"
+            else:
+                message = f"Service {interaction_type} removed successfully"
         else:
-            message = f"Service {interaction_type} already recorded"
+            # Non-toggle interactions
+            if was_added:
+                message = f"Service {interaction_type} recorded successfully"
+            else:
+                message = f"Service {interaction_type} already recorded"
         
         return {
             "success": True,
             "message": message,
-            "new_count": new_count
+            "new_count": new_count,
+            "is_active": was_added  # True if interaction is now active, False if removed
         }
     
-    async def _convert_to_service_list_item(self, service) -> ServiceListItem:
+    async def _convert_to_service_list_item(self, service, user_id: Optional[str] = None) -> ServiceListItem:
         """
         Convert Service model to ServiceListItem response.
         
         Args:
             service: Service model instance
+            user_id: Optional user ID to check if user has liked/saved the service
             
         Returns:
             ServiceListItem response object
@@ -351,6 +382,18 @@ class ServiceManager:
         
         # Check if featured
         is_featured, _ = await self.service_repo.is_service_featured(service.id)
+        
+        # Check user interactions if user_id provided
+        is_liked = False
+        is_saved = False
+        if user_id:
+            from app.models import InteractionType
+            user_interactions = await self.service_repo.get_user_interactions_for_service(user_id, service.id)
+            for interaction in user_interactions:
+                if interaction.interaction_type == InteractionType.LIKE:
+                    is_liked = True
+                elif interaction.interaction_type == InteractionType.SAVE:
+                    is_saved = True
         
         merchant_info = MerchantBasicInfo(
             id=merchant.id,
@@ -378,7 +421,9 @@ class ServiceManager:
             category_id=category.id,
             category_name=category.name,
             main_image_url=main_image_url,
-            is_featured=is_featured
+            is_featured=is_featured,
+            is_liked=is_liked,
+            is_saved=is_saved
         )
     
     async def _validate_search_filters(self, filters: ServiceSearchFilters) -> None:

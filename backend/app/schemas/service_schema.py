@@ -66,6 +66,10 @@ class ServiceListItem(BaseModel):
     
     # Featured status
     is_featured: bool = False
+    
+    # User interaction status (only populated if user is authenticated)
+    is_liked: bool = False
+    is_saved: bool = False
 
 
 class ServiceDetailResponse(BaseModel):
@@ -108,6 +112,10 @@ class ServiceDetailResponse(BaseModel):
     # Featured status
     is_featured: bool = False
     featured_until: Optional[datetime] = None
+    
+    # User interaction status (only populated if user is authenticated)
+    is_liked: bool = False
+    is_saved: bool = False
 
 
 class ServiceSearchFilters(BaseModel):
@@ -155,3 +163,4 @@ class ServiceInteractionResponse(BaseModel):
     success: bool
     message: str
     new_count: int
+    is_active: bool = True  # True if interaction is now active, False if removed (for toggle interactions)

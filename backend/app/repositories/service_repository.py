@@ -340,6 +340,8 @@ class ServiceRepository(BaseRepository[Service]):
     ) -> bool:
         """
         Record a user interaction with a service.
+        For LIKE and SAVE, toggles the interaction (delete if exists, create if not).
+        For VIEW and SHARE, only creates (no toggle).
         
         Args:
             user_id: 9-digit numeric string ID of the user
@@ -347,7 +349,7 @@ class ServiceRepository(BaseRepository[Service]):
             interaction_type: Type of interaction
             
         Returns:
-            bool: True if interaction was created, False if it already existed
+            bool: True if interaction was created/added, False if it was removed
         """
         # Check if interaction already exists for like/save/view
         if interaction_type in [InteractionType.LIKE, InteractionType.SAVE, InteractionType.VIEW]:
@@ -359,8 +361,24 @@ class ServiceRepository(BaseRepository[Service]):
                 )
             )
             existing_result = await self.db.execute(existing_statement)
-            if existing_result.scalars().first():
-                return False  # Already exists, don't duplicate
+            existing_interaction = existing_result.scalar_one_or_none()
+            
+            # For LIKE and SAVE, toggle (delete if exists)
+            if existing_interaction and interaction_type in [InteractionType.LIKE, InteractionType.SAVE]:
+                # Delete existing interaction
+                await self.db.delete(existing_interaction)
+                await self.db.commit()
+                
+                # Decrement counter
+                if interaction_type == InteractionType.LIKE:
+                    await self._decrement_counter(service_id, "like_count")
+                elif interaction_type == InteractionType.SAVE:
+                    await self._decrement_counter(service_id, "save_count")
+                
+                return False  # Interaction was removed
+            elif existing_interaction:
+                # VIEW already exists, don't duplicate
+                return False
         
         # Create new interaction
         interaction = UserInteraction(
@@ -394,6 +412,20 @@ class ServiceRepository(BaseRepository[Service]):
         """
         statement = text(
             f"UPDATE services SET {counter_field} = {counter_field} + 1 WHERE id = :service_id"
+        )
+        await self.db.execute(statement, {"service_id": service_id})
+        await self.db.commit()
+    
+    async def _decrement_counter(self, service_id: str, counter_field: str) -> None:
+        """
+        Decrement a specific counter field for a service (with floor at 0).
+        
+        Args:
+            service_id: 9-digit numeric string ID of the service
+            counter_field: Field name to decrement
+        """
+        statement = text(
+            f"UPDATE services SET {counter_field} = GREATEST({counter_field} - 1, 0) WHERE id = :service_id"
         )
         await self.db.execute(statement, {"service_id": service_id})
         await self.db.commit()
@@ -438,6 +470,31 @@ class ServiceRepository(BaseRepository[Service]):
         services = result.scalars().all()
 
         return services, total_count
+    
+    async def get_user_interactions_for_service(
+        self,
+        user_id: str,
+        service_id: str
+    ) -> List['UserInteraction']:
+        """
+        Get user interactions for a specific service.
+        
+        Args:
+            user_id: 9-digit numeric string ID of the user
+            service_id: 9-digit numeric string ID of the service
+            
+        Returns:
+            List of UserInteraction objects
+        """
+        statement = select(UserInteraction).where(
+            and_(
+                UserInteraction.user_id == user_id,
+                UserInteraction.service_id == service_id,
+                UserInteraction.interaction_type.in_([InteractionType.LIKE, InteractionType.SAVE])
+            )
+        )
+        result = await self.db.execute(statement)
+        return list(result.scalars().all())
     
     async def get_user_interactions(
         self,
