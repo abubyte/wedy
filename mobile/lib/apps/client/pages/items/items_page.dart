@@ -225,7 +225,31 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
                             location: service.locationRegion,
                             category: service.categoryName,
                             rating: service.overallRating,
+                            isFavorite: service.isSaved,
                             onTap: () => context.push('${RouteNames.serviceDetails}?id=${service.id}'),
+                            onFavoriteTap: () {
+                              final bloc = context.read<ServiceBloc>();
+                              bloc.add(InteractWithServiceEvent(serviceId: service.id, interactionType: 'save'));
+                              // Reload services after interaction to update favorite status
+                              Future.delayed(const Duration(milliseconds: 300), () {
+                                if (context.mounted) {
+                                  final category = widget.category;
+                                  if (widget.hotOffers) {
+                                    bloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
+                                  } else if (category != null) {
+                                    bloc.add(
+                                      LoadServicesEvent(
+                                        filters: ServiceSearchFilters(categoryId: category.id),
+                                        page: 1,
+                                        limit: 20,
+                                      ),
+                                    );
+                                  } else {
+                                    bloc.add(const LoadServicesEvent(page: 1, limit: 20));
+                                  }
+                                }
+                              });
+                            },
                           ),
                         );
                       },

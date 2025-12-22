@@ -151,7 +151,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       // Header
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-                        child: ServiceHeaderButtons(isMerchant: widget.isMerchant),
+                        child: ServiceHeaderButtons(isMerchant: widget.isMerchant, service: service),
                       ),
                       const SizedBox(height: AppDimensions.spacingL),
 

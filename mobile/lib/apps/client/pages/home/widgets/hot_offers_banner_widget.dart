@@ -107,7 +107,12 @@ class HotOffersBannerWidget extends StatelessWidget {
                             location: service.locationRegion,
                             category: service.categoryName,
                             rating: service.overallRating,
+                            isFavorite: service.isSaved,
                             onTap: () => context.push('${RouteNames.serviceDetails}?id=${service.id}'),
+                            onFavoriteTap: () {
+                              // Note: This would need ServiceBloc access, but hot offers uses a separate bloc
+                              // For now, favorite tap is handled in service detail page
+                            },
                           ),
                         ),
                       ),

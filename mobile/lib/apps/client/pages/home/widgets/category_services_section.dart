@@ -65,7 +65,24 @@ class CategoryServicesSection extends StatelessWidget {
                           location: service.locationRegion,
                           category: service.categoryName,
                           rating: service.overallRating,
+                          isFavorite: service.isSaved,
                           onTap: () => context.push('${RouteNames.serviceDetails}?id=${service.id}'),
+                          onFavoriteTap: () {
+                            final bloc = context.read<ServiceBloc>();
+                            bloc.add(InteractWithServiceEvent(serviceId: service.id, interactionType: 'save'));
+                            // Reload services after interaction to update favorite status
+                            Future.delayed(const Duration(milliseconds: 300), () {
+                              if (context.mounted) {
+                                bloc.add(
+                                  LoadServicesEvent(
+                                    filters: ServiceSearchFilters(categoryId: category.id),
+                                    page: 1,
+                                    limit: 20,
+                                  ),
+                                );
+                              }
+                            });
+                          },
                         ),
                       );
                     },
