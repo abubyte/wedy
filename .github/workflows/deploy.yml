@@ -140,6 +140,12 @@ jobs:
             ${{ secrets.UZUMBANK_MERCHANT_ID && format('echo "UZUMBANK_MERCHANT_ID={0}" >> /root/wedy/backend/.env', secrets.UZUMBANK_MERCHANT_ID) || '' }}
             ${{ secrets.UZUMBANK_API_URL && format('echo "UZUMBANK_API_URL={0}" >> /root/wedy/backend/.env', secrets.UZUMBANK_API_URL) || '' }}
             ${{ secrets.UZUMBANK_TEST_API_URL && format('echo "UZUMBANK_TEST_API_URL={0}" >> /root/wedy/backend/.env', secrets.UZUMBANK_TEST_API_URL) || '' }}
+
+            # Deep Links / Universal Links
+            ${{ secrets.ANDROID_PACKAGE_NAME && format('echo "ANDROID_PACKAGE_NAME={0}" >> /root/wedy/backend/.env', secrets.ANDROID_PACKAGE_NAME) || '' }}
+            ${{ secrets.ANDROID_SHA256_FINGERPRINT && format('echo "ANDROID_SHA256_FINGERPRINT={0}" >> /root/wedy/backend/.env', secrets.ANDROID_SHA256_FINGERPRINT) || '' }}
+            ${{ secrets.IOS_TEAM_ID && format('echo "IOS_TEAM_ID={0}" >> /root/wedy/backend/.env', secrets.IOS_TEAM_ID) || '' }}
+            ${{ secrets.IOS_BUNDLE_ID && format('echo "IOS_BUNDLE_ID={0}" >> /root/wedy/backend/.env', secrets.IOS_BUNDLE_ID) || '' }}
             
             # 3. Finalize
             chmod 600 /root/wedy/backend/.env
