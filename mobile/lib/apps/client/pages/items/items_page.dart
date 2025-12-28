@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:wedy/apps/client/layouts/main_layout.dart';
-import 'package:wedy/core/di/injection_container.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
@@ -55,18 +54,20 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
   Widget build(BuildContext context) {
     final category = widget.category;
 
-    return BlocProvider(
-      create: (context) {
-        final bloc = getIt<ServiceBloc>();
-        if (widget.hotOffers) {
-          bloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
-        } else if (category != null) {
-          bloc.add(LoadServicesEvent(filters: ServiceSearchFilters(categoryId: category.id), page: 1, limit: 20));
-        } else {
-          bloc.add(const LoadServicesEvent(page: 1, limit: 20));
-        }
-        return bloc;
-      },
+    // Use the global ServiceBloc instance to sync state across pages
+    final globalBloc = context.read<ServiceBloc>();
+
+    // Load services based on filters
+    if (widget.hotOffers) {
+      globalBloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
+    } else if (category != null) {
+      globalBloc.add(LoadServicesEvent(filters: ServiceSearchFilters(categoryId: category.id), page: 1, limit: 20));
+    } else {
+      globalBloc.add(const LoadServicesEvent(page: 1, limit: 20));
+    }
+
+    return BlocProvider.value(
+      value: globalBloc,
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
           if (_refreshController.isRefresh) {
@@ -92,6 +93,7 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
             final error = state is ServiceError ? state.message : null;
 
             return ClientMainLayout(
+              height: services.length < 5 ? MediaQuery.of(context).size.height : null,
               refreshController: _refreshController,
               onRefresh: _onRefresh,
               refreshHeader: const ClassicHeader(
@@ -110,12 +112,9 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
                   children: [
                     const WedyCircularButton(),
                     const SizedBox(width: AppDimensions.spacingS),
-                        Expanded(
-                          child: ClientSearchField(
-                            readOnly: true,
-                            onTap: () => context.pushNamed(RouteNames.search),
-                          ),
-                        ),
+                    Expanded(
+                      child: ClientSearchField(readOnly: true, onTap: () => context.pushNamed(RouteNames.search)),
+                    ),
                     const SizedBox(width: AppDimensions.spacingS),
                     const WedyCircularButton(icon: IconsaxPlusLinear.filter),
                   ],
@@ -225,30 +224,12 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
                             location: service.locationRegion,
                             category: service.categoryName,
                             rating: service.overallRating,
-                            isFavorite: service.isSaved,
+                            isFavorite: service.isLiked,
                             onTap: () => context.push('${RouteNames.serviceDetails}?id=${service.id}'),
                             onFavoriteTap: () {
                               final bloc = context.read<ServiceBloc>();
-                              bloc.add(InteractWithServiceEvent(serviceId: service.id, interactionType: 'save'));
-                              // Reload services after interaction to update favorite status
-                              Future.delayed(const Duration(milliseconds: 300), () {
-                                if (context.mounted) {
-                                  final category = widget.category;
-                                  if (widget.hotOffers) {
-                                    bloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
-                                  } else if (category != null) {
-                                    bloc.add(
-                                      LoadServicesEvent(
-                                        filters: ServiceSearchFilters(categoryId: category.id),
-                                        page: 1,
-                                        limit: 20,
-                                      ),
-                                    );
-                                  } else {
-                                    bloc.add(const LoadServicesEvent(page: 1, limit: 20));
-                                  }
-                                }
-                              });
+                              bloc.add(InteractWithServiceEvent(serviceId: service.id, interactionType: 'like'));
+                              // No need to reload - bloc handles optimistic update
                             },
                           ),
                         );

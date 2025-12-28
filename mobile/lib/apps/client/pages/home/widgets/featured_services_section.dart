@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:wedy/core/di/injection_container.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
 import 'package:wedy/features/service/presentation/bloc/service_event.dart';
@@ -9,17 +8,44 @@ import 'package:wedy/features/service/domain/entities/service.dart';
 import 'hot_offers_banner_widget.dart';
 
 /// Widget that displays featured services with its own ServiceBloc
-class FeaturedServicesSection extends StatelessWidget {
+class FeaturedServicesSection extends StatefulWidget {
   const FeaturedServicesSection({super.key});
 
   @override
+  State<FeaturedServicesSection> createState() => _FeaturedServicesSectionState();
+}
+
+class _FeaturedServicesSectionState extends State<FeaturedServicesSection> {
+  bool _hasCheckedInitialLoad = false;
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final bloc = getIt<ServiceBloc>();
-        bloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 10));
-        return bloc;
-      },
+    // Use the global ServiceBloc instance to sync state across pages
+    final globalBloc = context.read<ServiceBloc>();
+
+    // Reload if state doesn't match what we need (only check once per build cycle)
+    final currentState = globalBloc.state;
+    final hasFeaturedServices = currentState is UniversalServicesState
+        ? currentState.featuredServices != null && currentState.featuredServices!.isNotEmpty
+        : (currentState is ServicesLoaded && currentState.response.services.any((s) => s.isFeatured));
+
+    if (!_hasCheckedInitialLoad || (!hasFeaturedServices && currentState is! ServiceLoading)) {
+      _hasCheckedInitialLoad = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final state = globalBloc.state;
+          final hasFeatured = state is UniversalServicesState
+              ? state.featuredServices != null && state.featuredServices!.isNotEmpty
+              : (state is ServicesLoaded && state.response.services.any((s) => s.isFeatured));
+          if (!hasFeatured && state is! ServiceLoading) {
+            globalBloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 10));
+          }
+        }
+      });
+    }
+
+    return BlocProvider.value(
+      value: globalBloc,
       child: BlocBuilder<ServiceBloc, ServiceState>(
         builder: (context, state) {
           if (state is ServiceLoading || state is ServiceInitial) {
@@ -33,7 +59,9 @@ class FeaturedServicesSection extends StatelessWidget {
             return const SizedBox.shrink();
           }
 
-          final featuredServices = state is ServicesLoaded ? state.allServices : <ServiceListItem>[];
+          final featuredServices = state is UniversalServicesState
+              ? (state.featuredServices ?? <ServiceListItem>[])
+              : (state is ServicesLoaded ? state.allServices : <ServiceListItem>[]);
 
           if (featuredServices.isEmpty) {
             return const SizedBox.shrink();

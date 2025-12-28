@@ -93,9 +93,12 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Use the global ServiceBloc instance to sync state across pages
+    final globalServiceBloc = context.read<ServiceBloc>();
+
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => getIt<ServiceBloc>()),
+        BlocProvider.value(value: globalServiceBloc),
         BlocProvider(create: (context) => getIt<CategoryBloc>()..add(const LoadCategoriesEvent())),
       ],
       child: BlocListener<ServiceBloc, ServiceState>(
@@ -124,6 +127,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
             final isEmpty = !isLoading && !hasError && services.isEmpty;
 
             return ClientMainLayout(
+              height: services.length < 5 ? MediaQuery.of(context).size.height : null,
               refreshController: _refreshController,
               onRefresh: _onRefresh,
               refreshHeader: const ClassicHeader(
@@ -133,8 +137,8 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                 releaseText: 'Yangilash uchun qo\'yib yuboring',
                 textStyle: TextStyle(color: AppColors.primary),
               ),
-              expandedHeight: 80,
-              collapsedHeight: 70,
+              expandedHeight: 90,
+              collapsedHeight: 90,
               headerContent: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppDimensions.spacingL),

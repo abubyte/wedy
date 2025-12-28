@@ -129,7 +129,7 @@ class ClientServiceCard extends StatelessWidget {
             ),
           ),
         ),
-        if (rating != null)
+        if (rating != null && rating! > 0)
           Positioned(
             top: AppDimensions.spacingS,
             left: AppDimensions.spacingS,

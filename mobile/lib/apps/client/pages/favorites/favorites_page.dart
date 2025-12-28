@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
-import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -26,12 +25,12 @@ class ClientFavoritesPage extends StatefulWidget {
 
 class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
   final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  ServiceBloc? _serviceBloc;
+  bool _hasCheckedInitialLoad = false;
 
   @override
   void initState() {
     super.initState();
-    // Load saved services when page opens
-    context.read<ServiceBloc>().add(const LoadSavedServicesEvent());
   }
 
   @override
@@ -41,34 +40,60 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
   }
 
   void _onRefresh() {
-    // Refresh saved services
-    context.read<ServiceBloc>().add(const LoadSavedServicesEvent());
+    // Refresh liked services - completion will be handled by BlocListener
+    _serviceBloc?.add(const LoadLikedServicesEvent());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<ServiceBloc>()..add(const LoadSavedServicesEvent()),
+    // Use the global ServiceBloc instance to sync state across pages
+    final globalBloc = context.read<ServiceBloc>();
+    _serviceBloc = globalBloc;
+
+    // Reload if state doesn't match what we need (only check once per build cycle)
+    final currentState = globalBloc.state;
+    final hasLikedServices = currentState is UniversalServicesState
+        ? currentState.likedServices != null
+        : currentState is LikedServicesLoaded;
+
+    if (!_hasCheckedInitialLoad || (!hasLikedServices && currentState is! ServiceLoading)) {
+      _hasCheckedInitialLoad = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final state = globalBloc.state;
+          final hasServices = state is UniversalServicesState
+              ? state.likedServices != null
+              : state is LikedServicesLoaded;
+          if (!hasServices && state is! ServiceLoading) {
+            globalBloc.add(const LoadLikedServicesEvent());
+          }
+        }
+      });
+    }
+
+    return BlocProvider.value(
+      value: globalBloc,
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
+          // Complete refresh when data is loaded or error occurs (only if refresh is active)
           if (!_refreshController.isRefresh) return;
 
-          if (state is SavedServicesLoaded || state is ServiceError) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && _refreshController.isRefresh) {
-                if (state is SavedServicesLoaded) {
-                  _refreshController.refreshCompleted();
-                } else {
-                  _refreshController.refreshFailed();
-                }
-              }
-            });
+          if ((state is UniversalServicesState && state.likedServices != null) || state is LikedServicesLoaded) {
+            if (mounted) {
+              _refreshController.refreshCompleted();
+            }
+          } else if (state is ServiceError) {
+            if (mounted) {
+              _refreshController.refreshFailed();
+            }
           }
         },
         child: BlocBuilder<ServiceBloc, ServiceState>(
           builder: (context, state) {
-            final savedServices = state is SavedServicesLoaded ? state.savedServices : <ServiceListItem>[];
-            final isEmpty = savedServices.isEmpty && state is! ServiceLoading && state is! ServiceInitial;
+            final likedServices = state is UniversalServicesState
+                ? (state.likedServices ?? <ServiceListItem>[])
+                : (state is LikedServicesLoaded ? state.likedServices : <ServiceListItem>[]);
+            final isEmpty = likedServices.isEmpty && state is! ServiceLoading && state is! ServiceInitial;
 
             return Scaffold(
               backgroundColor: AppColors.background,
@@ -117,11 +142,12 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
                               ),
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: savedServices.length,
+                              itemCount: likedServices.length,
                               itemBuilder: (context, index) {
-                                final service = savedServices[index];
+                                final service = likedServices[index];
                                 return SizedBox(
-                                  width: ((MediaQuery.of(context).size.width - AppDimensions.spacingL * 2) / 2) -
+                                  width:
+                                      ((MediaQuery.of(context).size.width - AppDimensions.spacingL * 2) / 2) -
                                       AppDimensions.spacingL -
                                       AppDimensions.spacingS,
                                   child: ClientServiceCard(
@@ -134,17 +160,12 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
                                     isFavorite: true,
                                     onTap: () => context.push('${RouteNames.serviceDetails}?id=${service.id}'),
                                     onFavoriteTap: () {
-                                      // Unsave service
+                                      // Unlike service (Instagram approach - tap to unlike)
                                       final bloc = context.read<ServiceBloc>();
                                       bloc.add(
-                                        InteractWithServiceEvent(serviceId: service.id, interactionType: 'save'),
+                                        InteractWithServiceEvent(serviceId: service.id, interactionType: 'like'),
                                       );
-                                      // Reload saved services after a delay
-                                      Future.delayed(const Duration(milliseconds: 500), () {
-                                        if (mounted) {
-                                          bloc.add(const LoadSavedServicesEvent());
-                                        }
-                                      });
+                                      // No need to reload - bloc handles optimistic update
                                     },
                                   ),
                                 );
@@ -167,4 +188,3 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
     );
   }
 }
-
