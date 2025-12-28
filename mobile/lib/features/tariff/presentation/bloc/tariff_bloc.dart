@@ -3,6 +3,7 @@ import '../../../../core/errors/failures.dart';
 import '../../domain/usecases/create_tariff_payment.dart';
 import '../../domain/usecases/get_subscription.dart';
 import '../../domain/usecases/get_tariff_plans.dart';
+import '../../domain/usecases/activate_subscription.dart';
 import 'tariff_event.dart';
 import 'tariff_state.dart';
 
@@ -11,13 +12,19 @@ class TariffBloc extends Bloc<TariffEvent, TariffState> {
   final GetTariffPlans getTariffPlans;
   final GetSubscription getSubscription;
   final CreateTariffPayment createTariffPayment;
+  final ActivateSubscription activateSubscription;
 
-  TariffBloc({required this.getTariffPlans, required this.getSubscription, required this.createTariffPayment})
-    : super(const TariffInitial()) {
+  TariffBloc({
+    required this.getTariffPlans,
+    required this.getSubscription,
+    required this.createTariffPayment,
+    required this.activateSubscription,
+  }) : super(const TariffInitial()) {
     on<LoadTariffPlansEvent>(_onLoadTariffPlans);
     on<LoadSubscriptionEvent>(_onLoadSubscription);
     on<CreateTariffPaymentEvent>(_onCreateTariffPayment);
     on<RefreshTariffEvent>(_onRefreshTariff);
+    on<ActivateSubscriptionEvent>(_onActivateSubscription);
   }
 
   Future<void> _onLoadTariffPlans(LoadTariffPlansEvent event, Emitter<TariffState> emit) async {
@@ -70,6 +77,26 @@ class TariffBloc extends Bloc<TariffEvent, TariffState> {
   Future<void> _onRefreshTariff(RefreshTariffEvent event, Emitter<TariffState> emit) async {
     add(const LoadTariffPlansEvent());
     add(const LoadSubscriptionEvent());
+  }
+
+  Future<void> _onActivateSubscription(ActivateSubscriptionEvent event, Emitter<TariffState> emit) async {
+    emit(const TariffLoading());
+    final result = await activateSubscription();
+    result.fold((failure) => emit(TariffError(_mapFailureToMessage(failure))), (subscription) {
+      // After activation, refresh both plans and subscription
+      // If plans are already loaded, emit combined state
+      if (state is TariffPlansLoaded) {
+        final plansState = state as TariffPlansLoaded;
+        emit(TariffDataLoaded(plans: plansState.plans, subscription: subscription));
+      } else if (state is TariffDataLoaded) {
+        final dataState = state as TariffDataLoaded;
+        emit(TariffDataLoaded(plans: dataState.plans, subscription: subscription));
+      } else {
+        emit(SubscriptionLoaded(subscription));
+      }
+      // Also trigger a refresh to get the latest data
+      add(const RefreshTariffEvent());
+    });
   }
 
   String _mapFailureToMessage(Failure failure) {

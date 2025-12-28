@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
@@ -11,6 +10,7 @@ import 'package:wedy/features/tariff/domain/entities/tariff.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_bloc.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_event.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_state.dart';
+import 'package:wedy/shared/widgets/circular_button.dart';
 import 'package:wedy/shared/widgets/primary_button.dart';
 
 class TariffPage extends StatelessWidget {
@@ -46,11 +46,7 @@ class _TariffPageContentState extends State<_TariffPageContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('Tariflar', style: AppTextStyles.headline2),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
+
       body: BlocConsumer<TariffBloc, TariffState>(
         listener: (context, state) {
           if (state is PaymentCreated) {
@@ -87,30 +83,34 @@ class _TariffPageContentState extends State<_TariffPageContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Current subscription card
-                BlocBuilder<TariffBloc, TariffState>(
-                  builder: (context, state) {
-                    Subscription? sub;
-                    if (state is TariffDataLoaded) {
-                      sub = state.subscription;
-                    } else if (state is SubscriptionLoaded) {
-                      sub = state.subscription;
-                    }
-                    if (sub != null) {
-                      return Column(
-                        children: [
-                          _buildCurrentSubscriptionCard(sub),
-                          const SizedBox(height: AppDimensions.spacingL),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+                // // Current subscription card
+                // BlocBuilder<TariffBloc, TariffState>(
+                //   builder: (context, state) {
+                //     Subscription? sub;
+                //     if (state is TariffDataLoaded) {
+                //       sub = state.subscription;
+                //     } else if (state is SubscriptionLoaded) {
+                //       sub = state.subscription;
+                //     }
+                //     if (sub != null) {
+                //       return Column(
+                //         children: [
+                //           _buildCurrentSubscriptionCard(sub),
+                //           const SizedBox(height: AppDimensions.spacingL),
+                //         ],
+                //       );
+                //     }
+                //     return const SizedBox.shrink();
+                //   },
+                // ),
+                const SizedBox(height: AppDimensions.spacingL),
+                const WedyCircularButton(isPrimary: true),
+                const SizedBox(height: AppDimensions.spacingL),
 
                 // Tariff plans
-                Text('Mavjud tariflar', style: AppTextStyles.title1),
+                Text('Tariflar', style: AppTextStyles.title1),
                 const SizedBox(height: AppDimensions.spacingM),
+
                 BlocBuilder<TariffBloc, TariffState>(
                   builder: (context, state) {
                     List<TariffPlan> plansList = [];
@@ -210,6 +210,7 @@ class _TariffPageContentState extends State<_TariffPageContent> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildCurrentSubscriptionCard(Subscription subscription) {
     final dateFormat = DateFormat('dd-MM-yyyy');
     return Container(
@@ -266,31 +267,37 @@ class _TariffPageContentState extends State<_TariffPageContent> {
   }
 
   Widget _buildTariffPlanCard(TariffPlan plan) {
+    // ignore: unused_local_variable
     final isSelected = selectedPlan?.id == plan.id;
     return GestureDetector(
       onTap: () => setState(() => selectedPlan = plan),
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimensions.spacingM),
-        padding: const EdgeInsets.all(AppDimensions.spacingM),
+        padding: const EdgeInsets.all(AppDimensions.spacingS),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(plan.name, style: AppTextStyles.title1),
-                if (isSelected) const Icon(IconsaxPlusLinear.tick_circle, color: AppColors.primary),
-              ],
+              children: [Text(plan.name, style: AppTextStyles.title2.copyWith(color: AppColors.primary))],
             ),
             const SizedBox(height: AppDimensions.spacingS),
-            Text(
-              '${NumberFormat('#,###').format(plan.pricePerMonth)} so\'m/oy',
-              style: AppTextStyles.bodyRegular.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+            Text.rich(
+              TextSpan(
+                text: '${NumberFormat('#,###').format(plan.pricePerMonth)} ',
+                style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 30),
+                children: [
+                  TextSpan(
+                    text: 'so\'m/oy',
+                    style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 25),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppDimensions.spacingM),
             _buildFeatureRow('Xizmatlar', plan.maxServices.toString()),

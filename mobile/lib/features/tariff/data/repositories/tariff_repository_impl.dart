@@ -68,6 +68,22 @@ class TariffRepositoryImpl implements TariffRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Subscription?>> activateSubscription() async {
+    try {
+      final response = await remoteDataSource.activateSubscription();
+      // Handle case where subscription is null (shouldn't happen after activation)
+      if (response.subscription == null) {
+        return const Right(null);
+      }
+      return Right(response.subscription!.toEntity());
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
   Failure _handleDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:

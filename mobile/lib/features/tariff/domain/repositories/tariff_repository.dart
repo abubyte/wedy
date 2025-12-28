@@ -16,6 +16,9 @@ abstract class TariffRepository {
     required int durationMonths,
     required String paymentMethod,
   });
+
+  /// Activate free subscription for existing merchant (2 months)
+  Future<Either<Failure, Subscription?>> activateSubscription();
 }
 
 /// Payment response

@@ -113,9 +113,19 @@ class WedyTariffStatus extends StatelessWidget {
                   ],
 
                   if (!isActive && !isLoading) ...[
+                    if (hasNoSubscription) ...[
+                      WedyPrimaryButton(
+                        label: 'Bepul tarifni faollashtirish (2 oy)',
+                        onPressed: () {
+                          context.read<TariffBloc>().add(const ActivateSubscriptionEvent());
+                        },
+                      ),
+                      const SizedBox(height: AppDimensions.spacingS),
+                    ],
                     WedyPrimaryButton(
                       label: isExpired ? 'To\'lash' : 'Tarif tanlash',
                       onPressed: () => context.pushNamed(RouteNames.tariff),
+                      outlined: hasNoSubscription,
                     ),
                     const SizedBox(height: AppDimensions.spacingS),
                   ],
@@ -147,7 +157,7 @@ class WedyTariffStatus extends StatelessWidget {
     }
 
     if (subscription.isActive) {
-      final dateFormat = DateFormat('dd-MMM', 'uz');
+      final dateFormat = DateFormat('dd-MMM');
       return '${dateFormat.format(subscription.endDate)}gacha';
     }
 

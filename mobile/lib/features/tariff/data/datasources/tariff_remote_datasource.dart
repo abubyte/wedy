@@ -22,6 +22,10 @@ abstract class TariffRemoteDataSource {
   /// Create tariff payment
   @POST('/api/v1/payments/tariff')
   Future<PaymentResponseDto> createTariffPayment(@Body() Map<String, dynamic> body);
+
+  /// Activate subscription for existing merchant (free 2-month activation)
+  @POST('/api/v1/merchants/activate-subscription')
+  Future<SubscriptionWithLimitsResponseDto> activateSubscription();
 }
 
 /// Factory function to create TariffRemoteDataSource instance

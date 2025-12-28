@@ -38,3 +38,8 @@ class CreateTariffPaymentEvent extends TariffEvent {
 class RefreshTariffEvent extends TariffEvent {
   const RefreshTariffEvent();
 }
+
+/// Activate subscription (free 2-month activation for existing merchants)
+class ActivateSubscriptionEvent extends TariffEvent {
+  const ActivateSubscriptionEvent();
+}
