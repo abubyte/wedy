@@ -1,3 +1,5 @@
+// ignore_for_file: strict_top_level_inference
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -84,19 +86,27 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
 
   Widget _buildEmptyState() {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.spacingXL),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: AppDimensions.spacingXL),
-            const WedyEmptyState(
-              title: 'Xizmat yo\'q',
-              subtitle: 'Hozircha sizda xizmat mavjud emas. Yangi xizmat qo\'shish uchun quyidagi tugmani bosing.',
-            ),
-            const SizedBox(height: AppDimensions.spacingXL),
-            WedyPrimaryButton(label: 'Yangi xizmat qo\'shish', onPressed: () => context.pushNamed(RouteNames.edit)),
-          ],
+      child: RefreshIndicator(
+        onRefresh: () async {
+          final bloc = context.read<MerchantServiceBloc>();
+          bloc.add(const RefreshMerchantServicesEvent());
+          // Wait for the bloc to finish loading
+          await bloc.stream.firstWhere((state) => state is! MerchantServiceLoading && state is! MerchantServiceInitial);
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.spacingXL),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: AppDimensions.spacingXL),
+              const WedyEmptyState(
+                title: 'Xizmat yo\'q',
+                subtitle: 'Hozircha sizda xizmat mavjud emas. Yangi xizmat qo\'shish uchun quyidagi tugmani bosing.',
+              ),
+              const SizedBox(height: AppDimensions.spacingXL),
+              WedyPrimaryButton(label: 'Yangi xizmat qo\'shish', onPressed: () => context.pushNamed(RouteNames.edit)),
+            ],
+          ),
         ),
       ),
     );
@@ -127,93 +137,104 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
 
   Widget _buildServiceProfile(service) {
     return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with back button, service image, and edit buttons
-            _buildHeader(service),
+      child: RefreshIndicator(
+        onRefresh: () async {
+          final bloc = context.read<MerchantServiceBloc>();
+          bloc.add(const RefreshMerchantServicesEvent());
+          // Wait for the bloc to finish loading
+          await bloc.stream.firstWhere((state) => state is! MerchantServiceLoading && state is! MerchantServiceInitial);
+        },
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with back button, service image, and edit buttons
+              _buildHeader(service),
 
-            // Service title and category
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppDimensions.spacingM),
-                  Text(service.name, style: AppTextStyles.headline1.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: AppDimensions.spacingXS),
-                  Text(service.categoryName, style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted)),
-                  const SizedBox(height: AppDimensions.spacingM),
+              // Service title and category
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: AppDimensions.spacingM),
+                    Text(service.name, style: AppTextStyles.headline1.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: AppDimensions.spacingXS),
+                    Text(service.categoryName, style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted)),
+                    const SizedBox(height: AppDimensions.spacingM),
 
-                  // Price button
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.spacingM,
-                      vertical: AppDimensions.spacingS,
+                    // Price button
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.spacingM,
+                        vertical: AppDimensions.spacingS,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                      ),
+                      child: Text(
+                        '${_formatPrice(service.price)} so\'m/kun',
+                        style: AppTextStyles.bodyRegular.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                    const SizedBox(height: AppDimensions.spacingXL),
+                  ],
+                ),
+              ),
+
+              // Gallery section
+              _buildGallerySection(service),
+
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: AppDimensions.spacingL),
+                    Text(
+                      service.description,
+                      style: AppTextStyles.bodyRegular,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    child: Text(
-                      '${_formatPrice(service.price)} so\'m/kun',
-                      style: AppTextStyles.bodyRegular.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.spacingXL),
-                ],
+                    const SizedBox(height: AppDimensions.spacingXL),
+                  ],
+                ),
               ),
-            ),
 
-            // Gallery section
-            _buildGallerySection(service),
+              // Statistics
+              _buildStatistics(service),
 
-            // Description
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppDimensions.spacingL),
-                  Text(
-                    service.description,
-                    style: AppTextStyles.bodyRegular,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppDimensions.spacingXL),
-                ],
+              // Share button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                child: WedyPrimaryButton(
+                  label: 'Ulashish',
+                  icon: const Icon(IconsaxPlusLinear.export, size: 20),
+                  onPressed: () {
+                    // TODO: Implement share functionality
+                  },
+                ),
               ),
-            ),
 
-            // Statistics
-            _buildStatistics(service),
+              const SizedBox(height: AppDimensions.spacingL),
 
-            // Share button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-              child: WedyPrimaryButton(
-                label: 'Ulashish',
-                icon: const Icon(IconsaxPlusLinear.export, size: 20),
-                onPressed: () {
-                  // TODO: Implement share functionality
-                },
-              ),
-            ),
+              // Contact buttons
+              _buildContactButtons(),
 
-            const SizedBox(height: AppDimensions.spacingL),
+              const SizedBox(height: AppDimensions.spacingL),
 
-            // Contact buttons
-            _buildContactButtons(),
+              // Reviews section
+              ServiceReviews(serviceId: service.id, vertical: false, showHeader: true),
 
-            const SizedBox(height: AppDimensions.spacingL),
-
-            // Reviews section
-            ServiceReviews(serviceId: service.id, vertical: false, showHeader: true),
-
-            const SizedBox(height: AppDimensions.spacingXL),
-          ],
+              const SizedBox(height: AppDimensions.spacingXL),
+            ],
+          ),
         ),
       ),
     );
@@ -345,7 +366,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(title: 'Statistika'),
+          const SectionHeader(title: 'Statistika'),
           const SizedBox(height: AppDimensions.spacingM),
           Row(
             children: [

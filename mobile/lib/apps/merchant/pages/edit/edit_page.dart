@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -21,8 +23,17 @@ import 'package:wedy/features/service/presentation/bloc/merchant_service_event.d
 import 'package:wedy/features/service/presentation/bloc/merchant_service_state.dart';
 import 'package:wedy/shared/widgets/primary_button.dart';
 import 'package:widgets_easier/widgets_easier.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/constants/api_constants.dart';
 
 part 'widgets/input_field.dart';
+
+class _ContactItem {
+  final String value;
+  final String? platformName;
+
+  _ContactItem({required this.value, this.platformName});
+}
 
 class MerchantEditPage extends StatefulWidget {
   final MerchantService? service;
@@ -51,6 +62,10 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
   String? selectedRegion;
   double? latitude;
   double? longitude;
+
+  // Contact management
+  List<_ContactItem> phoneContacts = [];
+  List<_ContactItem> socialContacts = [];
 
   bool get isEditMode => widget.service != null;
 
@@ -434,6 +449,38 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                         },
                       ),
 
+                      const SizedBox(height: AppDimensions.spacingL),
+
+                      // Phone contacts section
+                      _buildContactsSection(
+                        title: 'Telefon raqamlar',
+                        contacts: phoneContacts,
+                        isPhone: true,
+                        isLoading: isLoading,
+                        onAdd: () => _showAddContactDialog(isPhone: true),
+                        onDelete: (index) {
+                          setState(() {
+                            phoneContacts.removeAt(index);
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: AppDimensions.spacingL),
+
+                      // Social media contacts section
+                      _buildContactsSection(
+                        title: 'Ijtimoiy tarmoqlar',
+                        contacts: socialContacts,
+                        isPhone: false,
+                        isLoading: isLoading,
+                        onAdd: () => _showAddContactDialog(isPhone: false),
+                        onDelete: (index) {
+                          setState(() {
+                            socialContacts.removeAt(index);
+                          });
+                        },
+                      ),
+
                       const SizedBox(height: AppDimensions.spacingXL),
 
                       // Submit button
@@ -477,7 +524,7 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
     }
   }
 
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -521,6 +568,216 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
           longitude: longitude,
         ),
       );
+    }
+
+    // Save contacts after service is created/updated
+    await _saveContacts();
+  }
+
+  Widget _buildContactsSection({
+    required String title,
+    required List<_ContactItem> contacts,
+    required bool isPhone,
+    required VoidCallback onAdd,
+    required Function(int) onDelete,
+    required bool isLoading,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: isLoading ? null : onAdd,
+                icon: const Icon(IconsaxPlusLinear.add, size: 16),
+                label: const Text('Qo\'shish'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  textStyle: AppTextStyles.bodySmall.copyWith(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacingS),
+          if (contacts.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(AppDimensions.spacingM),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                border: Border.all(color: AppColors.border, width: 0.5),
+              ),
+              child: Text(
+                'Hozircha kontaktlar yo\'q',
+                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+              ),
+            )
+          else
+            ...contacts.asMap().entries.map((entry) {
+              final index = entry.key;
+              final contact = entry.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: AppDimensions.spacingS),
+                padding: const EdgeInsets.all(AppDimensions.spacingM),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                  border: Border.all(color: AppColors.border, width: 0.5),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(contact.value, style: AppTextStyles.bodyRegular),
+                          if (contact.platformName != null && contact.platformName!.isNotEmpty)
+                            Text(
+                              contact.platformName!,
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(IconsaxPlusLinear.trash, size: 20, color: AppColors.error),
+                      onPressed: isLoading ? null : () => onDelete(index),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  void _showAddContactDialog({required bool isPhone}) {
+    final contactController = TextEditingController();
+    String? selectedPlatform;
+
+    final platforms = ['Telegram', 'Instagram', 'Facebook', 'YouTube', 'TikTok', 'LinkedIn'];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(isPhone ? 'Telefon raqam qo\'shish' : 'Ijtimoiy tarmoq qo\'shish'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isPhone)
+                  TextField(
+                    controller: contactController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Telefon raqam',
+                      hintText: '901234567',
+                      prefixText: '+998 ',
+                    ),
+                  )
+                else ...[
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedPlatform,
+                    decoration: const InputDecoration(labelText: 'Platforma', hintText: 'Platformani tanlang'),
+                    items: platforms.map((platform) {
+                      return DropdownMenuItem(value: platform, child: Text(platform));
+                    }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedPlatform = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: AppDimensions.spacingM),
+                  TextField(
+                    controller: contactController,
+                    keyboardType: TextInputType.url,
+                    decoration: const InputDecoration(
+                      labelText: 'URL yoki username',
+                      hintText: 'https://t.me/username yoki @username',
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+            TextButton(
+              onPressed: () {
+                final value = contactController.text.trim();
+                if (value.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qiymatni kiriting')));
+                  return;
+                }
+                if (!isPhone && selectedPlatform == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Platformani tanlang')));
+                  return;
+                }
+
+                setState(() {
+                  if (isPhone) {
+                    phoneContacts.add(_ContactItem(value: value, platformName: null));
+                  } else {
+                    socialContacts.add(_ContactItem(value: value, platformName: selectedPlatform));
+                  }
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Qo\'shish'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveContacts() async {
+    try {
+      final dio = ApiClient.instance;
+
+      // Save phone contacts
+      for (final contact in phoneContacts) {
+        await dio.post(
+          '${ApiConstants.apiVersion}/merchants/contacts',
+          data: {
+            'contact_type': 'phone',
+            'contact_value': contact.value,
+            'display_order': phoneContacts.indexOf(contact),
+          },
+        );
+      }
+
+      // Save social media contacts
+      for (final contact in socialContacts) {
+        await dio.post(
+          '${ApiConstants.apiVersion}/merchants/contacts',
+          data: {
+            'contact_type': 'social_media',
+            'contact_value': contact.value,
+            'platform_name': contact.platformName,
+            'display_order': socialContacts.indexOf(contact),
+          },
+        );
+      }
+    } catch (e) {
+      // Handle error silently or show message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Kontaktlarni saqlashda xatolik: $e')));
+      }
     }
   }
 
