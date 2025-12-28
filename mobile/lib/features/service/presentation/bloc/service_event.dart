@@ -63,3 +63,18 @@ class RefreshServicesEvent extends ServiceEvent {
 class LoadSavedServicesEvent extends ServiceEvent {
   const LoadSavedServicesEvent();
 }
+
+/// Load liked services event
+class LoadLikedServicesEvent extends ServiceEvent {
+  const LoadLikedServicesEvent();
+}
+
+/// Restore last services state event (for when pages become visible)
+class RestoreLastServicesStateEvent extends ServiceEvent {
+  const RestoreLastServicesStateEvent();
+}
+
+/// Restore last liked services state event
+class RestoreLastLikedServicesStateEvent extends ServiceEvent {
+  const RestoreLastLikedServicesStateEvent();
+}

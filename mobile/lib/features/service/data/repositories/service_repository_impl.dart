@@ -83,6 +83,18 @@ class ServiceRepositoryImpl implements ServiceRepository {
   }
 
   @override
+  Future<Either<Failure, List<ServiceListItem>>> getLikedServices() async {
+    try {
+      final response = await remoteDataSource.getUserInteractions();
+      return Right(response.toLikedServicesEntity());
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, MerchantServicesResponse>> getMerchantServices() async {
     try {
       final response = await remoteDataSource.getMerchantServices();

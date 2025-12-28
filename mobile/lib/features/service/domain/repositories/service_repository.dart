@@ -21,6 +21,9 @@ abstract class ServiceRepository {
   /// Get user's saved services
   Future<Either<Failure, List<ServiceListItem>>> getSavedServices();
 
+  /// Get user's liked services
+  Future<Either<Failure, List<ServiceListItem>>> getLikedServices();
+
   /// Get merchant's services
   Future<Either<Failure, MerchantServicesResponse>> getMerchantServices();
 

@@ -22,6 +22,7 @@ import '../../features/service/domain/usecases/get_services.dart';
 import '../../features/service/domain/usecases/get_service_by_id.dart';
 import '../../features/service/domain/usecases/interact_with_service.dart';
 import '../../features/service/domain/usecases/get_saved_services.dart';
+import '../../features/service/domain/usecases/get_liked_services.dart';
 import '../../features/service/domain/usecases/get_merchant_services.dart';
 import '../../features/service/domain/usecases/create_merchant_service.dart';
 import '../../features/service/domain/usecases/update_merchant_service.dart';
@@ -47,6 +48,7 @@ import '../../features/tariff/domain/repositories/tariff_repository.dart';
 import '../../features/tariff/domain/usecases/get_tariff_plans.dart';
 import '../../features/tariff/domain/usecases/get_subscription.dart';
 import '../../features/tariff/domain/usecases/create_tariff_payment.dart';
+import '../../features/tariff/domain/usecases/activate_subscription.dart';
 import '../../features/tariff/presentation/bloc/tariff_bloc.dart';
 
 /// Service locator instance
@@ -109,6 +111,7 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetServiceById(getIt()));
   getIt.registerLazySingleton(() => InteractWithService(getIt()));
   getIt.registerLazySingleton(() => GetSavedServices(getIt()));
+  getIt.registerLazySingleton(() => GetLikedServices(getIt()));
 
   // Merchant service use cases
   getIt.registerLazySingleton(() => GetMerchantServices(getIt()));
@@ -116,13 +119,14 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => UpdateMerchantService(getIt()));
   getIt.registerLazySingleton(() => DeleteMerchantService(getIt()));
 
-  // Service BLoC
-  getIt.registerFactory(
+  // Service BLoC - Singleton to sync liked/saved state across all pages
+  getIt.registerLazySingleton(
     () => ServiceBloc(
       getServicesUseCase: getIt(),
       getServiceByIdUseCase: getIt(),
       interactWithServiceUseCase: getIt(),
       getSavedServicesUseCase: getIt(),
+      getLikedServicesUseCase: getIt(),
     ),
   );
 
@@ -180,9 +184,15 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetTariffPlans(getIt()));
   getIt.registerLazySingleton(() => GetSubscription(getIt()));
   getIt.registerLazySingleton(() => CreateTariffPayment(getIt()));
+  getIt.registerLazySingleton(() => ActivateSubscription(getIt()));
 
   // Tariff BLoC
   getIt.registerFactory(
-    () => TariffBloc(getTariffPlans: getIt(), getSubscription: getIt(), createTariffPayment: getIt()),
+    () => TariffBloc(
+      getTariffPlans: getIt(),
+      getSubscription: getIt(),
+      createTariffPayment: getIt(),
+      activateSubscription: getIt(),
+    ),
   );
 }

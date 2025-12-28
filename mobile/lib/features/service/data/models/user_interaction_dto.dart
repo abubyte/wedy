@@ -45,6 +45,56 @@ class UserInteractionsResponseDto {
   Map<String, dynamic> toJson() => _$UserInteractionsResponseDtoToJson(this);
 
   List<ServiceListItem> toSavedServicesEntity() {
-    return savedServices.map((item) => item.toEntity()).toList();
+    return savedServices.map((item) {
+      final service = item.toEntity();
+      // Ensure all saved services are marked as saved
+      return ServiceListItem(
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        price: service.price,
+        locationRegion: service.locationRegion,
+        overallRating: service.overallRating,
+        totalReviews: service.totalReviews,
+        viewCount: service.viewCount,
+        likeCount: service.likeCount,
+        saveCount: service.saveCount,
+        createdAt: service.createdAt,
+        merchant: service.merchant,
+        categoryId: service.categoryId,
+        categoryName: service.categoryName,
+        mainImageUrl: service.mainImageUrl,
+        isFeatured: service.isFeatured,
+        isLiked: service.isLiked,
+        isSaved: true, // All services in saved list should be marked as saved
+      );
+    }).toList();
+  }
+
+  List<ServiceListItem> toLikedServicesEntity() {
+    return likedServices.map((item) {
+      final service = item.toEntity();
+      // Ensure all liked services are marked as liked
+      return ServiceListItem(
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        price: service.price,
+        locationRegion: service.locationRegion,
+        overallRating: service.overallRating,
+        totalReviews: service.totalReviews,
+        viewCount: service.viewCount,
+        likeCount: service.likeCount,
+        saveCount: service.saveCount,
+        createdAt: service.createdAt,
+        merchant: service.merchant,
+        categoryId: service.categoryId,
+        categoryName: service.categoryName,
+        mainImageUrl: service.mainImageUrl,
+        isFeatured: service.isFeatured,
+        isLiked: true, // All services in liked list should be marked as liked
+        isSaved: service.isSaved,
+      );
+    }).toList();
   }
 }

@@ -19,7 +19,81 @@ class ServiceLoading extends ServiceState {
   const ServiceLoading();
 }
 
-/// Services loaded state
+/// Universal services state - holds all service types simultaneously
+class UniversalServicesState extends ServiceState {
+  // Featured services
+  final List<ServiceListItem>? featuredServices;
+
+  // Services by category (key: categoryId, value: list of services)
+  final Map<int, List<ServiceListItem>> categoryServices;
+
+  // Liked services
+  final List<ServiceListItem>? likedServices;
+
+  // Saved services
+  final List<ServiceListItem>? savedServices;
+
+  // Current service details being viewed
+  final Service? currentServiceDetails;
+
+  // Current paginated services (for items/search pages)
+  final PaginatedServiceResponse? currentPaginatedResponse;
+  final List<ServiceListItem>? currentPaginatedServices;
+
+  const UniversalServicesState({
+    this.featuredServices,
+    this.categoryServices = const {},
+    this.likedServices,
+    this.savedServices,
+    this.currentServiceDetails,
+    this.currentPaginatedResponse,
+    this.currentPaginatedServices,
+  });
+
+  UniversalServicesState copyWith({
+    List<ServiceListItem>? featuredServices,
+    Map<int, List<ServiceListItem>>? categoryServices,
+    List<ServiceListItem>? Function()? likedServices,
+    List<ServiceListItem>? Function()? savedServices,
+    Service? Function()? currentServiceDetails,
+    PaginatedServiceResponse? Function()? currentPaginatedResponse,
+    List<ServiceListItem>? Function()? currentPaginatedServices,
+    bool clearFeaturedServices = false,
+    bool clearLikedServices = false,
+    bool clearSavedServices = false,
+    bool clearCurrentServiceDetails = false,
+    bool clearCurrentPaginated = false,
+  }) {
+    return UniversalServicesState(
+      featuredServices: clearFeaturedServices ? null : (featuredServices ?? this.featuredServices),
+      categoryServices: categoryServices ?? this.categoryServices,
+      likedServices: clearLikedServices ? null : (likedServices != null ? likedServices() : this.likedServices),
+      savedServices: clearSavedServices ? null : (savedServices != null ? savedServices() : this.savedServices),
+      currentServiceDetails: clearCurrentServiceDetails
+          ? null
+          : (currentServiceDetails != null ? currentServiceDetails() : this.currentServiceDetails),
+      currentPaginatedResponse: clearCurrentPaginated
+          ? null
+          : (currentPaginatedResponse != null ? currentPaginatedResponse() : this.currentPaginatedResponse),
+      currentPaginatedServices: clearCurrentPaginated
+          ? null
+          : (currentPaginatedServices != null ? currentPaginatedServices() : this.currentPaginatedServices),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    featuredServices,
+    categoryServices,
+    likedServices,
+    savedServices,
+    currentServiceDetails,
+    currentPaginatedResponse,
+    currentPaginatedServices,
+  ];
+}
+
+/// Services loaded state (kept for backward compatibility during migration)
 class ServicesLoaded extends ServiceState {
   final PaginatedServiceResponse response;
   final List<ServiceListItem> allServices; // Accumulated list for pagination
@@ -66,6 +140,16 @@ class SavedServicesLoaded extends ServiceState {
 
   @override
   List<Object?> get props => [savedServices];
+}
+
+/// Liked services loaded state
+class LikedServicesLoaded extends ServiceState {
+  final List<ServiceListItem> likedServices;
+
+  const LikedServicesLoaded(this.likedServices);
+
+  @override
+  List<Object?> get props => [likedServices];
 }
 
 /// Error state
