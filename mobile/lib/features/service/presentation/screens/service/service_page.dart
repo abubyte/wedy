@@ -10,12 +10,12 @@ import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
 import 'package:wedy/core/utils/maps_utils.dart';
-import 'package:wedy/core/di/injection_container.dart';
 import 'package:wedy/shared/widgets/service_reviews.dart';
 import '../../bloc/service_bloc.dart';
 import '../../bloc/service_event.dart';
 import '../../bloc/service_state.dart';
 import '../../../domain/entities/service.dart';
+import 'package:wedy/core/utils/deep_link_service.dart';
 
 part 'widgets/call_button.dart';
 part 'widgets/contact_tabs.dart';
@@ -62,31 +62,50 @@ class _WedyServicePageState extends State<WedyServicePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final bloc = getIt<ServiceBloc>();
-        // Load service immediately if serviceId is provided
-        if (widget.serviceId != null) {
-          bloc.add(LoadServiceByIdEvent(widget.serviceId!));
-        }
-        return bloc;
-      },
+    // Use the global ServiceBloc instance to sync state across pages
+    final globalBloc = context.read<ServiceBloc>();
+
+    // Load service if serviceId is provided and current state doesn't have it
+    if (widget.serviceId != null) {
+      final currentState = globalBloc.state;
+      final hasService =
+          (currentState is UniversalServicesState && currentState.currentServiceDetails?.id == widget.serviceId) ||
+          (currentState is ServiceDetailsLoaded && currentState.service.id == widget.serviceId);
+
+      if (!hasService && currentState is! ServiceLoading) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            final state = globalBloc.state;
+            final hasCurrentService =
+                (state is UniversalServicesState && state.currentServiceDetails?.id == widget.serviceId) ||
+                (state is ServiceDetailsLoaded && state.service.id == widget.serviceId);
+            if (!hasCurrentService && state is! ServiceLoading) {
+              globalBloc.add(LoadServiceByIdEvent(widget.serviceId!));
+            }
+          }
+        });
+      }
+    }
+
+    return BlocProvider.value(
+      value: globalBloc,
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
           if (state is ServiceError) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
-          } else if (state is ServiceInteractionSuccess) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.success));
           }
+          // Note: ServiceInteractionSuccess is no longer emitted to avoid state replacement
+          // The UI updates optimistically, so no success message needed
         },
         child: BlocBuilder<ServiceBloc, ServiceState>(
           builder: (context, state) {
             // Show loading if we're loading or if we have a serviceId but haven't loaded yet (initial state)
-            if (state is ServiceLoading || (state is ServiceInitial && widget.serviceId != null)) {
+            if (state is ServiceLoading ||
+                ((state is UniversalServicesState && state.currentServiceDetails == null) &&
+                    widget.serviceId != null) ||
+                (state is ServiceInitial && widget.serviceId != null)) {
               return Scaffold(
                 appBar: AppBar(title: const Text('Yuklanmoqda...')),
                 body: const Center(child: CircularProgressIndicator()),
@@ -116,13 +135,17 @@ class _WedyServicePageState extends State<WedyServicePage> {
               );
             }
 
-            final service = state is ServiceDetailsLoaded ? state.service : null;
+            final service = state is UniversalServicesState
+                ? state.currentServiceDetails
+                : (state is ServiceDetailsLoaded ? state.service : null);
 
             // Show "not found" only if we don't have a serviceId (invalid route)
             // or if we've finished loading (not initial) and got no service
             if (service == null) {
               // If we have a serviceId but no service, and we're not in initial state, show not found
-              if (widget.serviceId != null && state is! ServiceInitial) {
+              if (widget.serviceId != null &&
+                  state is! ServiceInitial &&
+                  !(state is UniversalServicesState && state.currentServiceDetails == null)) {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Xizmat topilmadi')),
                   body: const Center(child: Text('Xizmat ma\'lumotlari topilmadi')),

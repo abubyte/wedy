@@ -24,22 +24,17 @@ class ServiceHeaderButtons extends StatelessWidget {
         // Favorite & Share Buttons
         Row(
           children: [
-            // Favorite Button (only for client app)
+            // Favorite Button (only for client app) - Instagram approach: like button
             if (!isMerchant)
               WedyCircularButton(
-                icon: (service?.isSaved ?? false) ? IconsaxPlusBold.heart : IconsaxPlusLinear.heart,
-                color: (service?.isSaved ?? false) ? AppColors.primary : AppColors.surface,
-                borderColor: (service?.isSaved ?? false) ? AppColors.primary : AppColors.border,
+                icon: (service?.isLiked ?? false) ? IconsaxPlusBold.heart : IconsaxPlusLinear.heart,
+                color: (service?.isLiked ?? false) ? AppColors.primary : AppColors.surface,
+                borderColor: (service?.isLiked ?? false) ? AppColors.primary : AppColors.border,
                 onTap: service != null
                     ? () {
                         final bloc = context.read<ServiceBloc>();
-                        bloc.add(InteractWithServiceEvent(serviceId: service!.id, interactionType: 'save'));
-                        // Reload service details after interaction to update favorite status
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          if (context.mounted) {
-                            bloc.add(LoadServiceByIdEvent(service!.id));
-                          }
-                        });
+                        bloc.add(InteractWithServiceEvent(serviceId: service!.id, interactionType: 'like'));
+                        // No need to reload - bloc handles optimistic update
                       }
                     : null,
               )
@@ -57,9 +52,18 @@ class ServiceHeaderButtons extends StatelessWidget {
                 : WedyCircularButton(
                     icon: IconsaxPlusLinear.export_2,
                     onTap: service != null
-                        ? () {
+                        ? () async {
                             final bloc = context.read<ServiceBloc>();
                             bloc.add(InteractWithServiceEvent(serviceId: service!.id, interactionType: 'share'));
+
+                            // Share with deep link
+                            final deepLinkService = DeepLinkService();
+                            await deepLinkService.shareService(
+                              serviceId: service!.id,
+                              serviceName: service!.name,
+                              description: service!.description,
+                              useWebUrl: true, // Use web URL for sharing
+                            );
                           }
                         : null,
                   ),
