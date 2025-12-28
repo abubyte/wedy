@@ -7,7 +7,7 @@ import logging
 from app.core.config import settings
 from app.core.database import create_db_and_tables, close_db_connection
 from app.core.exceptions import WedyException, map_exception_to_http
-from app.api.v1 import auth, categories, users, services, merchants, merchants_cover_image, merchants_gallery, merchants_contacts, payments, reviews, tariffs
+from app.api.v1 import auth, categories, users, services, merchants, merchants_cover_image, merchants_gallery, merchants_contacts, payments, reviews, tariffs, deep_links
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -200,6 +200,9 @@ app.include_router(
     prefix=settings.API_V1_STR + "/reviews",
     tags=["Reviews"]
 )
+
+# Deep Links endpoints (no prefix for .well-known paths)
+app.include_router(deep_links.router)
 
 
 if __name__ == "__main__":

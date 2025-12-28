@@ -80,6 +80,12 @@ class Settings(BaseSettings):
     UZUMBANK_API_URL: str = "https://api.uzumbank.uz"
     UZUMBANK_TEST_API_URL: str = "https://api.uzumbank.uz"
 
+    # Deep Links / Universal Links
+    ANDROID_PACKAGE_NAME: str = "uz.wedy.app"
+    ANDROID_SHA256_FINGERPRINT: Optional[str] = None  # Get from: keytool -list -v -keystore <keystore> -alias <alias>
+    IOS_TEAM_ID: Optional[str] = None  # Apple Developer Team ID
+    IOS_BUNDLE_ID: str = "uz.wedy.app"
+
     # Pydantic configuration
     if HAS_PYDANTIC_SETTINGS:
         model_config = SettingsConfigDict(
