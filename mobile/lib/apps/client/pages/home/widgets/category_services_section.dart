@@ -67,7 +67,7 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
             if (state is UniversalServicesState) {
               categoryServices = state.categoryServices[widget.category.id];
             } else if (state is ServicesLoaded) {
-              categoryServices = state.allServices.where((s) => s.categoryId == widget.category.id.toString()).toList();
+              categoryServices = state.allServices.where((s) => s.categoryId == widget.category.id).toList();
             }
 
             if (categoryServices != null && (categoryServices.isNotEmpty || categoryServices.isEmpty)) {
@@ -89,7 +89,7 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
             if (state is UniversalServicesState) {
               stateServices = state.categoryServices[widget.category.id];
             } else if (state is ServicesLoaded) {
-              stateServices = state.allServices.where((s) => s.categoryId == widget.category.id.toString()).toList();
+              stateServices = state.allServices.where((s) => s.categoryId == widget.category.id).toList();
             }
 
             if (stateServices != null && stateServices.isNotEmpty) {
