@@ -81,7 +81,7 @@ class _AuthScreenState extends State<AuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(context),
+                const Align(alignment: Alignment.centerLeft, child: WedyCircularButton(isPrimary: true)),
                 const SizedBox(height: AppDimensions.spacingXL),
                 Expanded(
                   child: AnimatedSwitcher(duration: const Duration(milliseconds: 250), child: _buildStepContent()),
@@ -91,7 +91,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   builder: (context, state) {
                     final isLoading = state is AuthLoading;
                     return WedyPrimaryButton(
-                      label: _step == _AuthStep.name ? 'Tasdiqlash' : 'Keyingi',
+                      label: _step == _AuthStep.phone ? 'Keyingi' : 'Tasdiqlash',
                       onPressed: isLoading ? null : _handleNext,
                       loading: isLoading,
                     );
@@ -102,20 +102,6 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        if (_step != _AuthStep.phone)
-          WedyCircularButton(icon: Icons.arrow_back_ios_new_rounded, onTap: _handleBack)
-        else
-          const SizedBox(width: 44),
-        Text('Wedy', style: AppTextStyles.title1.copyWith(color: AppColors.primary)),
-        const SizedBox(width: 44),
-      ],
     );
   }
 
@@ -164,6 +150,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  // ignore: unused_element
   void _handleBack() {
     setState(() {
       if (_step == _AuthStep.otp) {
@@ -215,48 +202,98 @@ class _PhoneStep extends StatelessWidget {
         const SizedBox(height: AppDimensions.spacingS),
         PhoneInputWidget(controller: controller),
         const SizedBox(height: AppDimensions.spacingXL),
-        Text(
-          'Tasdiqlash orqali Foydalanish shartlari va Maxfiylik siyosati ga rozilik bildirasiz.',
-          style: AppTextStyles.caption,
-        ),
       ],
     );
   }
 }
 
-class _OtpStep extends StatelessWidget {
+class _OtpStep extends StatefulWidget {
   const _OtpStep({required this.controller, required this.secondsRemaining, required this.onResend});
 
   final TextEditingController controller;
+
   final int secondsRemaining;
   final VoidCallback onResend;
 
   @override
+  State<_OtpStep> createState() => _OtpStepState();
+}
+
+class _OtpStepState extends State<_OtpStep> {
+  @override
   Widget build(BuildContext context) {
-    final minutes = (secondsRemaining ~/ 60).toString().padLeft(2, '0');
-    final seconds = (secondsRemaining % 60).toString().padLeft(2, '0');
-    final canResend = secondsRemaining == 0;
+    final minutes = (widget.secondsRemaining ~/ 60).toString().padLeft(2, '0');
+    final seconds = (widget.secondsRemaining % 60).toString().padLeft(2, '0');
+    final canResend = widget.secondsRemaining == 0;
+    bool errorState = context.read<AuthBloc>().state is AuthError;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('SMS orqali kelgan kodni yozing:', style: AppTextStyles.headline2),
-        const SizedBox(height: AppDimensions.spacingXL),
-        OtpInputWidget(controller: controller),
-        const SizedBox(height: AppDimensions.spacingL),
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
-            Text('Agar kodni olmagan bo\'lsangiz ', style: AppTextStyles.caption),
-            GestureDetector(
-              onTap: canResend ? onResend : null,
-              child: Text(
-                canResend ? 'qayta yuboring' : '$minutes:$seconds dan keyin qayta yuboramiz',
-                style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+            Text('SMS orqali kelgan kodni yozing:', style: AppTextStyles.headline2),
+            const SizedBox(height: AppDimensions.spacingXL),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingXXL),
+              child: Builder(
+                builder: (context) {
+                  return OtpInputWidget(
+                    controller: widget.controller,
+                    // focusNode: _otpFocus,
+                    // enabled: !isLoading,
+                    // errorText: _inlineError,
+                    errorState: errorState,
+                    onChanged: (value) {
+                      setState(() {
+                        errorState = false;
+                      });
+                    },
+                    onFieldSubmitted: (_) {
+                      if (!context.mounted) return;
+                    },
+                  );
+                },
               ),
+            ),
+            const SizedBox(height: AppDimensions.spacingL),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingXXL),
+              child: canResend
+                  ? GestureDetector(
+                      onTap: () {
+                        // Resend OTP logic here
+                        if (context.mounted) {
+                          context.read<AuthBloc>().add(const SendOtpEvent('900000000'));
+                        }
+                      },
+                      child: Text(
+                        'Qayta yuborish',
+                        style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : Text.rich(
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      TextSpan(
+                        children: [
+                          TextSpan(text: 'Agar kodni olmagan bo\'lsangiz ', style: AppTextStyles.caption),
+                          TextSpan(
+                            text: '$minutes:$seconds ',
+                            style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+                          ),
+                          TextSpan(text: 'dan keyin qayta yuboramiz', style: AppTextStyles.caption),
+                        ],
+                      ),
+                    ),
             ),
           ],
         ),
-        const SizedBox(height: AppDimensions.spacingXL),
+
         Text.rich(
           TextSpan(
             text: 'Tasdiqlash orqali ',
@@ -291,15 +328,47 @@ class _NameStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Chiroyli ismingizni yozing:', style: AppTextStyles.headline2),
-        const SizedBox(height: AppDimensions.spacingM),
-        TextField(
-          controller: controller,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(hintText: 'Ismingiz yoki tashkilot nomini yozing'),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+            Text('Chiroyli ismingizni yozing:', style: AppTextStyles.headline2),
+            const SizedBox(height: AppDimensions.spacingM),
+            Text('Telefon raqam kiriting', style: AppTextStyles.caption),
+            const SizedBox(height: AppDimensions.spacingS),
+            TextField(
+              controller: controller,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                hintText: 'Ismingiz yoki tashkilot nomini yozing',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.spacingXL),
+          ],
         ),
-        const SizedBox(height: AppDimensions.spacingXL),
+
         Text.rich(
           TextSpan(
             text: 'Tasdiqlash orqali ',
