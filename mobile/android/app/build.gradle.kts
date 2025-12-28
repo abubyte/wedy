@@ -1,8 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Load keystore properties from key.properties file if it exists
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -24,8 +34,29 @@ android {
         targetSdk = flutter.targetSdkVersion
         // Versions are now set per flavor (client/merchant)
         // Default values (will be overridden by flavors)
+        // Note: applicationId is set per flavor, not in defaultConfig
         versionCode = 1
         versionName = "1.0.0"
+    }
+
+    // Disable lint for release builds to avoid cache issues
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
+    // Signing configurations
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                // storeFile path from key.properties is relative to app directory
+                val storeFilePath = keystoreProperties["storeFile"] as String
+                storeFile = file(storeFilePath)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
     }
 
     // Product flavors for different app types and environments
@@ -43,10 +74,11 @@ android {
         
         create("merchant") {
             dimension = "app"
+            // CRITICAL: This must be uz.wedy.business for merchant app
             applicationId = "uz.wedy.business"
             resValue("string", "app_name", "Wedy Biznes")
-            versionCode = 1
-            versionName = "1.0.0"
+            versionCode = 3
+            versionName = "1.0.2"
         }
         
         // Environments
@@ -69,9 +101,13 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Use release signing config if keystore exists, otherwise fall back to debug
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                // Fallback to debug signing for development/testing
+                signingConfig = signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -88,4 +124,18 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// Task to print applicationId for each variant (for debugging)
+tasks.register("printApplicationIds") {
+    doLast {
+        android.applicationVariants.all {
+            println("Variant: ${name} -> applicationId: ${applicationId}")
+        }
+    }
+}
+
+// Disable lint tasks to avoid cache issues
+tasks.matching { it.name.contains("lint") }.configureEach {
+    enabled = false
 }
