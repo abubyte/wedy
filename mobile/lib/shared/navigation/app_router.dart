@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wedy/apps/client/pages/chats/chats_page.dart';
 import 'package:wedy/apps/merchant/pages/account/account_page.dart';
-import 'package:wedy/apps/merchant/pages/profile/profile_page.dart';
 import 'package:wedy/apps/merchant/pages/boost/boost_page.dart';
 import 'package:wedy/apps/merchant/pages/chats/chats_page.dart';
 import 'package:wedy/apps/merchant/pages/edit/edit_page.dart';
-import 'package:wedy/apps/merchant/pages/services/services_page.dart';
 import 'package:wedy/apps/merchant/pages/settings/settings_page.dart';
 import 'package:wedy/apps/merchant/pages/tariff/tariff_page.dart';
 import 'package:wedy/features/category/domain/entities/category.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
+import 'package:wedy/features/service/presentation/bloc/merchant_service_bloc.dart';
+import 'package:wedy/features/service/presentation/bloc/merchant_service_state.dart';
 import 'package:wedy/shared/navigation/navigation_shell.dart';
 import 'package:wedy/apps/client/pages/favorites/favorites_page.dart';
 import 'package:wedy/apps/client/pages/home/home_page.dart';
@@ -219,11 +220,6 @@ class AppRouter {
         ),
         GoRoute(path: RouteNames.boost, builder: (context, state) => const BoostPage()),
         GoRoute(
-          path: RouteNames.services,
-          name: RouteNames.services,
-          builder: (context, state) => const MerchantServicesPage(),
-        ),
-        GoRoute(
           path: RouteNames.account,
           name: RouteNames.account,
           builder: (context, state) => const MerchantAccountPage(),
@@ -264,11 +260,21 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.profile,
                   name: RouteNames.profile,
-                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
-                    context: context,
-                    state: state,
-                    child: const MerchantProfilePage(),
-                  ),
+                  pageBuilder: (context, state) {
+                    final bloc = context.read<MerchantServiceBloc>();
+                    final blocState = bloc.state;
+                    MerchantService? service;
+
+                    if (blocState is MerchantServiceLoaded && blocState.service == null) {
+                      service = blocState.service;
+                    }
+
+                    return buildPageWithDefaultTransition<void>(
+                      context: context,
+                      state: state,
+                      child: service != null ? WedyServicePage(serviceId: service.id) : const MerchantEditPage(),
+                    );
+                  },
                 ),
               ],
             ),

@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:wedy/core/errors/failures.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
 import 'package:wedy/features/service/domain/repositories/service_repository.dart';
+import 'package:wedy/features/service/domain/usecases/get_liked_services.dart';
 import 'package:wedy/features/service/domain/usecases/get_service_by_id.dart';
 import 'package:wedy/features/service/domain/usecases/get_services.dart';
 import 'package:wedy/features/service/domain/usecases/interact_with_service.dart';
@@ -21,15 +22,18 @@ class MockInteractWithService extends Mock implements InteractWithService {}
 
 class MockGetSavedServices extends Mock implements GetSavedServices {}
 
+class MockGetLikedServices extends Mock implements GetLikedServices {}
+
 void main() {
   late ServiceBloc bloc;
   late MockGetServices mockGetServices;
   late MockGetServiceById mockGetServiceById;
   late MockInteractWithService mockInteractWithService;
   late MockGetSavedServices mockGetSavedServices;
+  late MockGetLikedServices mockGetLikedServices;
 
   setUpAll(() {
-    registerFallbackValue(ServiceSearchFilters());
+    registerFallbackValue(ServiceSearchFilters() );
   });
 
   setUp(() {
@@ -37,11 +41,13 @@ void main() {
     mockGetServiceById = MockGetServiceById();
     mockInteractWithService = MockInteractWithService();
     mockGetSavedServices = MockGetSavedServices();
+    mockGetLikedServices = MockGetLikedServices();
     bloc = ServiceBloc(
       getServicesUseCase: mockGetServices,
       getServiceByIdUseCase: mockGetServiceById,
       interactWithServiceUseCase: mockInteractWithService,
       getSavedServicesUseCase: mockGetSavedServices,
+      getLikedServicesUseCase: mockGetLikedServices,
     );
   });
 

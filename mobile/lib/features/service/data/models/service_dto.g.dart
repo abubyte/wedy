@@ -65,6 +65,8 @@ ServiceListItemDto _$ServiceListItemDtoFromJson(Map<String, dynamic> json) =>
       categoryName: json['category_name'] as String,
       mainImageUrl: json['main_image_url'] as String?,
       isFeatured: json['is_featured'] as bool? ?? false,
+      isLiked: json['is_liked'] as bool? ?? false,
+      isSaved: json['is_saved'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$ServiceListItemDtoToJson(ServiceListItemDto instance) =>
@@ -85,6 +87,8 @@ Map<String, dynamic> _$ServiceListItemDtoToJson(ServiceListItemDto instance) =>
       'category_name': instance.categoryName,
       'main_image_url': instance.mainImageUrl,
       'is_featured': instance.isFeatured,
+      'is_liked': instance.isLiked,
+      'is_saved': instance.isSaved,
     };
 
 ServiceDetailDto _$ServiceDetailDtoFromJson(Map<String, dynamic> json) =>
@@ -114,6 +118,8 @@ ServiceDetailDto _$ServiceDetailDtoFromJson(Map<String, dynamic> json) =>
           .toList(),
       isFeatured: json['is_featured'] as bool? ?? false,
       featuredUntil: json['featured_until'] as String?,
+      isLiked: json['is_liked'] as bool? ?? false,
+      isSaved: json['is_saved'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$ServiceDetailDtoToJson(ServiceDetailDto instance) =>
@@ -140,6 +146,8 @@ Map<String, dynamic> _$ServiceDetailDtoToJson(ServiceDetailDto instance) =>
       'images': instance.images,
       'is_featured': instance.isFeatured,
       'featured_until': instance.featuredUntil,
+      'is_liked': instance.isLiked,
+      'is_saved': instance.isSaved,
     };
 
 PaginatedServiceResponseDto _$PaginatedServiceResponseDtoFromJson(
@@ -172,6 +180,7 @@ ServiceInteractionResponseDto _$ServiceInteractionResponseDtoFromJson(
       success: json['success'] as bool,
       message: json['message'] as String,
       newCount: (json['new_count'] as num).toInt(),
+      isActive: json['is_active'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$ServiceInteractionResponseDtoToJson(
@@ -180,6 +189,7 @@ Map<String, dynamic> _$ServiceInteractionResponseDtoToJson(
       'success': instance.success,
       'message': instance.message,
       'new_count': instance.newCount,
+      'is_active': instance.isActive,
     };
 
 ServiceCreateRequestDto _$ServiceCreateRequestDtoFromJson(

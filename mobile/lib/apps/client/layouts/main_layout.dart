@@ -6,6 +6,7 @@ import 'package:wedy/core/constants/app_dimensions.dart';
 class ClientMainLayout extends StatelessWidget {
   final Widget headerContent;
   final List<Widget> bodyChildren;
+  final double? height;
   final double expandedHeight;
   final double collapsedHeight;
   final RefreshController? refreshController;
@@ -16,6 +17,7 @@ class ClientMainLayout extends StatelessWidget {
     super.key,
     required this.headerContent,
     required this.bodyChildren,
+    required this.height,
     this.expandedHeight = 80,
     this.collapsedHeight = 70,
     this.refreshController,
@@ -30,6 +32,7 @@ class ClientMainLayout extends StatelessWidget {
       child: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.only(top: AppDimensions.spacingL),
+          height: height,
           decoration: const BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.only(
