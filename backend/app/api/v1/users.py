@@ -160,8 +160,19 @@ async def get_user_interactions(
         saved_items = []
         
         for interaction, service in interactions:
-            # Convert service to ServiceListItem
-            service_item = await service_manager._convert_to_service_list_item(service)
+            # Convert service to ServiceListItem with user_id to get interaction status
+            service_item = await service_manager._convert_to_service_list_item(service, user_id=current_user.id)
+            
+            # Explicitly set interaction status based on interaction type
+            # Pydantic models allow attribute assignment in newer versions
+            if interaction.interaction_type == InteractionType.LIKE:
+                # For liked services, ensure is_liked is True
+                service_item.is_liked = True
+                service_item.is_saved = False  # Clear save status for liked items
+            elif interaction.interaction_type == InteractionType.SAVE:
+                # For saved services, ensure is_saved is True
+                service_item.is_saved = True
+                service_item.is_liked = False  # Clear like status for saved items
             
             interaction_item = UserInteractionItem(
                 interaction_type=interaction.interaction_type,
