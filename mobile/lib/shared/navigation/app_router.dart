@@ -15,7 +15,6 @@ import 'package:wedy/features/service/presentation/bloc/merchant_service_state.d
 import 'package:wedy/shared/navigation/navigation_shell.dart';
 import 'package:wedy/apps/client/pages/favorites/favorites_page.dart';
 import 'package:wedy/apps/client/pages/home/home_page.dart';
-import 'package:wedy/apps/client/pages/items/items_page.dart';
 import 'package:wedy/apps/client/pages/profile/profile_page.dart';
 import 'package:wedy/apps/client/pages/search/search_page.dart';
 import 'package:wedy/features/reviews/presentation/screens/reviews_page.dart';
@@ -105,13 +104,13 @@ class AppRouter {
                       builder: (context, state) {
                         final extra = state.extra;
                         final category = extra is ServiceCategory ? extra : null;
-                        return ClientItemsPage(category: category);
+                        return ClientSearchPage(category: category);
                       },
                     ),
                     GoRoute(
                       path: RouteNames.hotOffers,
                       name: RouteNames.hotOffers,
-                      builder: (context, state) => const ClientItemsPage(hotOffers: true),
+                      builder: (context, state) => const ClientSearchPage(hotOffers: true),
                     ),
                     GoRoute(
                       path: RouteNames.search,
