@@ -12,25 +12,23 @@ class _SearchEmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              padding: const EdgeInsets.all(AppDimensions.spacingL),
               decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusL),
               ),
-              child: const Icon(IconsaxPlusLinear.search_normal_1, size: 40, color: AppColors.textMuted),
+              child: const Icon(IconsaxPlusLinear.microscope, color: Colors.white, size: 40),
             ),
             const SizedBox(height: AppDimensions.spacingL),
-            Text(
-              'Qidiruv natijalari topilmadi',
-              style: AppTextStyles.headline2.copyWith(color: AppColors.textPrimary),
-              textAlign: TextAlign.center,
-            ),
+            Text('Hech narsa topilmadi', style: AppTextStyles.headline2.copyWith(color: AppColors.primary)),
             const SizedBox(height: AppDimensions.spacingS),
             Text(
               'Boshqa kalit so\'zlar bilan qidirib ko\'ring',
-              style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyRegular.copyWith(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -38,4 +36,3 @@ class _SearchEmptyState extends StatelessWidget {
     );
   }
 }
-

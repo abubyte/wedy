@@ -12,6 +12,7 @@ class ClientSearchField extends StatelessWidget {
     this.hintText,
     this.onChanged,
     this.onTap,
+    this.onSubmitted,
     this.trailing,
     this.readOnly = false,
     this.margin,
@@ -20,6 +21,7 @@ class ClientSearchField extends StatelessWidget {
   final TextEditingController? controller;
   final String? hintText;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool readOnly;
@@ -34,6 +36,7 @@ class ClientSearchField extends StatelessWidget {
         onTap: onTap,
         readOnly: readOnly,
         textInputAction: TextInputAction.search,
+        onSubmitted: onSubmitted,
         style: AppTextStyles.bodyRegular,
         decoration: InputDecoration(
           prefixIcon: const Icon(IconsaxPlusLinear.search_normal_1, size: 20, color: Color(0xFFC7CDDD)),

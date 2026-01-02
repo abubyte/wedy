@@ -19,6 +19,8 @@ class ClientServiceCard extends StatelessWidget {
     this.isFavorite = false,
     this.onFavoriteTap,
     this.onTap,
+    this.width,
+    this.height,
   });
 
   final String imageUrl;
@@ -30,6 +32,8 @@ class ClientServiceCard extends StatelessWidget {
   final bool isFavorite;
   final VoidCallback? onFavoriteTap;
   final VoidCallback? onTap;
+  final double? width;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +41,8 @@ class ClientServiceCard extends StatelessWidget {
       onTap: onTap ?? () => context.push(RouteNames.serviceDetails),
       borderRadius: BorderRadius.circular(AppDimensions.radiusM),
       child: Container(
-        width: (MediaQuery.of(context).size.width - AppDimensions.spacingL * 2) / 2,
-        height: double.infinity,
+        width: width ?? (MediaQuery.of(context).size.width - AppDimensions.spacingL * 2) / 2,
+        height: height ?? double.infinity,
         padding: const EdgeInsets.all(AppDimensions.spacingS),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -48,7 +52,9 @@ class ClientServiceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _buildImage()),
+            height != null
+                ? SizedBox(height: (height ?? 0) - 100, child: _buildImage())
+                : Expanded(child: _buildImage()),
             const SizedBox(height: AppDimensions.spacingXS),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
