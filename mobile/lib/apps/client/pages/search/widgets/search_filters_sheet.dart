@@ -20,6 +20,40 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
   late String? _sortBy;
   late String? _sortOrder;
 
+  // Mapping from Uzbek names (UI) to English names (API)
+  static const Map<String, String> _locationMapping = {
+    'Toshkent': 'Tashkent',
+    'Samarqand': 'Samarkand',
+    'Buxoro': 'Bukhara',
+    'Andijon': 'Andijan',
+    'Farg\'ona': 'Ferghana',
+    'Namangan': 'Namangan',
+    'Qashqadaryo': 'Kashkadarya',
+    'Surxondaryo': 'Surkhandarya',
+    'Jizzax': 'Jizzakh',
+    'Sirdaryo': 'Sirdarya',
+    'Navoiy': 'Navoiy',
+    'Xorazm': 'Khorezm',
+    'Qoraqalpog\'iston': 'Karakalpakstan',
+  };
+
+  // Reverse mapping from English names (API) to Uzbek names (UI)
+  static const Map<String, String> _locationReverseMapping = {
+    'Tashkent': 'Toshkent',
+    'Samarkand': 'Samarqand',
+    'Bukhara': 'Buxoro',
+    'Andijan': 'Andijon',
+    'Ferghana': 'Farg\'ona',
+    'Namangan': 'Namangan',
+    'Kashkadarya': 'Qashqadaryo',
+    'Surkhandarya': 'Surxondaryo',
+    'Jizzakh': 'Jizzax',
+    'Sirdarya': 'Sirdaryo',
+    'Navoiy': 'Navoiy',
+    'Khorezm': 'Xorazm',
+    'Karakalpakstan': 'Qoraqalpog\'iston',
+  };
+
   final List<String> _locations = [
     'Toshkent',
     'Samarqand',
@@ -36,19 +70,16 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
     'Qoraqalpog\'iston',
   ];
 
-  final List<String> _sortOptions = [
-    'created_at',
-    'price',
-    'rating',
-    'popularity',
-    'name',
-  ];
+  final List<String> _sortOptions = ['created_at', 'price', 'rating', 'popularity', 'name'];
 
   @override
   void initState() {
     super.initState();
     _selectedCategoryId = widget.filters.categoryId;
-    _selectedLocation = widget.filters.locationRegion;
+    // Convert English API name to Uzbek UI name for display
+    _selectedLocation = widget.filters.locationRegion != null
+        ? _locationReverseMapping[widget.filters.locationRegion] ?? widget.filters.locationRegion
+        : null;
     _minPrice = widget.filters.minPrice;
     _maxPrice = widget.filters.maxPrice;
     _minRating = widget.filters.minRating;
@@ -58,10 +89,15 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
   }
 
   void _applyFilters() {
+    // Convert Uzbek UI name to English API name
+    final locationRegionForApi = _selectedLocation != null
+        ? _locationMapping[_selectedLocation] ?? _selectedLocation
+        : null;
+
     final filters = ServiceSearchFilters(
       query: widget.filters.query,
       categoryId: _selectedCategoryId,
-      locationRegion: _selectedLocation,
+      locationRegion: locationRegionForApi,
       minPrice: _minPrice,
       maxPrice: _maxPrice,
       minRating: _minRating,
@@ -90,7 +126,9 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
   Widget build(BuildContext context) {
     return BlocBuilder<CategoryBloc, CategoryState>(
       builder: (context, categoryState) {
-        final categories = categoryState is CategoriesLoaded ? categoryState.categories.categories : <ServiceCategory>[];
+        final categories = categoryState is CategoriesLoaded
+            ? categoryState.categories.categories
+            : <ServiceCategory>[];
 
         return Container(
           decoration: const BoxDecoration(
@@ -100,6 +138,7 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: AppDimensions.spacingL),
               // Header
               Padding(
                 padding: const EdgeInsets.all(AppDimensions.spacingL),
@@ -184,11 +223,9 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
                           Expanded(
                             child: TextField(
                               decoration: InputDecoration(
-                                labelText: 'Min narx',
+                                labelText: 'dan',
                                 hintText: '0',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
                               ),
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
@@ -200,11 +237,9 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
                           Expanded(
                             child: TextField(
                               decoration: InputDecoration(
-                                labelText: 'Max narx',
+                                labelText: 'gacha',
                                 hintText: '10000000',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
                               ),
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
@@ -261,9 +296,7 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
                       DropdownButtonFormField<String>(
                         initialValue: _sortBy,
                         decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                          ),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
                         ),
                         items: _sortOptions.map((option) {
                           String label;
@@ -320,9 +353,7 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingM),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
                     ),
                     child: Text('Qo\'llash', style: AppTextStyles.bodyLarge.copyWith(color: Colors.white)),
                   ),
@@ -352,10 +383,7 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
-            width: 1,
-          ),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: 1),
         ),
         child: Text(
           label,
@@ -368,4 +396,3 @@ class _FilterChip extends StatelessWidget {
     );
   }
 }
-
