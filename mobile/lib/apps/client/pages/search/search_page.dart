@@ -23,11 +23,16 @@ import 'package:wedy/apps/client/widgets/search_field.dart';
 
 part 'widgets/search_filters_sheet.dart';
 part 'widgets/search_empty_state.dart';
+part 'widgets/search_initial_state.dart';
+part 'widgets/category_meta_card.dart';
+part 'widgets/hot_offers_meta_card.dart';
 
 class ClientSearchPage extends StatefulWidget {
-  const ClientSearchPage({super.key, this.initialQuery});
+  const ClientSearchPage({super.key, this.initialQuery, this.category, this.hotOffers = false});
 
   final String? initialQuery;
+  final ServiceCategory? category;
+  final bool hotOffers;
 
   @override
   State<ClientSearchPage> createState() => _ClientSearchPageState();
@@ -36,21 +41,48 @@ class ClientSearchPage extends StatefulWidget {
 class _ClientSearchPageState extends State<ClientSearchPage> {
   final RefreshController _refreshController = RefreshController(initialRefresh: false);
   final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-
+  bool _isInitial = true;
+  bool _isLoadingMore = false;
   ServiceSearchFilters _filters = ServiceSearchFilters();
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialQuery != null) {
+    // Initialize filters based on widget parameters
+    if (widget.hotOffers) {
+      // For hot offers, we'll load featured services initially
+      _filters = ServiceSearchFilters();
+    } else if (widget.category != null) {
+      // For category, set category filter
+      _filters = ServiceSearchFilters(categoryId: widget.category!.id);
+    } else if (widget.initialQuery != null) {
+      // For search, set query
       _searchController.text = widget.initialQuery!;
       _filters = ServiceSearchFilters(query: widget.initialQuery);
     }
+
     // Load categories for filter dropdown
     context.read<CategoryBloc>().add(const LoadCategoriesEvent());
-    // Perform initial search if query is provided
-    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+
+    // Perform initial load/search
+    if (widget.hotOffers) {
+      // Load featured services
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<ServiceBloc>().add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
+        }
+      });
+    } else if (widget.category != null) {
+      // Load category services
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<ServiceBloc>().add(
+            LoadServicesEvent(filters: ServiceSearchFilters(categoryId: widget.category!.id), page: 1, limit: 20),
+          );
+        }
+      });
+    } else if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+      // Perform search if query is provided
       _performSearch();
     }
   }
@@ -59,15 +91,35 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
   void dispose() {
     _refreshController.dispose();
     _searchController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
   void _performSearch() {
-    final query = _searchController.text.trim();
+    setState(() {
+      _isInitial = false;
+    });
+    // Use search controller text if available, otherwise use existing query from filters
+    final searchText = _searchController.text.trim();
+    final query = searchText.isNotEmpty ? searchText : _filters.query;
+
+    // If query is empty and we're in hotOffers/category mode, reload original services
+    if (query == null || query.isEmpty) {
+      if (widget.hotOffers) {
+        context.read<ServiceBloc>().add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
+        return;
+      } else if (widget.category != null) {
+        context.read<ServiceBloc>().add(
+          LoadServicesEvent(filters: ServiceSearchFilters(categoryId: widget.category!.id), page: 1, limit: 20),
+        );
+        return;
+      }
+    }
+
+    // Build filters - preserve category context (but not hotOffers when searching)
+    // Always prioritize widget.category.id if it exists (for category pages)
     final filters = ServiceSearchFilters(
-      query: query.isNotEmpty ? query : null,
-      categoryId: _filters.categoryId,
+      query: query?.isNotEmpty == true ? query : null,
+      categoryId: widget.hotOffers ? null : (widget.category?.id ?? _filters.categoryId),
       locationRegion: _filters.locationRegion,
       minPrice: _filters.minPrice,
       maxPrice: _filters.maxPrice,
@@ -76,18 +128,38 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
       sortBy: _filters.sortBy,
       sortOrder: _filters.sortOrder,
     );
+    // Update _filters to preserve category ID for future searches
     _filters = filters;
+    _filters = filters;
+
+    // Always use filters for search (even if hotOffers, search should be general)
     context.read<ServiceBloc>().add(LoadServicesEvent(filters: filters, page: 1, limit: 20));
   }
 
   void _onRefresh() {
-    _performSearch();
+    if (widget.hotOffers) {
+      context.read<ServiceBloc>().add(const RefreshServicesEvent(featured: true));
+    } else if (widget.category != null) {
+      context.read<ServiceBloc>().add(
+        RefreshServicesEvent(filters: ServiceSearchFilters(categoryId: widget.category!.id)),
+      );
+    } else {
+      _performSearch();
+    }
   }
 
   void _loadMore() {
+    if (_isLoadingMore) return;
     final state = context.read<ServiceBloc>().state;
-    if (state is ServicesLoaded && state.response.hasMore) {
+    if (state is UniversalServicesState && state.currentPaginatedResponse?.hasMore == true) {
+      _isLoadingMore = true;
       context.read<ServiceBloc>().add(const LoadMoreServicesEvent());
+      // Reset flag after a delay to allow the bloc to process
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _isLoadingMore = false;
+        }
+      });
     }
   }
 
@@ -103,9 +175,25 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
       ],
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
+          // Reset loading more flag when state changes
+          if (_isLoadingMore && (state is UniversalServicesState || state is ServiceError)) {
+            _isLoadingMore = false;
+          }
+
           if (!_refreshController.isRefresh) return;
 
-          if (state is ServicesLoaded) {
+          bool shouldComplete = false;
+          if (state is UniversalServicesState) {
+            if (widget.hotOffers) {
+              shouldComplete = state.featuredServices != null;
+            } else if (widget.category != null) {
+              shouldComplete = state.categoryServices[widget.category!.id] != null;
+            } else {
+              shouldComplete = state.currentPaginatedServices != null;
+            }
+          }
+
+          if (shouldComplete) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted && _refreshController.isRefresh) {
                 _refreshController.refreshCompleted();
@@ -121,7 +209,23 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
         },
         child: BlocBuilder<ServiceBloc, ServiceState>(
           builder: (context, serviceState) {
-            final services = serviceState is ServicesLoaded ? serviceState.allServices : <ServiceListItem>[];
+            final isInitial = _isInitial && !widget.hotOffers && widget.category == null;
+            // Read from UniversalServicesState based on context
+            final universalState = serviceState is UniversalServicesState ? serviceState : null;
+
+            // Get services based on context
+            // If searching (query exists), use currentPaginatedServices (search results)
+            // Otherwise use featured/category services
+            final hasSearchQuery = _searchController.text.trim().isNotEmpty;
+            final services = hasSearchQuery
+                ? (universalState?.currentPaginatedServices ?? <ServiceListItem>[])
+                : (widget.hotOffers
+                      ? (universalState?.featuredServices ?? <ServiceListItem>[])
+                      : (widget.category != null
+                            ? (universalState?.categoryServices[widget.category!.id] ?? <ServiceListItem>[])
+                            : (universalState?.currentPaginatedServices ?? <ServiceListItem>[])));
+
+            final paginatedResponse = universalState?.currentPaginatedResponse;
             final isLoading = serviceState is ServiceLoading || serviceState is ServiceInitial;
             final hasError = serviceState is ServiceError;
             final isEmpty = !isLoading && !hasError && services.isEmpty;
@@ -153,55 +257,97 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                             controller: _searchController,
                             hintText: 'Qidirish',
                             onChanged: (value) {
-                              // Debounce search could be added here
+                              setState(() {});
                             },
-                            trailing:
-                                _filters.categoryId != null ||
-                                    _filters.locationRegion != null ||
-                                    _filters.minPrice != null ||
-                                    _filters.maxPrice != null ||
-                                    _filters.minRating != null ||
-                                    _filters.isVerifiedMerchant == true
-                                ? GestureDetector(
-                                    onTap: () => _showFiltersBottomSheet(context),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary,
-                                        borderRadius: BorderRadius.circular(AppDimensions.radiusS),
-                                      ),
-                                      child: const Icon(IconsaxPlusLinear.filter, color: Colors.white, size: 16),
-                                    ),
-                                  )
+                            onSubmitted: (value) {
+                              _performSearch();
+                            },
+                            trailing: _searchController.text.isEmpty
+                                ? null
                                 : GestureDetector(
-                                    onTap: () => _showFiltersBottomSheet(context),
-                                    child: const Icon(IconsaxPlusLinear.filter, color: AppColors.textMuted, size: 20),
+                                    onTap: () => setState(() {
+                                      _searchController.clear();
+                                      // Clear query from filters when search field is cleared
+                                      // Preserve category ID from widget if it exists
+                                      _filters = ServiceSearchFilters(
+                                        query: null,
+                                        categoryId: widget.hotOffers
+                                            ? null
+                                            : (widget.category?.id ?? _filters.categoryId),
+                                        locationRegion: _filters.locationRegion,
+                                        minPrice: _filters.minPrice,
+                                        maxPrice: _filters.maxPrice,
+                                        minRating: _filters.minRating,
+                                        isVerifiedMerchant: _filters.isVerifiedMerchant,
+                                        sortBy: _filters.sortBy,
+                                        sortOrder: _filters.sortOrder,
+                                      );
+                                      // Reload original services
+                                      _onRefresh();
+                                    }),
+                                    child: const Icon(Icons.close, color: Colors.black, size: 20),
                                   ),
                           ),
                         ),
                         const SizedBox(width: AppDimensions.spacingS),
-                        GestureDetector(
-                          onTap: _performSearch,
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                            ),
-                            child: const Icon(IconsaxPlusLinear.search_normal_1, color: Colors.white, size: 20),
-                          ),
-                        ),
+                        _filters.categoryId != null ||
+                                _filters.locationRegion != null ||
+                                _filters.minPrice != null ||
+                                _filters.maxPrice != null ||
+                                _filters.minRating != null ||
+                                _filters.isVerifiedMerchant != null ||
+                                _filters.sortBy != 'created_at' ||
+                                _filters.sortOrder != 'desc'
+                            ? WedyCircularButton(
+                                icon: IconsaxPlusLinear.filter,
+                                isPrimary: true,
+                                onTap: () => _showFiltersBottomSheet(context),
+                              )
+                            : WedyCircularButton(
+                                icon: IconsaxPlusLinear.filter,
+                                onTap: () => _showFiltersBottomSheet(context),
+                              ),
                       ],
                     ),
                   ],
                 ),
               ),
               bodyChildren: [
+                // Page Title (only show when not searching and not initial)
+                if (!isInitial &&
+                    !isLoading &&
+                    !isEmpty &&
+                    serviceState is! ServiceError &&
+                    _searchController.text.trim().isEmpty) ...[
+                  if (widget.hotOffers)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                      child: _HotOffersMetaCard(),
+                    )
+                  else if (widget.category != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                      child: _CategoryMetaCard(category: widget.category),
+                    ),
+                  const SizedBox(height: AppDimensions.spacingM),
+                ] else if (!(isInitial || isLoading || isEmpty || serviceState is ServiceError) &&
+                    _searchController.text.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppDimensions.spacingL),
+                    child: Text(
+                      'Qidiruv natijalari:',
+                      style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+                    ),
+                  ),
+
                 if (isLoading)
-                  const Padding(
-                    padding: EdgeInsets.all(AppDimensions.spacingL),
-                    child: Center(child: CircularProgressIndicator()),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height - 300,
+                    width: double.infinity,
+                    child: const Center(child: CircularProgressIndicator()),
                   )
+                else if (isInitial)
+                  const _SearchInitialState()
                 else if (serviceState is ServiceError)
                   Padding(
                     padding: const EdgeInsets.all(AppDimensions.spacingL),
@@ -225,18 +371,25 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                 else
                   NotificationListener<ScrollNotification>(
                     onNotification: (notification) {
-                      if (notification is ScrollEndNotification) {
-                        if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
+                      if (notification is ScrollUpdateNotification) {
+                        final metrics = notification.metrics;
+                        if (metrics.pixels >= metrics.maxScrollExtent * 0.8) {
                           _loadMore();
                         }
                       }
                       return false;
                     },
-                    child: ListView.builder(
-                      controller: _scrollController,
+                    child: GridView.builder(
                       padding: const EdgeInsets.all(AppDimensions.spacingL),
-                      itemCount:
-                          services.length + (serviceState is ServicesLoaded && serviceState.response.hasMore ? 1 : 0),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: AppDimensions.spacingS,
+                        mainAxisSpacing: AppDimensions.spacingS,
+                        childAspectRatio: 0.8,
+                      ),
+                      itemCount: services.length + (paginatedResponse?.hasMore == true ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == services.length) {
                           return const Padding(
@@ -245,8 +398,11 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                           );
                         }
                         final service = services[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: AppDimensions.spacingM),
+                        return SizedBox(
+                          width:
+                              ((MediaQuery.of(context).size.width - AppDimensions.spacingL * 2) / 2) -
+                              AppDimensions.spacingL -
+                              AppDimensions.spacingS,
                           child: ClientServiceCard(
                             imageUrl: service.mainImageUrl ?? '',
                             title: service.name,
