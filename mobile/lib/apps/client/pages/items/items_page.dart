@@ -32,14 +32,45 @@ class ClientItemsPage extends StatefulWidget {
 
 class _ClientItemsPageState extends State<ClientItemsPage> {
   final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final TextEditingController _searchController = TextEditingController();
+  bool _hasCheckedInitialLoad = false;
+  bool _isSearching = false;
 
   @override
   void dispose() {
     _refreshController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
+  void _performSearch() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      // Clear search and reload original services
+      setState(() {
+        _isSearching = false;
+      });
+      _onRefresh();
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+    });
+
+    final category = widget.category;
+    final filters = ServiceSearchFilters(query: query, categoryId: widget.hotOffers ? null : (category?.id));
+
+    context.read<ServiceBloc>().add(LoadServicesEvent(filters: filters, page: 1, limit: 20));
+  }
+
   void _onRefresh() {
+    if (_isSearching && _searchController.text.trim().isNotEmpty) {
+      // If searching, refresh with search query
+      _performSearch();
+      return;
+    }
+
     final category = widget.category;
     if (widget.hotOffers) {
       context.read<ServiceBloc>().add(const RefreshServicesEvent(featured: true));
@@ -57,13 +88,46 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
     // Use the global ServiceBloc instance to sync state across pages
     final globalBloc = context.read<ServiceBloc>();
 
-    // Load services based on filters
-    if (widget.hotOffers) {
-      globalBloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
-    } else if (category != null) {
-      globalBloc.add(LoadServicesEvent(filters: ServiceSearchFilters(categoryId: category.id), page: 1, limit: 20));
-    } else {
-      globalBloc.add(const LoadServicesEvent(page: 1, limit: 20));
+    // Check if we need to load services (only once or if state doesn't have the data)
+    // Don't load if we're in search mode
+    if (!_isSearching) {
+      final currentState = globalBloc.state;
+      bool needsLoad = false;
+
+      if (widget.hotOffers) {
+        final hasFeatured = currentState is UniversalServicesState
+            ? currentState.featuredServices != null && currentState.featuredServices!.isNotEmpty
+            : false;
+        needsLoad = !_hasCheckedInitialLoad || (!hasFeatured && currentState is! ServiceLoading);
+      } else if (category != null) {
+        final hasCategory = currentState is UniversalServicesState
+            ? currentState.categoryServices[category.id] != null &&
+                  currentState.categoryServices[category.id]!.isNotEmpty
+            : false;
+        needsLoad = !_hasCheckedInitialLoad || (!hasCategory && currentState is! ServiceLoading);
+      } else {
+        final hasPaginated = currentState is UniversalServicesState
+            ? currentState.currentPaginatedServices != null && currentState.currentPaginatedServices!.isNotEmpty
+            : false;
+        needsLoad = !_hasCheckedInitialLoad || (!hasPaginated && currentState is! ServiceLoading);
+      }
+
+      if (needsLoad) {
+        _hasCheckedInitialLoad = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            if (widget.hotOffers) {
+              globalBloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
+            } else if (category != null) {
+              globalBloc.add(
+                LoadServicesEvent(filters: ServiceSearchFilters(categoryId: category.id), page: 1, limit: 20),
+              );
+            } else {
+              globalBloc.add(const LoadServicesEvent(page: 1, limit: 20));
+            }
+          }
+        });
+      }
     }
 
     return BlocProvider.value(
@@ -71,7 +135,7 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
           if (_refreshController.isRefresh) {
-            if (state is ServicesLoaded) {
+            if (state is UniversalServicesState || state is ServicesLoaded) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted && _refreshController.isRefresh) {
                   _refreshController.refreshCompleted();
@@ -88,8 +152,21 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
         },
         child: BlocBuilder<ServiceBloc, ServiceState>(
           builder: (context, state) {
-            final services = state is ServicesLoaded ? state.allServices : <ServiceListItem>[];
-            final isLoading = state is ServiceLoading;
+            // Get services from UniversalServicesState or fallback to ServicesLoaded
+            // If searching, use currentPaginatedServices (search results)
+            // Otherwise use featured/category services
+            final services = _isSearching
+                ? (state is UniversalServicesState
+                      ? (state.currentPaginatedServices ?? <ServiceListItem>[])
+                      : (state is ServicesLoaded ? state.allServices : <ServiceListItem>[]))
+                : (state is UniversalServicesState
+                      ? (widget.hotOffers
+                            ? (state.featuredServices ?? <ServiceListItem>[])
+                            : (widget.category != null
+                                  ? (state.categoryServices[widget.category!.id] ?? <ServiceListItem>[])
+                                  : (state.currentPaginatedServices ?? <ServiceListItem>[])))
+                      : (state is ServicesLoaded ? state.allServices : <ServiceListItem>[]));
+            final isLoading = state is ServiceLoading || state is ServiceInitial;
             final error = state is ServiceError ? state.message : null;
 
             return ClientMainLayout(
@@ -113,7 +190,28 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
                     const WedyCircularButton(),
                     const SizedBox(width: AppDimensions.spacingS),
                     Expanded(
-                      child: ClientSearchField(readOnly: true, onTap: () => context.pushNamed(RouteNames.search)),
+                      child: ClientSearchField(
+                        controller: _searchController,
+                        hintText: 'Qidirish',
+                        onChanged: (value) {
+                          setState(() {});
+                        },
+                        onSubmitted: (value) {
+                          _performSearch();
+                        },
+                        trailing: _searchController.text.isEmpty
+                            ? null
+                            : GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                    _isSearching = false;
+                                  });
+                                  _onRefresh();
+                                },
+                                child: const Icon(Icons.close, color: Colors.black, size: 20),
+                              ),
+                      ),
                     ),
                     const SizedBox(width: AppDimensions.spacingS),
                     const WedyCircularButton(icon: IconsaxPlusLinear.filter),
@@ -121,12 +219,24 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
                 ),
               ),
               bodyChildren: [
-                // Page Title
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-                  child: !widget.hotOffers ? _CategoryMetaCard(category: category) : const _HotOffersMetaCard(),
-                ),
-                const SizedBox(height: AppDimensions.spacingM),
+                // Page Title (only show when not searching)
+                if (!_isSearching) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                    child: !widget.hotOffers ? _CategoryMetaCard(category: category) : const _HotOffersMetaCard(),
+                  ),
+                  const SizedBox(height: AppDimensions.spacingM),
+                ] else ...[
+                  // Search results header
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppDimensions.spacingL),
+                    child: Text(
+                      'Qidiruv natijalari:',
+                      style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.spacingM),
+                ],
 
                 // Loading state
                 if (isLoading)

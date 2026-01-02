@@ -115,9 +115,10 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (state is ServiceLoading || state is ServiceInitial)
-                          const Padding(
-                            padding: EdgeInsets.all(AppDimensions.spacingL),
-                            child: Center(child: CircularProgressIndicator()),
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height - 200,
+                            width: double.infinity,
+                            child: const Center(child: CircularProgressIndicator()),
                           )
                         else if (!isEmpty) ...[
                           // Header
