@@ -121,7 +121,7 @@ class ServiceDetailResponse(BaseModel):
 class ServiceSearchFilters(BaseModel):
     """Service search filters."""
     query: Optional[str] = Field(None, description="Search query for service name/description")
-    category_id: Optional[UUID] = Field(None, description="Filter by category")
+    category_id: Optional[int] = Field(None, description="Filter by category")
     location_region: Optional[str] = Field(None, description="Filter by Uzbekistan region")
     min_price: Optional[float] = Field(None, ge=0, description="Minimum price in UZS")
     max_price: Optional[float] = Field(None, ge=0, description="Maximum price in UZS")
