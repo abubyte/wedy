@@ -79,14 +79,14 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       if (event.featured == true) {
         // Featured services
         _universalState = _universalState.copyWith(featuredServices: _accumulatedServices);
-      } else if (event.filters?.categoryId != null) {
-        // Category services
+      } else if (event.filters?.categoryId != null && (event.filters?.query == null || event.filters!.query!.isEmpty)) {
+        // Category services (only if no search query)
         final categoryId = event.filters!.categoryId!;
         final updatedCategoryServices = Map<int, List<ServiceListItem>>.from(_universalState.categoryServices);
         updatedCategoryServices[categoryId] = _accumulatedServices;
         _universalState = _universalState.copyWith(categoryServices: updatedCategoryServices);
       } else {
-        // General paginated services (for items/search pages)
+        // General paginated services (for items/search pages, including category search)
         _universalState = _universalState.copyWith(
           currentPaginatedResponse: () => response,
           currentPaginatedServices: () => _accumulatedServices,
@@ -119,7 +119,26 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         _serviceCache[service.id] = service;
       }
 
-      emit(ServicesLoaded(response: response, allServices: _accumulatedServices));
+      // Update universal state based on what was loaded
+      if (_currentFeatured == true) {
+        // Featured services
+        _universalState = _universalState.copyWith(featuredServices: _accumulatedServices);
+      } else if (_currentFilters?.categoryId != null &&
+          (_currentFilters?.query == null || _currentFilters!.query!.isEmpty)) {
+        // Category services (only if no search query)
+        final categoryId = _currentFilters!.categoryId!;
+        final updatedCategoryServices = Map<int, List<ServiceListItem>>.from(_universalState.categoryServices);
+        updatedCategoryServices[categoryId] = _accumulatedServices;
+        _universalState = _universalState.copyWith(categoryServices: updatedCategoryServices);
+      } else {
+        // General paginated services (for items/search pages, including category search)
+        _universalState = _universalState.copyWith(
+          currentPaginatedResponse: () => response,
+          currentPaginatedServices: () => _accumulatedServices,
+        );
+      }
+
+      emit(_universalState);
     });
   }
 
