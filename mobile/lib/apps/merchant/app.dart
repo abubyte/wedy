@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wedy/core/config/app_config.dart';
+import 'package:wedy/core/utils/app_update_service.dart';
 import 'package:wedy/features/auth/presentation/bloc/auth_event.dart';
 
 import '../../core/di/injection_container.dart';
@@ -13,8 +14,36 @@ import '../../features/category/presentation/bloc/category_bloc.dart';
 import '../../features/category/presentation/bloc/category_event.dart';
 import '../../shared/navigation/app_router.dart';
 
-class WedyMerchantApp extends StatelessWidget {
+class WedyMerchantApp extends StatefulWidget {
   const WedyMerchantApp({super.key});
+
+  @override
+  State<WedyMerchantApp> createState() => _WedyMerchantAppState();
+}
+
+class _WedyMerchantAppState extends State<WedyMerchantApp> {
+  @override
+  void initState() {
+    super.initState();
+    _checkForAppUpdate();
+  }
+
+  /// Check for app updates after app starts
+  void _checkForAppUpdate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Check for updates after a short delay to not interrupt initial load
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            AppUpdateService.checkForUpdate(
+              context: context,
+              forceUpdate: false, // Set to true if you want to force updates
+            );
+          }
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

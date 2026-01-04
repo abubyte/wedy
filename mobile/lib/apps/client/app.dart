@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wedy/core/config/app_config.dart';
 import 'package:wedy/core/utils/deep_link_service.dart';
+import 'package:wedy/core/utils/app_update_service.dart';
 import 'package:wedy/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wedy/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
@@ -29,6 +30,24 @@ class _WedyClientAppState extends State<WedyClientApp> {
     super.initState();
     _handleInitialDeepLink();
     _listenToDeepLinks();
+    _checkForAppUpdate();
+  }
+
+  /// Check for app updates after app starts
+  void _checkForAppUpdate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Check for updates after a short delay to not interrupt initial load
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            AppUpdateService.checkForUpdate(
+              context: context,
+              forceUpdate: false, // Set to true if you want to force updates
+            );
+          }
+        });
+      }
+    });
   }
 
   /// Handle deep link when app is opened via deep link
