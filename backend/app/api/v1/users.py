@@ -7,10 +7,11 @@ from app.models import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.user_schema import UserProfileResponse, UserProfileUpdateRequest, UserInteractionsResponse
 from app.schemas.common_schema import SuccessResponse
-from app.core.exceptions import ValidationError, ConflictError, NotFoundError
+from app.core.exceptions import ValidationError, ConflictError, NotFoundError, AuthenticationError
 from app.core.security import verify_phone_number, normalize_phone_number
 from app.models import UserType
 from app.services.merchant_manager import MerchantManager
+from app.services.auth_service import AuthService
 from app.utils.s3_client import s3_image_manager
 from app.schemas.merchant_schema import ImageUploadResponse
 
@@ -41,23 +42,32 @@ async def update_user_profile(
 ):
     """Update user profile (name and phone number)."""
     user_repo = UserRepository(db)
+    auth_service = AuthService(db)
 
     try:
         # Update phone number if provided
         if profile_data.phone_number is not None:
-            # validator in schema already normalizes, but double-check
-            if not verify_phone_number(profile_data.phone_number):
-                raise ValidationError("Invalid phone number format")
-
+            # Check if phone number is actually changing
             normalized = normalize_phone_number(profile_data.phone_number)
+            if normalized != current_user.phone_number:
+                # Phone number is changing - require OTP verification
+                if not profile_data.otp_code:
+                    raise ValidationError("OTP code is required when changing phone number")
+                
+                # Verify OTP for the new phone number
+                try:
+                    await auth_service.verify_otp_only(normalized, profile_data.otp_code)
+                except AuthenticationError as e:
+                    raise ValidationError(f"OTP verification failed: {str(e)}")
+                
+                # Check if new phone number is already taken
+                taken = await user_repo.is_phone_number_taken(
+                    normalized, exclude_user_id=current_user.id
+                )
+                if taken:
+                    raise ConflictError("Phone number is already taken")
 
-            taken = await user_repo.is_phone_number_taken(
-                normalized, exclude_user_id=current_user.id
-            )
-            if taken:
-                raise ConflictError("Phone number is already taken")
-
-            current_user.phone_number = normalized
+                current_user.phone_number = normalized
 
         # Update name if provided
         if profile_data.name is not None:
@@ -79,6 +89,8 @@ async def update_user_profile(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except ConflictError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except AuthenticationError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
 @router.post("/avatar")

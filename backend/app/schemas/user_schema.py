@@ -16,6 +16,10 @@ class UserProfileUpdateRequest(BaseModel):
         None, description="Phone number (9 digits, Uzbekistan format)", example="901234567"
     )
     name: Optional[str] = Field(None, min_length=2, max_length=255)
+    otp_code: Optional[str] = Field(
+        None, description="OTP code for phone number verification (required when changing phone number)", 
+        min_length=6, max_length=6, example="123456"
+    )
 
     @validator("phone_number")
     def validate_phone_number(cls, v):
@@ -32,6 +36,16 @@ class UserProfileUpdateRequest(BaseModel):
         v = v.strip()
         if len(v) < 2:
             raise ValueError("Name must be at least 2 characters long")
+        return v
+    
+    @validator("otp_code")
+    def validate_otp_code(cls, v):
+        if v is None:
+            return v
+        if not v.isdigit():
+            raise ValueError("OTP code must contain only digits")
+        if len(v) != 6:
+            raise ValueError("OTP code must be 6 digits")
         return v
 
 

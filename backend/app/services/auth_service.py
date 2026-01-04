@@ -91,6 +91,32 @@ class AuthService:
             expires_in=settings.OTP_EXPIRE_MINUTES
         )
     
+    async def verify_otp_only(self, phone_number: str, otp_code: str) -> None:
+        """
+        Verify OTP code only (without checking user existence or returning tokens).
+        Used for phone number change verification.
+        
+        Args:
+            phone_number: Normalized phone number
+            otp_code: OTP code to verify
+            
+        Raises:
+            AuthenticationError: If OTP is invalid or expired
+        """
+        # Normalize phone number
+        normalized_phone = normalize_phone_number(phone_number)
+        
+        # Get stored OTP
+        otp_key = f"otp:{normalized_phone}"
+        stored_otp = await self.redis_client.get(otp_key)
+        
+        if not stored_otp or stored_otp != otp_code:
+            raise AuthenticationError("Invalid or expired OTP")
+        
+        # Remove OTP and attempts after successful verification
+        await self.redis_client.delete(otp_key)
+        await self.redis_client.delete(f"otp_attempts:{normalized_phone}")
+    
     async def verify_otp(self, phone_number: str, otp_code: str) -> VerifyOTPResponse:
         """
         Verify OTP code and return tokens if user exists.
