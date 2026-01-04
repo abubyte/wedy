@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
+import 'package:wedy/core/utils/shimmer_helper.dart';
 import 'package:wedy/features/category/domain/entities/category.dart';
 import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
 import 'package:wedy/features/service/presentation/bloc/service_event.dart';
@@ -13,9 +14,10 @@ import '../../../widgets/service_card.dart';
 
 /// Widget that displays services for a specific category with its own ServiceBloc
 class CategoryServicesSection extends StatefulWidget {
-  const CategoryServicesSection({super.key, required this.category});
+  const CategoryServicesSection({super.key, required this.category, this.isLoading = false});
 
   final ServiceCategory category;
+  final bool isLoading;
 
   @override
   State<CategoryServicesSection> createState() => _CategoryServicesSectionState();
@@ -23,7 +25,6 @@ class CategoryServicesSection extends StatefulWidget {
 
 class _CategoryServicesSectionState extends State<CategoryServicesSection> {
   List<ServiceListItem> _cachedServices = [];
-  bool _isLoading = false;
   bool _hasLoaded = false;
 
   @override
@@ -31,19 +32,29 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
     super.initState();
     // Load services for this category immediately
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_hasLoaded && !_isLoading) {
+      if (mounted && !_hasLoaded && !widget.isLoading) {
         _loadCategoryServices();
       }
     });
   }
 
+  @override
+  void didUpdateWidget(CategoryServicesSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If loading finished and we haven't loaded yet, trigger load
+    if (oldWidget.isLoading && !widget.isLoading && !_hasLoaded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadCategoryServices();
+        }
+      });
+    }
+  }
+
   void _loadCategoryServices() {
-    if (_isLoading || _hasLoaded) return;
+    if (widget.isLoading || _hasLoaded) return;
 
     final globalBloc = context.read<ServiceBloc>();
-    setState(() {
-      _isLoading = true;
-    });
     globalBloc.add(
       LoadServicesEvent(filters: ServiceSearchFilters(categoryId: widget.category.id), page: 1, limit: 20),
     );
@@ -59,10 +70,10 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
       child: BlocListener<ServiceBloc, ServiceState>(
         listenWhen: (previous, current) {
           // Listen when services are loaded and we're waiting for this category's data
-          return _isLoading && (current is UniversalServicesState || current is ServicesLoaded);
+          return widget.isLoading && (current is UniversalServicesState || current is ServicesLoaded);
         },
         listener: (context, state) {
-          if (_isLoading) {
+          if (widget.isLoading) {
             List<ServiceListItem>? categoryServices;
             if (state is UniversalServicesState) {
               categoryServices = state.categoryServices[widget.category.id];
@@ -73,7 +84,6 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
             if (categoryServices != null && (categoryServices.isNotEmpty || categoryServices.isEmpty)) {
               setState(() {
                 _cachedServices = categoryServices!;
-                _isLoading = false;
                 _hasLoaded = true;
               });
             }
@@ -122,10 +132,18 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
                 const SizedBox(height: AppDimensions.spacingS),
 
                 // Services for this category
-                if (_isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppDimensions.spacingM),
-                    child: Center(child: CircularProgressIndicator()),
+                if (widget.isLoading)
+                  SizedBox(
+                    height: 211,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, serviceIndex) {
+                        return SizedBox(width: 150, child: ShimmerHelper.shimmerRounded(height: 211));
+                      },
+                      separatorBuilder: (context, index) => const SizedBox(width: AppDimensions.spacingS),
+                      itemCount: 3, // Show 3 shimmer items
+                    ),
                   )
                 else if (services.isEmpty)
                   const SizedBox.shrink()

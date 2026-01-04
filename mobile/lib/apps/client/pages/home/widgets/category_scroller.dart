@@ -1,12 +1,34 @@
 part of '../home_page.dart';
 
 class _CategoryScroller extends StatelessWidget {
-  const _CategoryScroller({required this.categories});
+  const _CategoryScroller({required this.categories, this.isLoading = false});
 
   final List<ServiceCategory> categories;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return SizedBox(
+        height: 100,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+          scrollDirection: Axis.horizontal,
+          itemBuilder: (context, index) {
+            return Column(
+              children: [
+                ShimmerHelper.shimmerCircle(width: 72, height: 72),
+                const SizedBox(height: AppDimensions.spacingS),
+                ShimmerHelper.shimmerContainer(width: 72, height: 14, borderRadius: 4.0),
+              ],
+            );
+          },
+          separatorBuilder: (_, _) => const SizedBox(width: AppDimensions.spacingM),
+          itemCount: 6, // Show 6 shimmer items
+        ),
+      );
+    }
+
     if (categories.isEmpty) {
       return const SizedBox.shrink();
     }
