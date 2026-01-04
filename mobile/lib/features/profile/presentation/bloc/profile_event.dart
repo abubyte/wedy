@@ -17,11 +17,12 @@ class LoadProfileEvent extends ProfileEvent {
 class UpdateProfileEvent extends ProfileEvent {
   final String? name;
   final String? phoneNumber;
+  final String? otpCode;
 
-  const UpdateProfileEvent({this.name, this.phoneNumber});
+  const UpdateProfileEvent({this.name, this.phoneNumber, this.otpCode});
 
   @override
-  List<Object?> get props => [name, phoneNumber];
+  List<Object?> get props => [name, phoneNumber, otpCode];
 }
 
 /// Event to upload avatar

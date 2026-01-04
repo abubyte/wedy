@@ -30,7 +30,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   Future<void> _onUpdateProfile(UpdateProfileEvent event, Emitter<ProfileState> emit) async {
     emit(const ProfileLoading());
 
-    final result = await updateProfileUseCase(name: event.name, phoneNumber: event.phoneNumber);
+    final result = await updateProfileUseCase(name: event.name, phoneNumber: event.phoneNumber, otpCode: event.otpCode);
 
     result.fold((failure) => emit(ProfileError(_getErrorMessage(failure))), (user) => emit(ProfileUpdated(user)));
   }
