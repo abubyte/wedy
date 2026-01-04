@@ -76,6 +76,11 @@ class AppRouter {
       routes: [
         GoRoute(path: RouteNames.auth, name: RouteNames.auth, builder: (context, state) => const AuthScreen()),
         GoRoute(
+          path: RouteNames.account,
+          name: RouteNames.account,
+          builder: (context, state) => const MerchantAccountPage(),
+        ),
+        GoRoute(
           path: RouteNames.serviceDetails,
           builder: (context, state) {
             final serviceId = state.uri.queryParameters['id'];

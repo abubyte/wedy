@@ -264,12 +264,7 @@ class _OtpStepState extends State<_OtpStep> {
               padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingXXL),
               child: canResend
                   ? GestureDetector(
-                      onTap: () {
-                        // Resend OTP logic here
-                        if (context.mounted) {
-                          context.read<AuthBloc>().add(const SendOtpEvent('900000000'));
-                        }
-                      },
+                      onTap: widget.onResend,
                       child: Text(
                         'Qayta yuborish',
                         style: AppTextStyles.caption.copyWith(color: AppColors.primary),
