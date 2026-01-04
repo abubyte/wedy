@@ -8,7 +8,7 @@ abstract class ProfileRepository {
   Future<Either<Failure, User>> getProfile();
 
   /// Update user profile (name and/or phone number)
-  Future<Either<Failure, User>> updateProfile({String? name, String? phoneNumber});
+  Future<Either<Failure, User>> updateProfile({String? name, String? phoneNumber, String? otpCode});
 
   /// Upload user avatar
   Future<Either<Failure, String>> uploadAvatar(String imagePath);

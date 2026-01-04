@@ -11,6 +11,7 @@ ProfileUpdateRequestDto _$ProfileUpdateRequestDtoFromJson(
     ProfileUpdateRequestDto(
       name: json['name'] as String?,
       phoneNumber: json['phone_number'] as String?,
+      otpCode: json['otp_code'] as String?,
     );
 
 Map<String, dynamic> _$ProfileUpdateRequestDtoToJson(
@@ -18,6 +19,7 @@ Map<String, dynamic> _$ProfileUpdateRequestDtoToJson(
     <String, dynamic>{
       'name': instance.name,
       'phone_number': instance.phoneNumber,
+      'otp_code': instance.otpCode,
     };
 
 ProfileResponseDto _$ProfileResponseDtoFromJson(Map<String, dynamic> json) =>

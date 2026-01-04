@@ -9,8 +9,10 @@ class ProfileUpdateRequestDto {
   final String? name;
   @JsonKey(name: 'phone_number')
   final String? phoneNumber;
+  @JsonKey(name: 'otp_code')
+  final String? otpCode;
 
-  ProfileUpdateRequestDto({this.name, this.phoneNumber});
+  ProfileUpdateRequestDto({this.name, this.phoneNumber, this.otpCode});
 
   factory ProfileUpdateRequestDto.fromJson(Map<String, dynamic> json) => _$ProfileUpdateRequestDtoFromJson(json);
 

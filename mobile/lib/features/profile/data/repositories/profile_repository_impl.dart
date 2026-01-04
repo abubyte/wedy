@@ -34,9 +34,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, User>> updateProfile({String? name, String? phoneNumber}) async {
+  Future<Either<Failure, User>> updateProfile({String? name, String? phoneNumber, String? otpCode}) async {
     try {
-      final request = ProfileUpdateRequestDto(name: name, phoneNumber: phoneNumber);
+      final request = ProfileUpdateRequestDto(name: name, phoneNumber: phoneNumber, otpCode: otpCode);
 
       final profileDto = await remoteDataSource.updateProfile(request);
       final user = profileDto.toEntity();

@@ -10,7 +10,7 @@ class UpdateProfile {
   UpdateProfile(this.repository);
 
   /// Execute the use case
-  Future<Either<Failure, User>> call({String? name, String? phoneNumber}) async {
+  Future<Either<Failure, User>> call({String? name, String? phoneNumber, String? otpCode}) async {
     // Business logic validation
     if (name != null && name.trim().isEmpty) {
       return const Left(ValidationFailure('Name cannot be empty'));
@@ -31,6 +31,6 @@ class UpdateProfile {
     }
 
     // Call repository
-    return await repository.updateProfile(name: name?.trim(), phoneNumber: phoneNumber);
+    return await repository.updateProfile(name: name?.trim(), phoneNumber: phoneNumber, otpCode: otpCode);
   }
 }
