@@ -14,12 +14,20 @@ echo "Creating dummy SSL certificates for $DOMAIN..."
 mkdir -p "$CERT_DIR"
 mkdir -p "./infra/nginx/certbot/conf/archive/$DOMAIN"
 
-# Generate dummy certificate
+# Check if certificate already exists
+if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ]; then
+    echo "⚠️  Certificate already exists at $CERT_DIR"
+    echo "   Skipping certificate generation."
+    echo "   If you want to regenerate, delete the existing certificates first."
+    exit 0
+fi
+
+# Generate dummy certificate (valid for 365 days)
 echo "Generating self-signed certificate..."
-openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout "$CERT_DIR/privkey.pem" \
   -out "$CERT_DIR/fullchain.pem" \
-  -subj "/CN=$DOMAIN"
+  -subj "/C=UZ/ST=Tashkent/L=Tashkent/O=Wedy/CN=$DOMAIN"
 
 # Also create chain.pem (sometimes required)
 cp "$CERT_DIR/fullchain.pem" "$CERT_DIR/chain.pem"
