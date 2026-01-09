@@ -11,6 +11,13 @@ abstract class ReviewRepository {
     int limit = 20,
   });
 
+  /// Get reviews by user ID
+  Future<Either<Failure, PaginatedReviewResponse>> getUserReviews({
+    required String userId,
+    int page = 1,
+    int limit = 20,
+  });
+
   /// Create a new review
   Future<Either<Failure, Review>> createReview({
     required String serviceId,

@@ -1,10 +1,12 @@
 part of '../search_page.dart';
 
 class _SearchFiltersSheet extends StatefulWidget {
-  const _SearchFiltersSheet({required this.filters, required this.onApply});
+  const _SearchFiltersSheet({required this.filters, required this.onApply, this.category, this.hotOffers = false});
 
   final ServiceSearchFilters filters;
   final Function(ServiceSearchFilters) onApply;
+  final ServiceCategory? category;
+  final bool hotOffers;
 
   @override
   State<_SearchFiltersSheet> createState() => _SearchFiltersSheetState();
@@ -19,6 +21,10 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
   late bool? _isVerifiedMerchant;
   late String? _sortBy;
   late String? _sortOrder;
+
+  // Controllers for price fields
+  late TextEditingController _minPriceController;
+  late TextEditingController _maxPriceController;
 
   // Mapping from Uzbek names (UI) to English names (API)
   static const Map<String, String> _locationMapping = {
@@ -86,6 +92,17 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
     _isVerifiedMerchant = widget.filters.isVerifiedMerchant;
     _sortBy = widget.filters.sortBy ?? 'created_at';
     _sortOrder = widget.filters.sortOrder ?? 'desc';
+
+    // Initialize price controllers with current values
+    _minPriceController = TextEditingController(text: _minPrice != null ? _minPrice!.toStringAsFixed(0) : '');
+    _maxPriceController = TextEditingController(text: _maxPrice != null ? _maxPrice!.toStringAsFixed(0) : '');
+  }
+
+  @override
+  void dispose() {
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
+    super.dispose();
   }
 
   void _applyFilters() {
@@ -102,8 +119,8 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
       maxPrice: _maxPrice,
       minRating: _minRating,
       isVerifiedMerchant: _isVerifiedMerchant,
-      sortBy: _sortBy,
-      sortOrder: _sortOrder,
+      sortBy: _sortBy ?? 'created_at',
+      sortOrder: _sortOrder ?? 'desc',
     );
     widget.onApply(filters);
     Navigator.pop(context);
@@ -111,7 +128,8 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
 
   void _clearFilters() {
     setState(() {
-      _selectedCategoryId = null;
+      // Preserve category from widget context (don't clear it)
+      _selectedCategoryId = widget.category?.id;
       _selectedLocation = null;
       _minPrice = null;
       _maxPrice = null;
@@ -119,6 +137,10 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
       _isVerifiedMerchant = null;
       _sortBy = 'created_at';
       _sortOrder = 'desc';
+
+      // Clear price controllers
+      _minPriceController.clear();
+      _maxPriceController.clear();
     });
   }
 
@@ -222,6 +244,7 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
                         children: [
                           Expanded(
                             child: TextField(
+                              controller: _minPriceController,
                               decoration: InputDecoration(
                                 labelText: 'dan',
                                 hintText: '0',
@@ -229,13 +252,16 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
                               ),
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
-                                _minPrice = value.isEmpty ? null : double.tryParse(value);
+                                setState(() {
+                                  _minPrice = value.isEmpty ? null : double.tryParse(value);
+                                });
                               },
                             ),
                           ),
                           const SizedBox(width: AppDimensions.spacingM),
                           Expanded(
                             child: TextField(
+                              controller: _maxPriceController,
                               decoration: InputDecoration(
                                 labelText: 'gacha',
                                 hintText: '10000000',
@@ -243,7 +269,9 @@ class _SearchFiltersSheetState extends State<_SearchFiltersSheet> {
                               ),
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
-                                _maxPrice = value.isEmpty ? null : double.tryParse(value);
+                                setState(() {
+                                  _maxPrice = value.isEmpty ? null : double.tryParse(value);
+                                });
                               },
                             ),
                           ),

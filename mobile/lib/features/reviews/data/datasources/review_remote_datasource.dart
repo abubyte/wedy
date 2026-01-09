@@ -19,6 +19,14 @@ abstract class ReviewRemoteDataSource {
     @Query('limit') int limit = 20,
   });
 
+  /// Get reviews by user ID
+  @GET('/api/v1/reviews')
+  Future<PaginatedReviewResponseDto> getUserReviews({
+    @Query('user_id') String? userId,
+    @Query('page') int page = 1,
+    @Query('limit') int limit = 20,
+  });
+
   /// Create a new review
   @POST('/api/v1/reviews')
   Future<ReviewDto> createReview(@Body() ReviewCreateRequestDto request);

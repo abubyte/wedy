@@ -15,4 +15,7 @@ class RouteNames {
   static const String boost = '/boost';
   static const String services = '/services';
   static const String account = '/account';
+  static const String myReviews = '/my-reviews';
+  static const String help = '/help';
+  static const String policy = '/policy';
 }

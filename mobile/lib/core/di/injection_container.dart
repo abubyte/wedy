@@ -38,6 +38,7 @@ import '../../features/reviews/data/datasources/review_remote_datasource.dart';
 import '../../features/reviews/data/repositories/review_repository_impl.dart';
 import '../../features/reviews/domain/repositories/review_repository.dart';
 import '../../features/reviews/domain/usecases/get_reviews.dart';
+import '../../features/reviews/domain/usecases/get_user_reviews.dart';
 import '../../features/reviews/domain/usecases/create_review.dart';
 import '../../features/reviews/domain/usecases/update_review.dart';
 import '../../features/reviews/domain/usecases/delete_review.dart';
@@ -160,6 +161,7 @@ Future<void> init() async {
 
   // Review use cases
   getIt.registerLazySingleton(() => GetReviews(getIt()));
+  getIt.registerLazySingleton(() => GetUserReviews(getIt()));
   getIt.registerLazySingleton(() => CreateReview(getIt()));
   getIt.registerLazySingleton(() => UpdateReview(getIt()));
   getIt.registerLazySingleton(() => DeleteReview(getIt()));
@@ -168,6 +170,7 @@ Future<void> init() async {
   getIt.registerFactory(
     () => ReviewBloc(
       getReviewsUseCase: getIt(),
+      getUserReviewsUseCase: getIt(),
       createReviewUseCase: getIt(),
       updateReviewUseCase: getIt(),
       deleteReviewUseCase: getIt(),

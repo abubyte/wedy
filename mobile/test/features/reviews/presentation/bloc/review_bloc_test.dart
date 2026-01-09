@@ -7,12 +7,15 @@ import 'package:wedy/features/reviews/domain/entities/review.dart';
 import 'package:wedy/features/reviews/domain/usecases/create_review.dart';
 import 'package:wedy/features/reviews/domain/usecases/delete_review.dart';
 import 'package:wedy/features/reviews/domain/usecases/get_reviews.dart';
+import 'package:wedy/features/reviews/domain/usecases/get_user_reviews.dart';
 import 'package:wedy/features/reviews/domain/usecases/update_review.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_bloc.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_event.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_state.dart';
 
 class MockGetReviews extends Mock implements GetReviews {}
+
+class MockGetUserReviews extends Mock implements GetUserReviews {}
 
 class MockCreateReview extends Mock implements CreateReview {}
 
@@ -23,6 +26,7 @@ class MockDeleteReview extends Mock implements DeleteReview {}
 void main() {
   late ReviewBloc bloc;
   late MockGetReviews mockGetReviews;
+  late MockGetUserReviews mockGetUserReviews;
   late MockCreateReview mockCreateReview;
   late MockUpdateReview mockUpdateReview;
   late MockDeleteReview mockDeleteReview;
@@ -52,11 +56,13 @@ void main() {
 
   setUp(() {
     mockGetReviews = MockGetReviews();
+    mockGetUserReviews = MockGetUserReviews();
     mockCreateReview = MockCreateReview();
     mockUpdateReview = MockUpdateReview();
     mockDeleteReview = MockDeleteReview();
     bloc = ReviewBloc(
       getReviewsUseCase: mockGetReviews,
+      getUserReviewsUseCase: mockGetUserReviews,
       createReviewUseCase: mockCreateReview,
       updateReviewUseCase: mockUpdateReview,
       deleteReviewUseCase: mockDeleteReview,
@@ -71,8 +77,9 @@ void main() {
     blocTest<ReviewBloc, ReviewState>(
       'emits [ReviewLoading, ReviewsLoaded] when reviews are loaded successfully',
       build: () {
-        when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-            .thenAnswer((_) async => Right(tPaginatedResponse));
+        when(
+          () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+        ).thenAnswer((_) async => Right(tPaginatedResponse));
         return bloc;
       },
       act: (bloc) => bloc.add(const LoadReviewsEvent(serviceId: 'service1', page: 1, limit: 20)),
@@ -88,15 +95,13 @@ void main() {
     blocTest<ReviewBloc, ReviewState>(
       'emits [ReviewLoading, ReviewError] when loading fails',
       build: () {
-        when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-            .thenAnswer((_) async => const Left(ServerFailure('Server error')));
+        when(
+          () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+        ).thenAnswer((_) async => const Left(ServerFailure('Server error')));
         return bloc;
       },
       act: (bloc) => bloc.add(const LoadReviewsEvent(serviceId: 'service1', page: 1, limit: 20)),
-      expect: () => [
-        const ReviewLoading(),
-        const ReviewError('Server error. Please try again later.'),
-      ],
+      expect: () => [const ReviewLoading(), const ReviewError('Server error. Please try again later.')],
     );
   });
 
@@ -111,8 +116,9 @@ void main() {
         hasMore: true,
         totalPages: 2,
       );
-      when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-          .thenAnswer((_) async => Right(firstResponse));
+      when(
+        () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+      ).thenAnswer((_) async => Right(firstResponse));
       final secondResponse = PaginatedReviewResponse(
         reviews: [tReview],
         total: 2,
@@ -121,8 +127,9 @@ void main() {
         hasMore: false,
         totalPages: 2,
       );
-      when(() => mockGetReviews(serviceId: 'service1', page: 2, limit: 20))
-          .thenAnswer((_) async => Right(secondResponse));
+      when(
+        () => mockGetReviews(serviceId: 'service1', page: 2, limit: 20),
+      ).thenAnswer((_) async => Right(secondResponse));
 
       // Act - Load first page
       bloc.add(const LoadReviewsEvent(serviceId: 'service1', page: 1, limit: 20));
@@ -153,8 +160,9 @@ void main() {
           hasMore: false,
           totalPages: 1,
         );
-        when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-            .thenAnswer((_) async => Right(noMoreResponse));
+        when(
+          () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+        ).thenAnswer((_) async => Right(noMoreResponse));
         return bloc;
       },
       act: (bloc) {
@@ -186,10 +194,12 @@ void main() {
     blocTest<ReviewBloc, ReviewState>(
       'emits [ReviewCreated, ReviewLoading, ReviewsLoaded] when review is created successfully',
       build: () {
-        when(() => mockCreateReview(serviceId: 'service1', rating: 5, comment: 'Great service!'))
-            .thenAnswer((_) async => Right(tReview));
-        when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-            .thenAnswer((_) async => Right(tPaginatedResponse));
+        when(
+          () => mockCreateReview(serviceId: 'service1', rating: 5, comment: 'Great service!'),
+        ).thenAnswer((_) async => Right(tReview));
+        when(
+          () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+        ).thenAnswer((_) async => Right(tPaginatedResponse));
         return bloc;
       },
       act: (bloc) => bloc.add(const CreateReviewEvent(serviceId: 'service1', rating: 5, comment: 'Great service!')),
@@ -204,14 +214,13 @@ void main() {
     blocTest<ReviewBloc, ReviewState>(
       'emits [ReviewError] when creation fails',
       build: () {
-        when(() => mockCreateReview(serviceId: 'service1', rating: 5, comment: 'Great service!'))
-            .thenAnswer((_) async => const Left(ValidationFailure('You have already reviewed this service.')));
+        when(
+          () => mockCreateReview(serviceId: 'service1', rating: 5, comment: 'Great service!'),
+        ).thenAnswer((_) async => const Left(ValidationFailure('You have already reviewed this service.')));
         return bloc;
       },
       act: (bloc) => bloc.add(const CreateReviewEvent(serviceId: 'service1', rating: 5, comment: 'Great service!')),
-      expect: () => [
-        const ReviewError('You have already reviewed this service.'),
-      ],
+      expect: () => [const ReviewError('You have already reviewed this service.')],
     );
   });
 
@@ -219,10 +228,12 @@ void main() {
     blocTest<ReviewBloc, ReviewState>(
       'emits [ReviewUpdated, ReviewLoading, ReviewsLoaded] when review is updated successfully',
       build: () {
-        when(() => mockUpdateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment'))
-            .thenAnswer((_) async => Right(tReview));
-        when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-            .thenAnswer((_) async => Right(tPaginatedResponse));
+        when(
+          () => mockUpdateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment'),
+        ).thenAnswer((_) async => Right(tReview));
+        when(
+          () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+        ).thenAnswer((_) async => Right(tPaginatedResponse));
         return bloc;
       },
       act: (bloc) {
@@ -247,8 +258,9 @@ void main() {
       'emits [ReviewDeleted, ReviewLoading, ReviewsLoaded] when review is deleted successfully',
       build: () {
         when(() => mockDeleteReview('review1')).thenAnswer((_) async => const Right(null));
-        when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-            .thenAnswer((_) async => Right(tPaginatedResponse));
+        when(
+          () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+        ).thenAnswer((_) async => Right(tPaginatedResponse));
         return bloc;
       },
       seed: () {
@@ -276,8 +288,9 @@ void main() {
     blocTest<ReviewBloc, ReviewState>(
       'emits [ReviewLoading, ReviewsLoaded] when refresh succeeds',
       build: () {
-        when(() => mockGetReviews(serviceId: 'service1', page: 1, limit: 20))
-            .thenAnswer((_) async => Right(tPaginatedResponse));
+        when(
+          () => mockGetReviews(serviceId: 'service1', page: 1, limit: 20),
+        ).thenAnswer((_) async => Right(tPaginatedResponse));
         return bloc;
       },
       act: (bloc) {
@@ -294,4 +307,3 @@ void main() {
     );
   });
 }
-

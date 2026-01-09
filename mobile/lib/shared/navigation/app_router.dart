@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wedy/apps/client/pages/chats/chats_page.dart';
+import 'package:wedy/apps/client/pages/privacy/privacy_policy_page.dart';
 import 'package:wedy/apps/merchant/pages/account/account_page.dart';
 import 'package:wedy/apps/merchant/pages/boost/boost_page.dart';
 import 'package:wedy/apps/merchant/pages/chats/chats_page.dart';
@@ -16,8 +17,14 @@ import 'package:wedy/shared/navigation/navigation_shell.dart';
 import 'package:wedy/apps/client/pages/favorites/favorites_page.dart';
 import 'package:wedy/apps/client/pages/home/home_page.dart';
 import 'package:wedy/apps/client/pages/profile/profile_page.dart';
+import 'package:wedy/apps/client/pages/help/help_page.dart';
+import 'package:wedy/apps/client/pages/reviews/my_reviews_page.dart';
 import 'package:wedy/apps/client/pages/search/search_page.dart';
+import 'package:wedy/features/reviews/presentation/bloc/review_bloc.dart';
+import 'package:wedy/features/reviews/presentation/bloc/review_event.dart';
 import 'package:wedy/features/reviews/presentation/screens/reviews_page.dart';
+import 'package:wedy/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:wedy/features/auth/presentation/bloc/auth_state.dart';
 import 'package:wedy/features/service/presentation/screens/service/service_page.dart';
 import 'package:wedy/apps/merchant/pages/home/home_page.dart';
 import 'package:wedy/features/auth/presentation/screens/auth_screen.dart';
@@ -80,6 +87,24 @@ class AppRouter {
           name: RouteNames.account,
           builder: (context, state) => const MerchantAccountPage(),
         ),
+        GoRoute(
+          path: RouteNames.myReviews,
+          name: RouteNames.myReviews,
+          builder: (context, state) => BlocProvider(
+            create: (context) {
+              final bloc = getIt<ReviewBloc>();
+              // Load user reviews when bloc is created
+              final authState = context.read<AuthBloc>().state;
+              if (authState is Authenticated) {
+                bloc.add(LoadUserReviewsEvent(userId: authState.user.id));
+              }
+              return bloc;
+            },
+            child: const MyReviewsPage(),
+          ),
+        ),
+        GoRoute(path: RouteNames.help, name: RouteNames.help, builder: (context, state) => const HelpPage()),
+        GoRoute(path: RouteNames.policy, name: RouteNames.policy, builder: (context, state) => const PrivacyPolicyPage()),
         GoRoute(
           path: RouteNames.serviceDetails,
           builder: (context, state) {

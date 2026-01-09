@@ -102,15 +102,57 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
     final searchText = _searchController.text.trim();
     final query = searchText.isNotEmpty ? searchText : _filters.query;
 
-    // If query is empty and we're in hotOffers/category mode, reload original services
+    // Check if any filters are applied (excluding category/hotOffers context)
+    final hasActiveFilters =
+        _filters.locationRegion != null ||
+        _filters.minPrice != null ||
+        _filters.maxPrice != null ||
+        _filters.minRating != null ||
+        _filters.isVerifiedMerchant != null ||
+        (_filters.sortBy != null && _filters.sortBy != 'created_at') ||
+        (_filters.sortOrder != null && _filters.sortOrder != 'desc');
+
+    // If query is empty and we're in hotOffers/category mode, check if filters are applied
     if (query == null || query.isEmpty) {
       if (widget.hotOffers) {
-        context.read<ServiceBloc>().add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
+        // If filters are applied, use them; otherwise load featured services
+        if (hasActiveFilters) {
+          final filters = ServiceSearchFilters(
+            query: null,
+            categoryId: null,
+            locationRegion: _filters.locationRegion,
+            minPrice: _filters.minPrice,
+            maxPrice: _filters.maxPrice,
+            minRating: _filters.minRating,
+            isVerifiedMerchant: _filters.isVerifiedMerchant,
+            sortBy: _filters.sortBy,
+            sortOrder: _filters.sortOrder,
+          );
+          context.read<ServiceBloc>().add(LoadServicesEvent(filters: filters, page: 1, limit: 20));
+        } else {
+          context.read<ServiceBloc>().add(const LoadServicesEvent(featured: true, page: 1, limit: 20));
+        }
         return;
       } else if (widget.category != null) {
-        context.read<ServiceBloc>().add(
-          LoadServicesEvent(filters: ServiceSearchFilters(categoryId: widget.category!.id), page: 1, limit: 20),
-        );
+        // If filters are applied, use them with category; otherwise load category services
+        if (hasActiveFilters) {
+          final filters = ServiceSearchFilters(
+            query: null,
+            categoryId: widget.category!.id,
+            locationRegion: _filters.locationRegion,
+            minPrice: _filters.minPrice,
+            maxPrice: _filters.maxPrice,
+            minRating: _filters.minRating,
+            isVerifiedMerchant: _filters.isVerifiedMerchant,
+            sortBy: _filters.sortBy,
+            sortOrder: _filters.sortOrder,
+          );
+          context.read<ServiceBloc>().add(LoadServicesEvent(filters: filters, page: 1, limit: 20));
+        } else {
+          context.read<ServiceBloc>().add(
+            LoadServicesEvent(filters: ServiceSearchFilters(categoryId: widget.category!.id), page: 1, limit: 20),
+          );
+        }
         return;
       }
     }
@@ -130,7 +172,6 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
     );
     // Update _filters to preserve category ID for future searches
     _filters = filters;
-    _filters = filters;
 
     // Always use filters for search (even if hotOffers, search should be general)
     context.read<ServiceBloc>().add(LoadServicesEvent(filters: filters, page: 1, limit: 20));
@@ -146,6 +187,18 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
     } else {
       _performSearch();
     }
+  }
+
+  bool _hasActiveFilters() {
+    // Check if any filters are applied (excluding default category/hotOffers context)
+    // Don't count widget.category.id as a filter since it's the page context
+    return _filters.locationRegion != null ||
+        _filters.minPrice != null ||
+        _filters.maxPrice != null ||
+        _filters.minRating != null ||
+        _filters.isVerifiedMerchant != null ||
+        (_filters.sortBy != null && _filters.sortBy != 'created_at') ||
+        (_filters.sortOrder != null && _filters.sortOrder != 'desc');
   }
 
   void _loadMore() {
@@ -214,10 +267,13 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
             final universalState = serviceState is UniversalServicesState ? serviceState : null;
 
             // Get services based on context
-            // If searching (query exists), use currentPaginatedServices (search results)
+            // If searching (query exists) or filters are applied, use currentPaginatedServices (search results)
             // Otherwise use featured/category services
             final hasSearchQuery = _searchController.text.trim().isNotEmpty;
-            final services = hasSearchQuery
+            final hasActiveFilters = _hasActiveFilters();
+            final shouldUsePaginatedServices = hasSearchQuery || hasActiveFilters;
+
+            final services = shouldUsePaginatedServices
                 ? (universalState?.currentPaginatedServices ?? <ServiceListItem>[])
                 : (widget.hotOffers
                       ? (universalState?.featuredServices ?? <ServiceListItem>[])
@@ -256,11 +312,9 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                           child: ClientSearchField(
                             controller: _searchController,
                             hintText: 'Qidirish',
-                            onChanged: (value) {
-                              setState(() {});
-                            },
+
                             onSubmitted: (value) {
-                              _performSearch();
+                              if (value.isNotEmpty) _performSearch();
                             },
                             trailing: _searchController.text.isEmpty
                                 ? null
@@ -290,14 +344,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                           ),
                         ),
                         const SizedBox(width: AppDimensions.spacingS),
-                        _filters.categoryId != null ||
-                                _filters.locationRegion != null ||
-                                _filters.minPrice != null ||
-                                _filters.maxPrice != null ||
-                                _filters.minRating != null ||
-                                _filters.isVerifiedMerchant != null ||
-                                _filters.sortBy != 'created_at' ||
-                                _filters.sortOrder != 'desc'
+                        _hasActiveFilters()
                             ? WedyCircularButton(
                                 icon: IconsaxPlusLinear.filter,
                                 isPrimary: true,
@@ -431,6 +478,8 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => _SearchFiltersSheet(
         filters: _filters,
+        category: widget.category,
+        hotOffers: widget.hotOffers,
         onApply: (filters) {
           setState(() {
             _filters = filters;

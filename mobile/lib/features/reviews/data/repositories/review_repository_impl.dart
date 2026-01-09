@@ -29,6 +29,22 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
+  Future<Either<Failure, PaginatedReviewResponse>> getUserReviews({
+    required String userId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await remoteDataSource.getUserReviews(userId: userId, page: page, limit: limit);
+      return Right(response.toEntity());
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, Review>> createReview({
     required String serviceId,
     required int rating,

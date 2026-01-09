@@ -64,3 +64,20 @@ class RefreshReviewsEvent extends ReviewEvent {
   const RefreshReviewsEvent();
 }
 
+/// Load reviews by user ID
+class LoadUserReviewsEvent extends ReviewEvent {
+  final String userId;
+  final int page;
+  final int limit;
+
+  const LoadUserReviewsEvent({required this.userId, this.page = 1, this.limit = 20});
+
+  @override
+  List<Object?> get props => [userId, page, limit];
+}
+
+/// Load more user reviews (pagination)
+class LoadMoreUserReviewsEvent extends ReviewEvent {
+  const LoadMoreUserReviewsEvent();
+}
+
