@@ -105,6 +105,12 @@ async def service_redirect(
         # Format price
         price_formatted = f"{int(service.price):,}".replace(",", " ")
         
+        # Prepare image HTML (avoid backslash in f-string expression)
+        image_html = f'<div class="image"><img src="{main_image_url}" alt="{service.name}"></div>' if main_image_url else '<div class="image">Rasm yo\'q</div>'
+        
+        # Prepare rating HTML (avoid backslash in f-string expression)
+        rating_html = f'<div class="meta-item">⭐ {service.overall_rating:.1f}</div>' if service.overall_rating > 0 else ''
+        
         # Create HTML page with meta tags and auto-redirect
         html_content = f"""<!DOCTYPE html>
 <html lang="uz">
@@ -249,14 +255,14 @@ async def service_redirect(
 </head>
 <body>
     <div class="container">
-        {f'<div class="image"><img src="{main_image_url}" alt="{service.name}"></div>' if main_image_url else '<div class="image">Rasm yo\'q</div>'}
+        {image_html}
         <div class="content">
             <h1>{service.name}</h1>
             <div class="price">{price_formatted} so'm</div>
             <div class="meta">
                 <div class="meta-item">📍 {service.location_region}</div>
                 <div class="meta-item">📁 {service.category_name}</div>
-                {f'<div class="meta-item">⭐ {service.overall_rating:.1f}</div>' if service.overall_rating > 0 else ''}
+                {rating_html}
             </div>
             <div class="description">{service.description}</div>
             <button class="button" onclick="openApp()">Ilovada ochish</button>
@@ -285,6 +291,11 @@ async def service_redirect(
             detail="Service not found"
         )
     except Exception as e:
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in service_redirect endpoint: {str(e)}", exc_info=True)
+        
         # Return a simple error page
         html_content = f"""<!DOCTYPE html>
 <html lang="uz">
