@@ -225,6 +225,8 @@ class ServiceRepositoryImpl implements ServiceRepository {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return const NetworkFailure('Connection timeout. Please check your internet connection.');
+      case DioExceptionType.connectionError:
+        return const NetworkFailure('Connection error. Please check your internet connection and try again.');
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
         if (statusCode == 401) {

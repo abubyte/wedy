@@ -14,6 +14,10 @@ class ErrorInterceptor extends Interceptor {
         formattedError = err.copyWith(error: 'Connection timeout. Please check your internet connection.');
         break;
 
+      case DioExceptionType.connectionError:
+        formattedError = err.copyWith(error: 'Connection error. Please check your internet connection and try again.');
+        break;
+
       case DioExceptionType.badResponse:
         // Handle different status codes
         final errorMessage = _extractErrorMessage(err.response?.data);
