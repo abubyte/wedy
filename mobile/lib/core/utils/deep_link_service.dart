@@ -21,17 +21,15 @@ class DeepLinkService {
     required String serviceId,
     required String serviceName,
     String? description,
-    bool useWebUrl = false,
+    bool useWebUrl = true, // Default to web URL for better compatibility
   }) async {
-    // Generate both web URL and app scheme
+    // Generate web URL for sharing (Universal Links will automatically open app if installed)
     final webUrl = generateServiceDeepLink(serviceId, useWebUrl: true);
-    final appScheme = generateServiceDeepLink(serviceId, useWebUrl: false);
 
-    // Use web URL for sharing (Universal Links will open app if installed)
-    // Also include app scheme as fallback
+    // Share only web URL - Universal Links/App Links will handle opening the app
     final text = description != null && description.isNotEmpty
-        ? '$serviceName\n\n$description\n\n$webUrl\n\nYoki app\'da ochish: $appScheme'
-        : '$serviceName\n\n$webUrl\n\nYoki app\'da ochish: $appScheme';
+        ? '$serviceName\n\n$description\n\n$webUrl'
+        : '$serviceName\n\n$webUrl';
 
     await Share.share(text, subject: serviceName);
   }

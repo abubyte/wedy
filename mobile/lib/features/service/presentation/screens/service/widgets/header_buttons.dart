@@ -28,8 +28,6 @@ class ServiceHeaderButtons extends StatelessWidget {
             if (!isMerchant)
               WedyCircularButton(
                 icon: (service?.isLiked ?? false) ? IconsaxPlusBold.heart : IconsaxPlusLinear.heart,
-                color: (service?.isLiked ?? false) ? AppColors.primary : AppColors.surface,
-                borderColor: (service?.isLiked ?? false) ? AppColors.primary : AppColors.border,
                 onTap: service != null
                     ? () {
                         final bloc = context.read<ServiceBloc>();
@@ -56,13 +54,12 @@ class ServiceHeaderButtons extends StatelessWidget {
                             final bloc = context.read<ServiceBloc>();
                             bloc.add(InteractWithServiceEvent(serviceId: service!.id, interactionType: 'share'));
 
-                            // Share with deep link
+                            // Share with deep link (web URL - Universal Links will open app automatically)
                             final deepLinkService = DeepLinkService();
                             await deepLinkService.shareService(
                               serviceId: service!.id,
                               serviceName: service!.name,
                               description: service!.description,
-                              useWebUrl: true, // Use web URL for sharing
                             );
                           }
                         : null,
