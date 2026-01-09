@@ -1,53 +1,157 @@
-# Nginx Configuration with SSL
+# Nginx va SSL Konfiguratsiya
 
-This directory contains the Nginx reverse proxy configuration with SSL support using Let's Encrypt.
-
-## Quick Start
-
-1. **Generate self-signed certificate** (required for nginx to start):
-   ```bash
-   ./generate-self-signed.sh
-   ```
-
-2. **Start services**:
-   ```bash
-   docker compose up -d
-   ```
-
-3. **Obtain Let's Encrypt certificate**:
-   ```bash
-   # Edit init-letsencrypt.sh and set your email
-   nano init-letsencrypt.sh
-   
-   # Run the initialization
-   ./init-letsencrypt.sh
-   ```
-
-## Files
-
-- `nginx.conf` - Main Nginx configuration
-- `init-letsencrypt.sh` - Script to obtain Let's Encrypt SSL certificates
-- `generate-self-signed.sh` - Script to generate self-signed certificates for development
-- `SSL_SETUP.md` - Detailed SSL setup documentation
-
-## Architecture
+## 📁 Fayl Tuzilishi
 
 ```
-Internet → Nginx (Port 80/443) → Backend (Port 8000)
-                ↓
-            Certbot (Auto-renewal)
+infra/nginx/
+├── nginx.conf              # Asosiy nginx konfiguratsiya (HTTP + HTTPS)
+├── nginx-http-only.conf    # Faqat HTTP uchun (SSL yo'q)
+├── init-ssl.sh             # SSL sertifikat olish skripti
+├── certbot/
+│   ├── conf/               # Let's Encrypt sertifikatlar
+│   └── www/                # ACME challenge fayllari
+└── README.md               # Ushbu fayl
 ```
 
-## Domain Configuration
+## 🚀 Ishga Tushirish
 
-The default domain is `api.wedy.uz`. To change it:
+### 1. Development (SSL yo'q)
 
-1. Update `nginx.conf` - replace all instances of `api.wedy.uz`
-2. Update `init-letsencrypt.sh` - change the `domains` array
-3. Update `docker-compose.yml` - if needed for any domain-specific configs
+```bash
+# Backend to'g'ridan-to'g'ri (nginx yo'q)
+docker compose -f docker-compose.dev.yml up -d
 
-## See Also
+# API: http://localhost:8000
+# Docs: http://localhost:8000/docs
+```
 
-- [SSL_SETUP.md](./SSL_SETUP.md) - Complete SSL setup guide
-- [../../docker-compose.yml](../../docker-compose.yml) - Docker Compose configuration
+### 2. Production (HTTP only - SSL oldinidan)
+
+Agar SSL sertifikati hali yo'q bo'lsa:
+
+```bash
+# HTTP-only nginx config ishlatish
+cp infra/nginx/nginx-http-only.conf infra/nginx/nginx.conf
+
+# Docker compose ishga tushirish
+docker compose up -d
+
+# API: http://api.wedy.uz
+```
+
+### 3. Production (HTTPS bilan)
+
+```bash
+# 1. SSL sertifikat olish
+cd infra/nginx
+./init-ssl.sh admin@wedy.uz api.wedy.uz
+
+# 2. Asosiy nginx.conf ishlatish (HTTP + HTTPS)
+# (nginx.conf allaqachon to'g'ri konfiguratsiya qilingan)
+
+# 3. Docker compose qayta ishga tushirish
+docker compose -f docker-compose.prod.yml up -d
+
+# API: https://api.wedy.uz
+```
+
+## 🔐 SSL Sertifikat
+
+### Yangi sertifikat olish
+
+```bash
+cd infra/nginx
+./init-ssl.sh your-email@example.com api.wedy.uz
+```
+
+### Sertifikatni tekshirish
+
+```bash
+docker compose exec nginx nginx -t
+openssl x509 -in infra/nginx/certbot/conf/live/api.wedy.uz/fullchain.pem -text -noout
+```
+
+### Manual yangilash
+
+```bash
+docker compose run --rm certbot renew
+docker compose exec nginx nginx -s reload
+```
+
+## ⚙️ Nginx Konfiguratsiya
+
+### Rate Limiting
+
+| Zone | Limit | Burst |
+|------|-------|-------|
+| `api` | 10 req/s | 20 |
+| `auth` | 5 req/s | 10 |
+
+### Timeouts
+
+| Setting | Value |
+|---------|-------|
+| Connect | 10s |
+| Send | 60s |
+| Read | 60s |
+
+### Max Upload Size
+
+```
+client_max_body_size 10M;
+```
+
+## 🐳 Docker Compose Fayllar
+
+| Fayl | Ishlatish |
+|------|-----------|
+| `docker-compose.yml` | Asosiy (nginx bilan) |
+| `docker-compose.dev.yml` | Development (nginx yo'q) |
+| `docker-compose.prod.yml` | Production (SSL + resource limits) |
+
+## 🔧 Foydali Buyruqlar
+
+```bash
+# Nginx konfigni tekshirish
+docker compose exec nginx nginx -t
+
+# Nginx qayta yuklash
+docker compose exec nginx nginx -s reload
+
+# Nginx loglarni ko'rish
+docker compose logs -f nginx
+
+# Backend loglarni ko'rish
+docker compose logs -f backend
+
+# Barcha servislar holati
+docker compose ps
+```
+
+## ⚠️ Muammolarni Hal Qilish
+
+### 1. SSL sertifikat topilmadi
+
+```bash
+# HTTP-only config ishlatish
+cp nginx-http-only.conf nginx.conf
+docker compose up -d nginx
+```
+
+### 2. 502 Bad Gateway
+
+```bash
+# Backend sog'ligini tekshirish
+curl http://localhost:8000/health
+
+# Backend loglarni ko'rish
+docker compose logs backend
+```
+
+### 3. Rate limit xatosi (429)
+
+```bash
+# Nginx config da rate limitni oshirish
+limit_req zone=api burst=50 nodelay;
+```
 
