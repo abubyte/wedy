@@ -117,7 +117,7 @@ async def add_gallery_image(
             file_name=file.filename,
             file_size=content_length,
             image_type=ImageType.MERCHANT_GALLERY,
-            related_id=current_merchant.id,
+            related_id=str(current_merchant.id),
             display_order=display_order or 0
         )
         
