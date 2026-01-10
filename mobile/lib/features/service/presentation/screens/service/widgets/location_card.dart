@@ -24,19 +24,22 @@ class ServiceLocationCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
               border: Border.all(color: AppColors.border, width: .5),
             ),
+            height: 160,
+            width: double.infinity,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
               child: Image(
-                image: NetworkImage(
+                image: CachedNetworkImageProvider(
                   MapsUtils.buildStaticMapUrlWithMarker(
                     center: latitude != null && longitude != null ? '$latitude,$longitude' : '39.6542,66.9597',
-                    lat: latitude ?? 39.6542,
-                    lng: longitude ?? 66.9597,
+                    lat: 39.6542,
+                    lng: 66.9597,
                     zoom: 14,
                     size: '600x300',
                     markerColor: 'red',
                   ),
                 ),
+
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     height: 200,

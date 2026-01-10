@@ -327,7 +327,7 @@ class ReviewService:
     async def delete_review(
         self,
         review_id: UUID,
-        user_id: UUID
+        user_id: str
     ) -> bool:
         """
         Delete a review (soft delete).

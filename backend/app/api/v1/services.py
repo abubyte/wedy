@@ -732,3 +732,47 @@ async def admin_feature_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create featured service: {str(e)}"
         )
+
+
+# ================== SERVICE REVIEWS ==================
+
+from app.services.review_service import ReviewService
+from app.schemas.review_schema import ReviewListResponse
+
+
+@router.get("/{service_id}/reviews", response_model=ReviewListResponse)
+async def get_service_reviews(
+    service_id: str,
+    include_inactive: bool = Query(False, description="Include inactive reviews"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Get all reviews for a specific service (public endpoint).
+    
+    Args:
+        service_id: 9-digit numeric string ID of the service
+        include_inactive: Whether to include inactive reviews
+        page: Page number (1-based)
+        limit: Items per page (1-100)
+        db: Database session
+        
+    Returns:
+        ReviewListResponse with paginated reviews
+    """
+    try:
+        review_service = ReviewService(db)
+        pagination = PaginationParams(page=page, limit=limit)
+        
+        return await review_service.list_reviews(
+            service_id=service_id,
+            include_inactive=include_inactive,
+            pagination=pagination
+        )
+    
+    except WedyException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
