@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:wedy/core/di/injection_container.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
 import 'package:wedy/shared/widgets/circular_button.dart';
-import 'package:wedy/shared/widgets/service_reviews.dart';
 import '../../domain/entities/review.dart';
 import '../bloc/review_bloc.dart';
 import '../bloc/review_event.dart';
@@ -118,10 +118,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
                             Expanded(
                               child: Text(
                                 'Fikrlar',
-                                style: AppTextStyles.headline2.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 24,
-                                ),
+                                style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 24),
                               ),
                             ),
                             ElevatedButton.icon(
@@ -159,10 +156,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
                                         textAlign: TextAlign.center,
                                       ),
                                       const SizedBox(height: AppDimensions.spacingM),
-                                      ElevatedButton(
-                                        onPressed: _onRefresh,
-                                        child: const Text('Qayta urinish'),
-                                      ),
+                                      ElevatedButton(onPressed: _onRefresh, child: const Text('Qayta urinish')),
                                     ],
                                   ),
                                 ),
@@ -194,7 +188,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
                             return Column(
                               children: [
-                                ServiceReviews(serviceId: serviceId, vertical: true, showHeader: false),
+                                ...reviews.map((review) => _ReviewCard(review: review)),
                                 if (state is ReviewsLoaded && state.response.hasMore)
                                   const Padding(
                                     padding: EdgeInsets.all(AppDimensions.spacingM),
@@ -219,10 +213,124 @@ class _ReviewsPageState extends State<ReviewsPage> {
   void _showAddReviewDialog(BuildContext context, String serviceId) {
     showDialog(
       context: context,
-      builder: (context) => BlocProvider.value(
+      builder: (dialogContext) => BlocProvider.value(
         value: context.read<ReviewBloc>(),
         child: AddReviewDialog(serviceId: serviceId),
       ),
     );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({required this.review});
+
+  final Review review;
+
+  @override
+  Widget build(BuildContext context) {
+    final userName = review.user?.name ?? 'Foydalanuvchi';
+    final avatarUrl = review.user?.avatarUrl;
+    final date = _formatDate(review.createdAt);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppDimensions.spacingM),
+      padding: const EdgeInsets.all(AppDimensions.spacingM),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+        border: Border.all(color: AppColors.border, width: .5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                  color: AppColors.surfaceMuted,
+                ),
+                child: avatarUrl != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                        child: Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(IconsaxPlusLinear.user, size: 24),
+                        ),
+                      )
+                    : const Icon(IconsaxPlusLinear.user, size: 24),
+              ),
+              const SizedBox(width: AppDimensions.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: AppTextStyles.bodyRegular.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      date,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  const Icon(IconsaxPlusBold.star_1, size: 16, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text(
+                    review.rating.toString(),
+                    style: AppTextStyles.bodyRegular.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (review.comment != null && review.comment!.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.spacingM),
+            Text(
+              review.comment!,
+              style: AppTextStyles.bodyRegular.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'Yanvar',
+      'Fevral',
+      'Mart',
+      'Aprel',
+      'May',
+      'Iyun',
+      'Iyul',
+      'Avgust',
+      'Sentabr',
+      'Oktabr',
+      'Noyabr',
+      'Dekabr',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }

@@ -303,7 +303,12 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       const SizedBox(height: AppDimensions.spacingL),
 
                       // Reviews
-                      const SectionHeader(title: 'Fikrlar', applyPadding: true),
+                      SectionHeader(
+                        title: 'Fikrlar',
+                        applyPadding: true,
+                        hasAction: true,
+                        onTap: () => context.pushNamed(RouteNames.reviews, queryParameters: {'serviceId': service.id}),
+                      ),
                       const SizedBox(height: AppDimensions.spacingSM),
                       ServiceReviews(serviceId: service.id),
                       const SizedBox(height: AppDimensions.spacingL),
