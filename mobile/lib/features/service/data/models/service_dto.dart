@@ -27,6 +27,40 @@ class ServiceImageDto {
 }
 
 @JsonSerializable()
+class MerchantContactDto {
+  final String id;
+  @JsonKey(name: 'contact_type')
+  final String contactType;
+  @JsonKey(name: 'contact_value')
+  final String contactValue;
+  @JsonKey(name: 'platform_name')
+  final String? platformName;
+  @JsonKey(name: 'display_order')
+  final int displayOrder;
+
+  MerchantContactDto({
+    required this.id,
+    required this.contactType,
+    required this.contactValue,
+    this.platformName,
+    required this.displayOrder,
+  });
+
+  factory MerchantContactDto.fromJson(Map<String, dynamic> json) => _$MerchantContactDtoFromJson(json);
+  Map<String, dynamic> toJson() => _$MerchantContactDtoToJson(this);
+
+  MerchantContact toEntity() {
+    return MerchantContact(
+      id: id,
+      contactType: contactType,
+      contactValue: contactValue,
+      platformName: platformName,
+      displayOrder: displayOrder,
+    );
+  }
+}
+
+@JsonSerializable()
 class MerchantBasicInfoDto {
   final String id;
   @JsonKey(name: 'business_name')
@@ -184,6 +218,8 @@ class ServiceDetailDto {
   @JsonKey(name: 'category_name')
   final String categoryName;
   final List<ServiceImageDto> images;
+  @JsonKey(defaultValue: [])
+  final List<MerchantContactDto> contacts;
   @JsonKey(name: 'is_featured')
   final bool isFeatured;
   @JsonKey(name: 'featured_until')
@@ -214,6 +250,7 @@ class ServiceDetailDto {
     required this.categoryId,
     required this.categoryName,
     required this.images,
+    this.contacts = const [],
     this.isFeatured = false,
     this.featuredUntil,
     this.isLiked = false,
@@ -245,6 +282,7 @@ class ServiceDetailDto {
       categoryId: categoryId,
       categoryName: categoryName,
       images: images.map((img) => img.toEntity()).toList(),
+      contacts: contacts.map((c) => c.toEntity()).toList(),
       isFeatured: isFeatured,
       featuredUntil: featuredUntil != null ? DateTime.parse(featuredUntil!) : null,
       isLiked: isLiked,
@@ -310,12 +348,7 @@ class ServiceInteractionResponseDto {
   Map<String, dynamic> toJson() => _$ServiceInteractionResponseDtoToJson(this);
 
   ServiceInteractionResponse toEntity() {
-    return ServiceInteractionResponse(
-      success: success,
-      message: message,
-      newCount: newCount,
-      isActive: isActive,
-    );
+    return ServiceInteractionResponse(success: success, message: message, newCount: newCount, isActive: isActive);
   }
 }
 

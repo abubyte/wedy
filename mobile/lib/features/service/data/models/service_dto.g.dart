@@ -22,6 +22,24 @@ Map<String, dynamic> _$ServiceImageDtoToJson(ServiceImageDto instance) =>
       'display_order': instance.displayOrder,
     };
 
+MerchantContactDto _$MerchantContactDtoFromJson(Map<String, dynamic> json) =>
+    MerchantContactDto(
+      id: json['id'] as String,
+      contactType: json['contact_type'] as String,
+      contactValue: json['contact_value'] as String,
+      platformName: json['platform_name'] as String?,
+      displayOrder: (json['display_order'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$MerchantContactDtoToJson(MerchantContactDto instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'contact_type': instance.contactType,
+      'contact_value': instance.contactValue,
+      'platform_name': instance.platformName,
+      'display_order': instance.displayOrder,
+    };
+
 MerchantBasicInfoDto _$MerchantBasicInfoDtoFromJson(
         Map<String, dynamic> json) =>
     MerchantBasicInfoDto(
@@ -116,6 +134,11 @@ ServiceDetailDto _$ServiceDetailDtoFromJson(Map<String, dynamic> json) =>
       images: (json['images'] as List<dynamic>)
           .map((e) => ServiceImageDto.fromJson(e as Map<String, dynamic>))
           .toList(),
+      contacts: (json['contacts'] as List<dynamic>?)
+              ?.map(
+                  (e) => MerchantContactDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       isFeatured: json['is_featured'] as bool? ?? false,
       featuredUntil: json['featured_until'] as String?,
       isLiked: json['is_liked'] as bool? ?? false,
@@ -144,6 +167,7 @@ Map<String, dynamic> _$ServiceDetailDtoToJson(ServiceDetailDto instance) =>
       'category_id': instance.categoryId,
       'category_name': instance.categoryName,
       'images': instance.images,
+      'contacts': instance.contacts,
       'is_featured': instance.isFeatured,
       'featured_until': instance.featuredUntil,
       'is_liked': instance.isLiked,

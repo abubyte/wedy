@@ -20,6 +20,7 @@ class Service {
   final int categoryId;
   final String categoryName;
   final List<ServiceImage> images;
+  final List<MerchantContact> contacts;
   final bool isFeatured;
   final DateTime? featuredUntil;
   final bool isLiked;
@@ -46,11 +47,20 @@ class Service {
     required this.categoryId,
     required this.categoryName,
     required this.images,
+    this.contacts = const [],
     this.isFeatured = false,
     this.featuredUntil,
     this.isLiked = false,
     this.isSaved = false,
   });
+
+  /// Get phone contacts only
+  List<MerchantContact> get phoneContacts =>
+      contacts.where((c) => c.isPhone).toList()..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+
+  /// Get social media contacts only
+  List<MerchantContact> get socialMediaContacts =>
+      contacts.where((c) => c.isSocialMedia).toList()..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
 }
 
 /// Service list item (simplified version for listings)
@@ -177,6 +187,26 @@ class ServiceImage {
   final int displayOrder;
 
   ServiceImage({required this.id, required this.s3Url, required this.fileName, required this.displayOrder});
+}
+
+/// Merchant contact (phone or social media)
+class MerchantContact {
+  final String id;
+  final String contactType; // "phone" or "social_media"
+  final String contactValue; // Phone number or social media URL
+  final String? platformName; // Platform name for social media (instagram, telegram, etc.)
+  final int displayOrder;
+
+  MerchantContact({
+    required this.id,
+    required this.contactType,
+    required this.contactValue,
+    this.platformName,
+    required this.displayOrder,
+  });
+
+  bool get isPhone => contactType == 'phone';
+  bool get isSocialMedia => contactType == 'social_media';
 }
 
 /// Service search filters

@@ -16,8 +16,10 @@ from app.schemas.service_schema import (
     PaginatedServiceResponse,
     FeaturedServicesResponse,
     MerchantBasicInfo,
-    ServiceImageResponse
+    ServiceImageResponse,
+    MerchantContactResponse
 )
+from app.repositories.merchant_repository import MerchantRepository
 from app.schemas.common_schema import PaginationParams
 from app.utils.constants import UZBEKISTAN_REGIONS, INTERACTION_TYPES
 
@@ -28,6 +30,7 @@ class ServiceManager:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.service_repo = ServiceRepository(db)
+        self.merchant_repo = MerchantRepository(db)
         self.user_repo = UserRepository(db)
     
     async def get_categories(self) -> ServiceCategoriesResponse:
@@ -228,6 +231,19 @@ class ServiceManager:
             for img in images
         ]
         
+        # Get merchant contacts (phones and social media)
+        contacts = await self.merchant_repo.get_merchant_contacts(merchant.id)
+        contact_responses = [
+            MerchantContactResponse(
+                id=contact.id,
+                contact_type=contact.contact_type.value,
+                contact_value=contact.contact_value,
+                platform_name=contact.platform_name,
+                display_order=contact.display_order
+            )
+            for contact in contacts
+        ]
+        
         # Get merchant user info
         merchant_user = await self.user_repo.get_by_id(merchant.user_id)
         if not merchant_user:
@@ -264,6 +280,7 @@ class ServiceManager:
             category_id=category.id,
             category_name=category.name,
             images=image_responses,
+            contacts=contact_responses,
             is_featured=is_featured,
             featured_until=featured_until,
             is_liked=is_liked,

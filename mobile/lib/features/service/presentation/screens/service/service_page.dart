@@ -255,13 +255,21 @@ class _WedyServicePageState extends State<WedyServicePage> {
 
                       // Phone Numbers
                       if (phone) ...[
-                        const ServicePhoneTile(),
-                        const SizedBox(height: AppDimensions.spacingS),
-
-                        const ServicePhoneTile(),
-                        const SizedBox(height: AppDimensions.spacingS),
-
-                        const ServicePhoneTile(),
+                        if (service.phoneContacts.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                            child: Text(
+                              'Telefon raqamlar mavjud emas',
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                            ),
+                          )
+                        else
+                          ...service.phoneContacts.map(
+                            (contact) => Padding(
+                              padding: const EdgeInsets.only(bottom: AppDimensions.spacingS),
+                              child: ServicePhoneTile(phoneNumber: contact.contactValue),
+                            ),
+                          ),
                       ],
 
                       // Location
@@ -274,10 +282,21 @@ class _WedyServicePageState extends State<WedyServicePage> {
 
                       // Social
                       if (social) ...[
-                        const ServiceSocialTile(),
-                        const SizedBox(height: AppDimensions.spacingS),
-
-                        const ServiceSocialTile(),
+                        if (service.socialMediaContacts.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                            child: Text(
+                              'Ijtimoiy tarmoqlar mavjud emas',
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                            ),
+                          )
+                        else
+                          ...service.socialMediaContacts.map(
+                            (contact) => Padding(
+                              padding: const EdgeInsets.only(bottom: AppDimensions.spacingS),
+                              child: ServiceSocialTile(url: contact.contactValue, platformName: contact.platformName),
+                            ),
+                          ),
                       ],
                       const SizedBox(height: AppDimensions.spacingL),
 

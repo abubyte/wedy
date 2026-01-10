@@ -29,6 +29,15 @@ class ServiceImageResponse(BaseModel):
     display_order: int
 
 
+class MerchantContactResponse(BaseModel):
+    """Merchant contact response schema."""
+    id: UUID
+    contact_type: str  # "phone" or "social_media"
+    contact_value: str  # Phone number or social media URL
+    platform_name: Optional[str] = None  # Platform name for social media (instagram, telegram, etc.)
+    display_order: int
+
+
 class MerchantBasicInfo(BaseModel):
     """Basic merchant information for service listings."""
     id: UUID  # Pydantic will automatically serialize UUID to string in JSON
@@ -108,6 +117,9 @@ class ServiceDetailResponse(BaseModel):
     
     # Images
     images: List[ServiceImageResponse] = []
+    
+    # Merchant contacts (phones and social media)
+    contacts: List[MerchantContactResponse] = []
     
     # Featured status
     is_featured: bool = False
