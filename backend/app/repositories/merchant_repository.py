@@ -546,3 +546,18 @@ class MerchantRepository(BaseRepository[Merchant]):
             await self.db.commit()
             return True
         return False
+    
+    async def create_service_image(self, image: Image) -> Image:
+        """
+        Create a service image record.
+        
+        Args:
+            image: Image instance with image_type=SERVICE_IMAGE
+            
+        Returns:
+            Created image record
+        """
+        self.db.add(image)
+        await self.db.commit()
+        await self.db.refresh(image)
+        return image
