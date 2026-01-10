@@ -1,6 +1,7 @@
+from io import BytesIO
 from typing import List, Optional
 from uuid import UUID, uuid4
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db_session
 from app.api.deps import get_current_active_merchant
@@ -56,8 +57,7 @@ async def get_gallery_images(
 
 @router.post("/gallery", response_model=ImageUploadResponse)
 async def add_gallery_image(
-    file_name: str = Form(..., description="Original file name"),
-    content_type: str = Form(..., description="MIME type of the file"),
+    file: UploadFile = File(..., description="Gallery image file"),
     display_order: Optional[int] = Form(0, description="Display order"),
     current_merchant: Merchant = Depends(get_current_active_merchant),
     db: AsyncSession = Depends(get_db_session)
@@ -66,14 +66,13 @@ async def add_gallery_image(
     Add gallery image with tariff limit validation.
     
     Args:
-        file_name: Original file name
-        content_type: MIME type of the file
+        file: Gallery image file (multipart/form-data)
         display_order: Display order for the image
         current_merchant: Current authenticated merchant
         db: Database session
         
     Returns:
-        ImageUploadResponse: Presigned URL and image info
+        ImageUploadResponse: Upload result with S3 URL
     """
     try:
         merchant_manager = MerchantManager(db)
@@ -93,12 +92,19 @@ async def add_gallery_image(
                 f"Max allowed: {tariff_plan.max_gallery_images}"
             )
         
-        # Validate image constraints
-        s3_image_manager.validate_image_constraints(content_type, 5 * 1024 * 1024)
+        # Read file content
+        content = await file.read()
+        content_type = file.content_type or 'application/octet-stream'
+        content_length = len(content)
         
-        # Generate presigned URL
-        s3_url, presigned_url = s3_image_manager.generate_presigned_upload_url(
-            file_name=file_name,
+        # Validate image constraints
+        s3_image_manager.validate_image_constraints(content_type, content_length)
+        
+        # Upload directly to S3
+        fileobj = BytesIO(content)
+        s3_url = s3_image_manager.upload_fileobj(
+            fileobj=fileobj,
+            file_name=file.filename,
             content_type=content_type,
             image_type="merchant_gallery",
             related_id=str(current_merchant.id)
@@ -108,7 +114,8 @@ async def add_gallery_image(
         image = Image(
             id=uuid4(),
             s3_url=s3_url,
-            file_name=file_name,
+            file_name=file.filename,
+            file_size=content_length,
             image_type=ImageType.MERCHANT_GALLERY,
             related_id=current_merchant.id,
             display_order=display_order or 0
@@ -118,10 +125,10 @@ async def add_gallery_image(
         
         return ImageUploadResponse(
             success=True,
-            message="Gallery image upload URL generated",
+            message="Gallery image uploaded successfully",
             image_id=created_image.id,
             s3_url=s3_url,
-            presigned_url=presigned_url
+            presigned_url=None
         )
     
     except (PaymentRequiredError, ForbiddenError, ValidationError) as e:
@@ -133,10 +140,13 @@ async def add_gallery_image(
         
         raise HTTPException(status_code=status_code, detail=str(e))
     
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Gallery image preparation failed: {str(e)}"
+            detail=f"Gallery image upload failed: {str(e)}"
         )
 
 

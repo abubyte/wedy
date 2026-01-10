@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from io import BytesIO
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db_session
 from app.api.deps import get_current_active_merchant
@@ -14,22 +15,20 @@ router = APIRouter()
 
 @router.post("/cover-image", response_model=ImageUploadResponse)
 async def add_cover_image(
-    file_name: str = Form(..., description="Original file name"),
-    content_type: str = Form(..., description="MIME type of the file"),
+    file: UploadFile = File(..., description="Cover image file"),
     current_merchant: Merchant = Depends(get_current_active_merchant),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
-    Generate presigned URL for cover image upload.
+    Upload cover image directly to S3.
     
     Args:
-        file_name: Original file name
-        content_type: MIME type of the file
+        file: Cover image file (multipart/form-data)
         current_merchant: Current authenticated merchant
         db: Database session
         
     Returns:
-        ImageUploadResponse: Presigned URL for upload
+        ImageUploadResponse: Upload result with S3 URL
     """
     try:
         # Check if cover image is allowed in tariff plan
@@ -44,12 +43,19 @@ async def add_cover_image(
         if not tariff_plan.allow_cover_image:
             raise ForbiddenError("Cover image not allowed in current tariff plan")
         
-        # Validate image constraints
-        s3_image_manager.validate_image_constraints(content_type, 5 * 1024 * 1024)  # Max check
+        # Read file content
+        content = await file.read()
+        content_type = file.content_type or 'application/octet-stream'
+        content_length = len(content)
         
-        # Generate presigned URL
-        s3_url, presigned_url = s3_image_manager.generate_presigned_upload_url(
-            file_name=file_name,
+        # Validate image constraints
+        s3_image_manager.validate_image_constraints(content_type, content_length)
+        
+        # Upload directly to S3
+        fileobj = BytesIO(content)
+        s3_url = s3_image_manager.upload_fileobj(
+            fileobj=fileobj,
+            file_name=file.filename,
             content_type=content_type,
             image_type="merchant_cover",
             related_id=str(current_merchant.id)
@@ -60,9 +66,9 @@ async def add_cover_image(
         
         return ImageUploadResponse(
             success=True,
-            message="Cover image upload URL generated",
+            message="Cover image uploaded successfully",
             s3_url=s3_url,
-            presigned_url=presigned_url
+            presigned_url=None
         )
     
     except (PaymentRequiredError, ForbiddenError, ValidationError) as e:
@@ -74,31 +80,32 @@ async def add_cover_image(
         
         raise HTTPException(status_code=status_code, detail=str(e))
     
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Upload preparation failed: {str(e)}"
+            detail=f"Cover image upload failed: {str(e)}"
         )
 
 
 @router.put("/cover-image", response_model=ImageUploadResponse)
 async def update_cover_image(
-    file_name: str = Form(..., description="Original file name"),
-    content_type: str = Form(..., description="MIME type of the file"),
+    file: UploadFile = File(..., description="Cover image file"),
     current_merchant: Merchant = Depends(get_current_active_merchant),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
-    Update cover image by generating a new presigned URL.
+    Update cover image by uploading a new file directly to S3.
     
     Args:
-        file_name: Original file name
-        content_type: MIME type of the file
+        file: Cover image file (multipart/form-data)
         current_merchant: Current authenticated merchant
         db: Database session
         
     Returns:
-        ImageUploadResponse: Presigned URL for upload
+        ImageUploadResponse: Upload result with S3 URL
     """
     try:
         # Check if cover image is allowed in tariff plan
@@ -113,12 +120,19 @@ async def update_cover_image(
         if not tariff_plan.allow_cover_image:
             raise ForbiddenError("Cover image not allowed in current tariff plan")
         
-        # Validate image constraints
-        s3_image_manager.validate_image_constraints(content_type, 5 * 1024 * 1024)  # Max check
+        # Read file content
+        content = await file.read()
+        content_type = file.content_type or 'application/octet-stream'
+        content_length = len(content)
         
-        # Generate presigned URL
-        s3_url, presigned_url = s3_image_manager.generate_presigned_upload_url(
-            file_name=file_name,
+        # Validate image constraints
+        s3_image_manager.validate_image_constraints(content_type, content_length)
+        
+        # Upload directly to S3
+        fileobj = BytesIO(content)
+        s3_url = s3_image_manager.upload_fileobj(
+            fileobj=fileobj,
+            file_name=file.filename,
             content_type=content_type,
             image_type="merchant_cover",
             related_id=str(current_merchant.id)
@@ -129,9 +143,9 @@ async def update_cover_image(
         
         return ImageUploadResponse(
             success=True,
-            message="Cover image update URL generated",
+            message="Cover image updated successfully",
             s3_url=s3_url,
-            presigned_url=presigned_url
+            presigned_url=None
         )
     
     except (PaymentRequiredError, ForbiddenError, ValidationError) as e:
@@ -143,10 +157,13 @@ async def update_cover_image(
         
         raise HTTPException(status_code=status_code, detail=str(e))
     
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Cover image update preparation failed: {str(e)}"
+            detail=f"Cover image update failed: {str(e)}"
         )
 
 

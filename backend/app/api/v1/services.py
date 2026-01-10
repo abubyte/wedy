@@ -1,7 +1,8 @@
+from io import BytesIO
 from typing import Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status, Form
+from fastapi import APIRouter, Depends, Query, HTTPException, status, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
@@ -496,25 +497,23 @@ async def delete_service(
 @router.post("/{service_id}/images", response_model=ImageUploadResponse)
 async def upload_service_image(
     service_id: str,
-    file_name: str = Form(..., description="Original file name"),
-    content_type: str = Form(..., description="MIME type of the file"),
+    file: UploadFile = File(..., description="Service image file"),
     display_order: Optional[int] = Form(0, description="Display order"),
     current_user: User = Depends(get_current_merchant_user),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
-    Upload service image with tariff limit validation.
+    Upload service image directly to S3 with tariff limit validation.
     
     Args:
         service_id: 9-digit numeric string ID of the service
-        file_name: Original file name
-        content_type: MIME type of the file
+        file: Service image file (multipart/form-data)
         display_order: Display order for the image
         current_user: Current authenticated merchant user
         db: Database session
         
     Returns:
-        ImageUploadResponse: Presigned URL and image info
+        ImageUploadResponse: Upload result with S3 URL
     """
     try:
         merchant_manager = MerchantManager(db)
@@ -554,12 +553,19 @@ async def upload_service_image(
                 f"Max allowed: {tariff_plan.max_images_per_service}"
             )
         
-        # Validate image constraints
-        s3_image_manager.validate_image_constraints(content_type, 5 * 1024 * 1024)
+        # Read file content
+        content = await file.read()
+        content_type = file.content_type or 'application/octet-stream'
+        content_length = len(content)
         
-        # Generate presigned URL
-        s3_url, presigned_url = s3_image_manager.generate_presigned_upload_url(
-            file_name=file_name,
+        # Validate image constraints
+        s3_image_manager.validate_image_constraints(content_type, content_length)
+        
+        # Upload directly to S3
+        fileobj = BytesIO(content)
+        s3_url = s3_image_manager.upload_fileobj(
+            fileobj=fileobj,
+            file_name=file.filename,
             content_type=content_type,
             image_type="service_image",
             related_id=str(service_id)
@@ -569,7 +575,8 @@ async def upload_service_image(
         image = Image(
             id=uuid4(),
             s3_url=s3_url,
-            file_name=file_name,
+            file_name=file.filename,
+            file_size=content_length,
             image_type=ImageType.SERVICE_IMAGE,
             related_id=service_id,
             display_order=display_order or 0
@@ -579,10 +586,10 @@ async def upload_service_image(
         
         return ImageUploadResponse(
             success=True,
-            message="Service image upload URL generated",
+            message="Service image uploaded successfully",
             image_id=created_image.id,
             s3_url=s3_url,
-            presigned_url=presigned_url
+            presigned_url=None
         )
     
     except (PaymentRequiredError, ForbiddenError, NotFoundError, ValidationError) as e:
@@ -593,6 +600,8 @@ async def upload_service_image(
             else status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
