@@ -137,7 +137,7 @@ class ServiceUpdateRequest(BaseModel):
 
 class MerchantServiceResponse(BaseModel):
     """Merchant's service response."""
-    id: UUID
+    id: str  # 9-digit service ID
     name: str
     description: str
     price: float
