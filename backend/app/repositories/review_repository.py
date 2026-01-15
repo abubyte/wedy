@@ -167,7 +167,8 @@ class ReviewRepository(BaseRepository[Review]):
         statement = select(Review).where(
             and_(
                 Review.user_id == user_id,
-                Review.service_id == service_id
+                Review.service_id == service_id,
+                Review.is_active == True
             )
         )
         result = await self.db.execute(statement)

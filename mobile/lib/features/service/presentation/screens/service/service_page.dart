@@ -307,7 +307,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
                         applyPadding: true,
                         hasAction: true,
                         onTap: () => context.pushNamed(
-                          RouteNames.myReviews,
+                          RouteNames.reviews,
                           extra: 'service',
                           queryParameters: {'serviceId': service.id},
                         ),
