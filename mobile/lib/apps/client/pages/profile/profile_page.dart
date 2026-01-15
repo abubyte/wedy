@@ -314,7 +314,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                                     children: [
                                       const SizedBox(height: AppDimensions.spacingXS),
                                       GestureDetector(
-                                        onTap: () => context.pushNamed(RouteNames.myReviews),
+                                        onTap: () => context.pushNamed(RouteNames.myReviews, extra: 'user'),
                                         child: Row(
                                           children: [
                                             const Icon(

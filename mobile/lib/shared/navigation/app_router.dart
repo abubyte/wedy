@@ -95,8 +95,10 @@ class AppRouter {
               final bloc = getIt<ReviewBloc>();
               // Load user reviews when bloc is created
               final authState = context.read<AuthBloc>().state;
-              if (authState is Authenticated) {
+              if (authState is Authenticated && state.extra == 'user') {
                 bloc.add(LoadUserReviewsEvent(userId: authState.user.id));
+              } else if (state.extra == 'service') {
+                bloc.add(LoadReviewsEvent(serviceId: state.uri.queryParameters['serviceId'] as String));
               }
               return bloc;
             },
@@ -104,7 +106,11 @@ class AppRouter {
           ),
         ),
         GoRoute(path: RouteNames.help, name: RouteNames.help, builder: (context, state) => const HelpPage()),
-        GoRoute(path: RouteNames.policy, name: RouteNames.policy, builder: (context, state) => const PrivacyPolicyPage()),
+        GoRoute(
+          path: RouteNames.policy,
+          name: RouteNames.policy,
+          builder: (context, state) => const PrivacyPolicyPage(),
+        ),
         GoRoute(
           path: RouteNames.serviceDetails,
           builder: (context, state) {
@@ -154,7 +160,7 @@ class AppRouter {
                       path: RouteNames.reviews,
                       name: RouteNames.reviews,
                       builder: (context, state) {
-                        final serviceId = state.uri.queryParameters['serviceId'];
+                        final serviceId = state.pathParameters['serviceId'];
                         return ReviewsPage(serviceId: serviceId);
                       },
                     ),
@@ -269,16 +275,16 @@ class AppRouter {
                     state: state,
                     child: const MerchantHomePage(),
                   ),
-                  routes: [
-                    GoRoute(
-                      path: RouteNames.reviews,
-                      name: RouteNames.reviews,
-                      builder: (context, state) {
-                        final serviceId = state.uri.queryParameters['serviceId'];
-                        return ReviewsPage(serviceId: serviceId);
-                      },
-                    ),
-                  ],
+                  // routes: [
+                  //   GoRoute(
+                  //     path: RouteNames.reviews,
+                  //     name: RouteNames.reviews,
+                  //     builder: (context, state) {
+                  //       final serviceId = state.uri.queryParameters['serviceId'];
+                  //       return ReviewsPage(serviceId: serviceId);
+                  //     },
+                  //   ),
+                  // ],
                 ),
               ],
             ),

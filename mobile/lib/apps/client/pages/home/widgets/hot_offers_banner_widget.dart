@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
+import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
+import 'package:wedy/features/service/presentation/bloc/service_event.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 import '../../../widgets/service_card.dart';
 
@@ -109,10 +112,9 @@ class HotOffersBannerWidget extends StatelessWidget {
                             rating: service.overallRating,
                             isFavorite: service.isLiked,
                             onTap: () => context.push('${RouteNames.serviceDetails}?id=${service.id}'),
-                            onFavoriteTap: () {
-                              // Note: This would need ServiceBloc access, but hot offers uses a separate bloc
-                              // For now, favorite tap is handled in service detail page
-                            },
+                            onFavoriteTap: () => context.read<ServiceBloc>().add(
+                              InteractWithServiceEvent(serviceId: service.id, interactionType: 'like'),
+                            ),
                           ),
                         ),
                       ),

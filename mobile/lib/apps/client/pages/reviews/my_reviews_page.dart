@@ -379,15 +379,15 @@ class _ReviewCard extends StatelessWidget {
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          color: Color(0xFFFF6666),
+                          color: const Color(0xFFFF6666),
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.error, width: 1),
                         ),
                       ),
-                      Positioned.fill(
+                      const Positioned.fill(
                         top: -4,
                         left: -4,
-                        child: const Icon(IconsaxPlusLinear.trash_square, size: 32, color: AppColors.surface),
+                        child: Icon(IconsaxPlusLinear.trash_square, size: 32, color: AppColors.surface),
                       ),
                     ],
                   ),

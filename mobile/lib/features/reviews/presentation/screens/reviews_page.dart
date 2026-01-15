@@ -259,8 +259,7 @@ class _ReviewCard extends StatelessWidget {
                         child: Image.network(
                           avatarUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(IconsaxPlusLinear.user, size: 24),
+                          errorBuilder: (context, error, stackTrace) => const Icon(IconsaxPlusLinear.user, size: 24),
                         ),
                       )
                     : const Icon(IconsaxPlusLinear.user, size: 24),
@@ -278,12 +277,7 @@ class _ReviewCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      date,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    Text(date, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               ),
@@ -304,12 +298,7 @@ class _ReviewCard extends StatelessWidget {
           ),
           if (review.comment != null && review.comment!.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.spacingM),
-            Text(
-              review.comment!,
-              style: AppTextStyles.bodyRegular.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
+            Text(review.comment!, style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textSecondary)),
           ],
         ],
       ),

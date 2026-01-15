@@ -67,23 +67,6 @@ class ServiceReviews extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (showHeader) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Fikrlar (${reviews.length})',
-                      style: AppTextStyles.headline2,
-                    ),
-                    if (!vertical)
-                      TextButton(
-                        onPressed: () => context.pushNamed(RouteNames.reviews, queryParameters: {'serviceId': serviceId!}),
-                        child: Text('Barchasini ko\'rish', style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary)),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.spacingM),
-              ],
               SizedBox(
                 height: vertical ? null : 110,
                 child: ListView.separated(
