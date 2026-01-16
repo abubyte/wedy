@@ -30,6 +30,7 @@ void main() {
       name: 'Saved Service 1',
       description: 'Description 1',
       price: 100000.0,
+      priceType: 'fixed',
       locationRegion: 'Toshkent',
       overallRating: 4.5,
       totalReviews: 10,
@@ -48,6 +49,7 @@ void main() {
       name: 'Saved Service 2',
       description: 'Description 2',
       price: 200000.0,
+      priceType: 'fixed',
       locationRegion: 'Samarqand',
       overallRating: 4.8,
       totalReviews: 15,
@@ -82,17 +84,13 @@ void main() {
         GoRoute(
           path: '/',
           name: '/',
-          builder: (context, state) => BlocProvider<ServiceBloc>.value(
-            value: mockServiceBloc,
-            child: const ClientFavoritesPage(),
-          ),
+          builder: (context, state) =>
+              BlocProvider<ServiceBloc>.value(value: mockServiceBloc, child: const ClientFavoritesPage()),
         ),
         GoRoute(
           path: '/service/:id',
           name: '/service/:id',
-          builder: (context, state) => Scaffold(
-            body: Text('Service ${state.pathParameters['id']}'),
-          ),
+          builder: (context, state) => Scaffold(body: Text('Service ${state.pathParameters['id']}')),
         ),
       ],
     );
@@ -220,4 +218,3 @@ void main() {
     });
   });
 }
-

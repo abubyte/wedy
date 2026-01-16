@@ -32,6 +32,7 @@ void main() {
     name: 'Test Service',
     description: 'Test Description',
     price: 100000.0,
+    priceType: 'fixed',
     locationRegion: 'Toshkent',
     latitude: 41.3111,
     longitude: 69.2797,

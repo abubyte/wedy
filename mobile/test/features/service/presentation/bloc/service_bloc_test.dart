@@ -33,7 +33,7 @@ void main() {
   late MockGetLikedServices mockGetLikedServices;
 
   setUpAll(() {
-    registerFallbackValue(ServiceSearchFilters() );
+    registerFallbackValue(ServiceSearchFilters());
   });
 
   setUp(() {
@@ -66,6 +66,7 @@ void main() {
     name: 'Test Service',
     description: 'Test Description',
     price: 100000.0,
+    priceType: 'fixed',
     locationRegion: 'Toshkent',
     overallRating: 4.5,
     totalReviews: 10,
@@ -94,6 +95,7 @@ void main() {
     name: 'Test Service',
     description: 'Test Description',
     price: 100000.0,
+    priceType: 'fixed',
     locationRegion: 'Toshkent',
     latitude: 41.3111,
     longitude: 69.2797,
@@ -411,6 +413,7 @@ void main() {
           name: 'Saved Service 1',
           description: 'Description 1',
           price: 100000.0,
+          priceType: 'fixed',
           locationRegion: 'Toshkent',
           overallRating: 4.5,
           totalReviews: 10,
@@ -429,6 +432,7 @@ void main() {
           name: 'Saved Service 2',
           description: 'Description 2',
           price: 200000.0,
+          priceType: 'fixed',
           locationRegion: 'Samarqand',
           overallRating: 4.8,
           totalReviews: 15,
@@ -451,10 +455,7 @@ void main() {
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadSavedServicesEvent()),
-        expect: () => [
-          const ServiceLoading(),
-          SavedServicesLoaded(tSavedServices),
-        ],
+        expect: () => [const ServiceLoading(), SavedServicesLoaded(tSavedServices)],
         verify: (_) {
           verify(() => mockGetSavedServices()).called(1);
         },
@@ -467,10 +468,7 @@ void main() {
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadSavedServicesEvent()),
-        expect: () => [
-          const ServiceLoading(),
-          const SavedServicesLoaded([]),
-        ],
+        expect: () => [const ServiceLoading(), const SavedServicesLoaded([])],
         verify: (_) {
           verify(() => mockGetSavedServices()).called(1);
         },
@@ -479,8 +477,7 @@ void main() {
       blocTest<ServiceBloc, ServiceState>(
         'emits [ServiceLoading, ServiceError] when loading saved services fails',
         build: () {
-          when(() => mockGetSavedServices())
-              .thenAnswer((_) async => const Left(NetworkFailure('Network error')));
+          when(() => mockGetSavedServices()).thenAnswer((_) async => const Left(NetworkFailure('Network error')));
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadSavedServicesEvent()),
@@ -496,15 +493,11 @@ void main() {
       blocTest<ServiceBloc, ServiceState>(
         'emits [ServiceLoading, ServiceError] when server error occurs',
         build: () {
-          when(() => mockGetSavedServices())
-              .thenAnswer((_) async => const Left(ServerFailure('Server error')));
+          when(() => mockGetSavedServices()).thenAnswer((_) async => const Left(ServerFailure('Server error')));
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadSavedServicesEvent()),
-        expect: () => [
-          const ServiceLoading(),
-          const ServiceError('Server error. Please try again later.'),
-        ],
+        expect: () => [const ServiceLoading(), const ServiceError('Server error. Please try again later.')],
         verify: (_) {
           verify(() => mockGetSavedServices()).called(1);
         },
@@ -513,15 +506,11 @@ void main() {
       blocTest<ServiceBloc, ServiceState>(
         'emits [ServiceLoading, ServiceError] when unauthorized',
         build: () {
-          when(() => mockGetSavedServices())
-              .thenAnswer((_) async => const Left(AuthFailure('Unauthorized')));
+          when(() => mockGetSavedServices()).thenAnswer((_) async => const Left(AuthFailure('Unauthorized')));
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadSavedServicesEvent()),
-        expect: () => [
-          const ServiceLoading(),
-          const ServiceError('Authentication failed. Please login again.'),
-        ],
+        expect: () => [const ServiceLoading(), const ServiceError('Authentication failed. Please login again.')],
         verify: (_) {
           verify(() => mockGetSavedServices()).called(1);
         },
