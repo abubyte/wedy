@@ -200,6 +200,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
                                   name: service.name,
                                   description: service.description,
                                   price: service.price,
+                                  priceType: service.priceType,
                                   locationRegion: service.locationRegion,
                                   overallRating: service.overallRating,
                                   totalReviews: service.totalReviews,

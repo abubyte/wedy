@@ -34,18 +34,12 @@ class _AddReviewDialogState extends State<AddReviewDialog> {
         if (state is ReviewCreated) {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Fikr muvaffaqiyatli qo\'shildi'),
-              backgroundColor: AppColors.success,
-            ),
+            const SnackBar(content: Text('Fikr muvaffaqiyatli qo\'shildi'), backgroundColor: AppColors.success),
           );
         } else if (state is ReviewError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
         }
       },
       child: AlertDialog(
@@ -63,7 +57,7 @@ class _AddReviewDialogState extends State<AddReviewDialog> {
                   final starIndex = index + 1;
                   return IconButton(
                     icon: Icon(
-                      starIndex <= _rating ? IconsaxPlusBold.star_1 : IconsaxPlusLinear.star_1,
+                      starIndex <= _rating ? Icons.star : IconsaxPlusLinear.star_1,
                       color: starIndex <= _rating ? Colors.yellow : Colors.grey,
                       size: 32,
                     ),
@@ -79,19 +73,14 @@ class _AddReviewDialogState extends State<AddReviewDialog> {
                 maxLines: 5,
                 decoration: InputDecoration(
                   hintText: 'Fikringizni yozing...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
                 ),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Bekor qilish'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Bekor qilish')),
           BlocBuilder<ReviewBloc, ReviewState>(
             builder: (context, state) {
               final isLoading = state is ReviewLoading;
@@ -100,14 +89,12 @@ class _AddReviewDialogState extends State<AddReviewDialog> {
                     ? null
                     : () {
                         context.read<ReviewBloc>().add(
-                              CreateReviewEvent(
-                                serviceId: widget.serviceId,
-                                rating: _rating,
-                                comment: _commentController.text.trim().isEmpty
-                                    ? null
-                                    : _commentController.text.trim(),
-                              ),
-                            );
+                          CreateReviewEvent(
+                            serviceId: widget.serviceId,
+                            rating: _rating,
+                            comment: _commentController.text.trim().isEmpty ? null : _commentController.text.trim(),
+                          ),
+                        );
                       },
                 child: isLoading ? const CircularProgressIndicator() : const Text('Yuborish'),
               );
