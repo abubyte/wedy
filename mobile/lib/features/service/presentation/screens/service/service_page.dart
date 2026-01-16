@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wedy/core/utils/shimmer_helper.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 import 'package:wedy/shared/widgets/circular_button.dart';
 import 'package:wedy/shared/widgets/section_header.dart';
@@ -215,7 +216,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       const SizedBox(height: AppDimensions.spacingL),
 
                       // Price
-                      ServicePriceButton(price: service.price),
+                      ServicePriceButton(price: service.price, priceType: service.priceType,),
                       const SizedBox(height: AppDimensions.spacingL),
 
                       // Gallery Items
@@ -307,9 +308,9 @@ class _WedyServicePageState extends State<WedyServicePage> {
                         applyPadding: true,
                         hasAction: true,
                         onTap: () => context.pushNamed(
-                          RouteNames.reviews,
+                          RouteNames.myReviews,
                           extra: 'service',
-                          queryParameters: {'serviceId': service.id},
+                          pathParameters: {'serviceId': service.id},
                         ),
                       ),
                       const SizedBox(height: AppDimensions.spacingSM),
