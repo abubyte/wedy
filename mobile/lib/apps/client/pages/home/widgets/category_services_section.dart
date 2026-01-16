@@ -32,7 +32,7 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
     super.initState();
     // Load services for this category immediately
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_hasLoaded && !widget.isLoading) {
+      if (mounted && !_hasLoaded) {
         _loadCategoryServices();
       }
     });
@@ -41,8 +41,9 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
   @override
   void didUpdateWidget(CategoryServicesSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If loading finished and we haven't loaded yet, trigger load
-    if (oldWidget.isLoading && !widget.isLoading && !_hasLoaded) {
+    // Reload if category changed
+    if (oldWidget.category.id != widget.category.id) {
+      _hasLoaded = false;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _loadCategoryServices();
@@ -52,7 +53,7 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
   }
 
   void _loadCategoryServices() {
-    if (widget.isLoading || _hasLoaded) return;
+    if (_hasLoaded) return;
 
     final globalBloc = context.read<ServiceBloc>();
     globalBloc.add(
@@ -69,24 +70,22 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
       value: globalBloc,
       child: BlocListener<ServiceBloc, ServiceState>(
         listenWhen: (previous, current) {
-          // Listen when services are loaded and we're waiting for this category's data
-          return widget.isLoading && (current is UniversalServicesState || current is ServicesLoaded);
+          // Listen when services are loaded for this category
+          return current is UniversalServicesState || current is ServicesLoaded;
         },
         listener: (context, state) {
-          if (widget.isLoading) {
-            List<ServiceListItem>? categoryServices;
-            if (state is UniversalServicesState) {
-              categoryServices = state.categoryServices[widget.category.id];
-            } else if (state is ServicesLoaded) {
-              categoryServices = state.allServices.where((s) => s.categoryId == widget.category.id).toList();
-            }
+          List<ServiceListItem>? categoryServices;
+          if (state is UniversalServicesState) {
+            categoryServices = state.categoryServices[widget.category.id];
+          } else if (state is ServicesLoaded) {
+            categoryServices = state.allServices.where((s) => s.categoryId == widget.category.id).toList();
+          }
 
-            if (categoryServices != null && (categoryServices.isNotEmpty || categoryServices.isEmpty)) {
-              setState(() {
-                _cachedServices = categoryServices!;
-                _hasLoaded = true;
-              });
-            }
+          if (categoryServices != null && categoryServices.isNotEmpty) {
+            setState(() {
+              _cachedServices = categoryServices!;
+              _hasLoaded = true;
+            });
           }
         },
         child: BlocBuilder<ServiceBloc, ServiceState>(
@@ -132,7 +131,7 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
                 const SizedBox(height: AppDimensions.spacingS),
 
                 // Services for this category
-                if (widget.isLoading)
+                if (!_hasLoaded && services.isEmpty)
                   SizedBox(
                     height: 211,
                     child: ListView.separated(

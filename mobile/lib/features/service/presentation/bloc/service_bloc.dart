@@ -49,7 +49,15 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   }
 
   Future<void> _onLoadServices(LoadServicesEvent event, Emitter<ServiceState> emit) async {
-    emit(const ServiceLoading());
+    // Only emit ServiceLoading for general/paginated loads, not for category-specific or featured loads
+    // This prevents resetting the entire UI when loading individual category data
+    final isCategoryLoad =
+        event.filters?.categoryId != null && (event.filters?.query == null || event.filters!.query!.isEmpty);
+    final isFeaturedLoad = event.featured == true;
+
+    if (!isCategoryLoad && !isFeaturedLoad) {
+      emit(const ServiceLoading());
+    }
 
     // Reset accumulated services for new load
     _accumulatedServices = [];
@@ -155,6 +163,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         name: service.name,
         description: service.description,
         price: service.price,
+        priceType: service.priceType,
         locationRegion: service.locationRegion,
         overallRating: service.overallRating,
         totalReviews: service.totalReviews,
@@ -227,6 +236,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
             name: service.name,
             description: service.description,
             price: service.price,
+            priceType: service.priceType,
             locationRegion: service.locationRegion,
             overallRating: service.overallRating,
             totalReviews: service.totalReviews,
@@ -281,6 +291,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
               name: service.name,
               description: service.description,
               price: service.price,
+              priceType: service.priceType,
               locationRegion: service.locationRegion,
               overallRating: service.overallRating,
               totalReviews: service.totalReviews,
@@ -313,6 +324,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
                 name: service.name,
                 description: service.description,
                 price: service.price,
+                priceType: service.priceType,
                 locationRegion: service.locationRegion,
                 overallRating: service.overallRating,
                 totalReviews: service.totalReviews,
@@ -346,6 +358,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
               name: service.name,
               description: service.description,
               price: service.price,
+              priceType: service.priceType,
               locationRegion: service.locationRegion,
               overallRating: service.overallRating,
               totalReviews: service.totalReviews,
@@ -408,6 +421,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
             name: service.name,
             description: service.description,
             price: service.price,
+            priceType: service.priceType,
             locationRegion: service.locationRegion,
             overallRating: service.overallRating,
             totalReviews: service.totalReviews,
@@ -436,6 +450,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         name: updatedServiceDetails.name,
         description: updatedServiceDetails.description,
         price: updatedServiceDetails.price,
+        priceType: updatedServiceDetails.priceType,
         locationRegion: updatedServiceDetails.locationRegion,
         latitude: updatedServiceDetails.latitude,
         longitude: updatedServiceDetails.longitude,
@@ -508,6 +523,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
             name: service.name,
             description: service.description,
             price: service.price,
+            priceType: service.priceType,
             locationRegion: service.locationRegion,
             overallRating: service.overallRating,
             totalReviews: service.totalReviews,
@@ -563,6 +579,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
                 name: s.name,
                 description: s.description,
                 price: s.price,
+                priceType: service.priceType,
                 locationRegion: s.locationRegion,
                 overallRating: s.overallRating,
                 totalReviews: s.totalReviews,
@@ -603,6 +620,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
                 name: s.name,
                 description: s.description,
                 price: s.price,
+                priceType: service.priceType,
                 locationRegion: s.locationRegion,
                 overallRating: s.overallRating,
                 totalReviews: s.totalReviews,
@@ -633,6 +651,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         name: updatedServiceDetails.name,
         description: updatedServiceDetails.description,
         price: updatedServiceDetails.price,
+        priceType: updatedServiceDetails.priceType,
         locationRegion: updatedServiceDetails.locationRegion,
         latitude: updatedServiceDetails.latitude,
         longitude: updatedServiceDetails.longitude,
@@ -685,6 +704,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       name: cachedService.name,
       description: cachedService.description,
       price: cachedService.price,
+      priceType: cachedService.priceType,
       locationRegion: cachedService.locationRegion,
       overallRating: cachedService.overallRating,
       totalReviews: cachedService.totalReviews,
@@ -733,6 +753,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
             name: service.name,
             description: service.description,
             price: service.price,
+            priceType: service.priceType,
             locationRegion: service.locationRegion,
             overallRating: service.overallRating,
             totalReviews: service.totalReviews,
@@ -769,6 +790,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
           name: service.name,
           description: service.description,
           price: service.price,
+          priceType: service.priceType,
           locationRegion: service.locationRegion,
           latitude: service.latitude,
           longitude: service.longitude,
@@ -816,6 +838,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
             name: service.name,
             description: service.description,
             price: service.price,
+            priceType: service.priceType,
             locationRegion: service.locationRegion,
             overallRating: service.overallRating,
             totalReviews: service.totalReviews,
@@ -855,6 +878,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
             name: service.name,
             description: service.description,
             price: service.price,
+            priceType: service.priceType,
             locationRegion: service.locationRegion,
             overallRating: service.overallRating,
             totalReviews: service.totalReviews,
@@ -907,6 +931,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         name: cachedService.name,
         description: cachedService.description,
         price: cachedService.price,
+        priceType: cachedService.priceType,
         locationRegion: cachedService.locationRegion,
         overallRating: cachedService.overallRating,
         totalReviews: cachedService.totalReviews,
@@ -942,6 +967,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
             name: service.name,
             description: service.description,
             price: service.price,
+            priceType: service.priceType,
             locationRegion: service.locationRegion,
             overallRating: service.overallRating,
             totalReviews: service.totalReviews,
@@ -974,6 +1000,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
           name: service.name,
           description: service.description,
           price: service.price,
+          priceType: service.priceType,
           locationRegion: service.locationRegion,
           latitude: service.latitude,
           longitude: service.longitude,

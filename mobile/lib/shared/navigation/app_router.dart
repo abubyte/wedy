@@ -98,7 +98,7 @@ class AppRouter {
               if (authState is Authenticated && state.extra == 'user') {
                 bloc.add(LoadUserReviewsEvent(userId: authState.user.id));
               } else if (state.extra == 'service') {
-                bloc.add(LoadReviewsEvent(serviceId: state.uri.queryParameters['serviceId'] as String));
+                bloc.add(LoadReviewsEvent(serviceId: state.pathParameters['serviceId'] as String));
               }
               return bloc;
             },
@@ -116,21 +116,6 @@ class AppRouter {
           builder: (context, state) {
             final serviceId = state.uri.queryParameters['id'];
             return WedyServicePage(serviceId: serviceId);
-          },
-        ),
-        GoRoute(
-          path: RouteNames.reviews,
-          name: RouteNames.reviews,
-          builder: (context, state) {
-            final serviceId = state.uri.queryParameters['serviceId'];
-            return BlocProvider(
-              create: (context) {
-                final bloc = getIt<ReviewBloc>();
-                bloc.add(LoadReviewsEvent(serviceId: serviceId!, page: 1, limit: 20));
-                return bloc;
-              },
-              child: ReviewsPage(serviceId: serviceId),
-            );
           },
         ),
         StatefulShellRoute.indexedStack(
@@ -169,6 +154,14 @@ class AppRouter {
                       builder: (context, state) {
                         final query = state.uri.queryParameters['q'];
                         return ClientSearchPage(initialQuery: query);
+                      },
+                    ),
+                    GoRoute(
+                      path: RouteNames.reviews,
+                      name: RouteNames.reviews,
+                      builder: (context, state) {
+                        final serviceId = state.pathParameters['serviceId'];
+                        return ReviewsPage(serviceId: serviceId);
                       },
                     ),
                   ],
