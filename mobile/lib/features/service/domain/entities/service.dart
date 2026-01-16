@@ -4,6 +4,7 @@ class Service {
   final String name;
   final String description;
   final double price;
+  final String priceType;
   final String locationRegion;
   final double? latitude;
   final double? longitude;
@@ -31,6 +32,7 @@ class Service {
     required this.name,
     required this.description,
     required this.price,
+    required this.priceType,
     required this.locationRegion,
     this.latitude,
     this.longitude,
@@ -69,6 +71,7 @@ class ServiceListItem {
   final String name;
   final String description;
   final double price;
+  final String priceType;
   final String locationRegion;
   final double overallRating;
   final int totalReviews;
@@ -89,6 +92,7 @@ class ServiceListItem {
     required this.name,
     required this.description,
     required this.price,
+    required this.priceType,
     required this.locationRegion,
     required this.overallRating,
     required this.totalReviews,

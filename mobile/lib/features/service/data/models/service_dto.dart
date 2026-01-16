@@ -108,6 +108,8 @@ class ServiceListItemDto {
   final String name;
   final String description;
   final double price;
+  @JsonKey(name: 'price_type')
+  final String priceType;
   @JsonKey(name: 'location_region')
   final String locationRegion;
   @JsonKey(name: 'overall_rating')
@@ -141,6 +143,7 @@ class ServiceListItemDto {
     required this.name,
     required this.description,
     required this.price,
+    required this.priceType,
     required this.locationRegion,
     required this.overallRating,
     required this.totalReviews,
@@ -166,6 +169,7 @@ class ServiceListItemDto {
       name: name,
       description: description,
       price: price,
+      priceType: priceType,
       locationRegion: locationRegion,
       overallRating: overallRating,
       totalReviews: totalReviews,
@@ -190,6 +194,8 @@ class ServiceDetailDto {
   final String name;
   final String description;
   final double price;
+  @JsonKey(name: 'price_type')
+  final String priceType;
   @JsonKey(name: 'location_region')
   final String locationRegion;
   final double? latitude;
@@ -234,6 +240,7 @@ class ServiceDetailDto {
     required this.name,
     required this.description,
     required this.price,
+    required this.priceType,
     required this.locationRegion,
     this.latitude,
     this.longitude,
@@ -266,6 +273,7 @@ class ServiceDetailDto {
       name: name,
       description: description,
       price: price,
+      priceType: priceType,
       locationRegion: locationRegion,
       latitude: latitude,
       longitude: longitude,
@@ -417,6 +425,8 @@ class MerchantServiceDto {
   @JsonKey(name: 'category_name')
   final String categoryName;
   final double price;
+  @JsonKey(name: 'price_type')
+  final String priceType;
   @JsonKey(name: 'location_region')
   final String locationRegion;
   final double? latitude;
@@ -455,6 +465,7 @@ class MerchantServiceDto {
     required this.categoryId,
     required this.categoryName,
     required this.price,
+    required this.priceType,
     required this.locationRegion,
     this.latitude,
     this.longitude,
@@ -507,6 +518,7 @@ class MerchantServiceDto {
       name: name,
       description: description,
       price: price,
+      priceType: priceType,
       locationRegion: locationRegion,
       latitude: latitude,
       longitude: longitude,

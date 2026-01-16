@@ -2,8 +2,9 @@ part of '../service_page.dart';
 
 class ServicePriceButton extends StatelessWidget {
   final double price;
+  final String priceType;
 
-  const ServicePriceButton({super.key, required this.price});
+  const ServicePriceButton({super.key, required this.price, required this.priceType});
 
   String _formatPrice(double price) {
     // Format price with thousand separators
@@ -15,7 +16,13 @@ class ServicePriceButton extends StatelessWidget {
       }
       buffer.write(priceStr[i]);
     }
-    return '${buffer.toString()} so\'m';
+
+    if (priceType == 'fixed') return '${buffer.toString()} so\'m';
+    if (priceType == 'daily') return "1 kun ${buffer.toString()} so'm";
+    if (priceType == 'hourly') return "1 soati ${buffer.toString()} so'm";
+    if (priceType == 'person') return "1 kishi uchun ${buffer.toString()} so'm";
+
+    return 'Kelishamiz';
   }
 
   @override
