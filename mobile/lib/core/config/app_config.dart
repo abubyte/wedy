@@ -27,6 +27,7 @@ class AppConfig {
   late final bool enableLogging;
   late final bool enableAnalytics;
   late final String googleMapsApiKey;
+  late final String? iosAppStoreId;
 
   /// Initialize the app configuration
   /// This should be called before runApp()
@@ -38,8 +39,9 @@ class AppConfig {
     // Set environment-specific values
     switch (environment) {
       case Environment.development:
-        // _instance!.baseUrl = 'http://192.168.100.34:8000';
-        _instance!.baseUrl = 'http://195.200.29.240:8000';
+        // _instance!.baseUrl = 'http://10.0.2.2:8000'; // Android emulator localhost
+        // _instance!.baseUrl = 'http://localhost:8000'; // iOS simulator
+        _instance!.baseUrl = 'http://195.200.29.240:8000'; // Production server
         _instance!.enableLogging = true;
         _instance!.enableAnalytics = false;
         break;
@@ -82,6 +84,9 @@ class AppConfig {
 
     // Google Maps API key (TODO: Move to environment variables or secure storage)
     _instance!.googleMapsApiKey = 'AIzaSyAbOGkhFhfS0xG6E5o3KGX1MvwdxoimDFU';
+
+    // iOS App Store ID (set when app is published to App Store)
+    _instance!.iosAppStoreId = null;
   }
 
   /// Get full API URL

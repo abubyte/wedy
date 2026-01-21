@@ -14,6 +14,7 @@ import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/get_profile.dart';
 import '../../features/profile/domain/usecases/update_profile.dart';
 import '../../features/profile/domain/usecases/upload_avatar.dart';
+import '../../features/profile/domain/usecases/delete_avatar.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/service/data/datasources/service_remote_datasource.dart';
 import '../../features/service/data/repositories/service_repository_impl.dart';
@@ -84,6 +85,7 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetProfile(getIt()));
   getIt.registerLazySingleton(() => UpdateProfile(getIt()));
   getIt.registerLazySingleton(() => UploadAvatar(getIt()));
+  getIt.registerLazySingleton(() => DeleteAvatar(getIt()));
 
   // BLoC
   getIt.registerFactory(
@@ -98,7 +100,12 @@ Future<void> init() async {
   );
 
   getIt.registerFactory(
-    () => ProfileBloc(getProfileUseCase: getIt(), updateProfileUseCase: getIt(), uploadAvatarUseCase: getIt()),
+    () => ProfileBloc(
+      getProfileUseCase: getIt(),
+      updateProfileUseCase: getIt(),
+      uploadAvatarUseCase: getIt(),
+      deleteAvatarUseCase: getIt(),
+    ),
   );
 
   // Service data sources

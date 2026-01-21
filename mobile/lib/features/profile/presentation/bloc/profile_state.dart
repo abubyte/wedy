@@ -50,6 +50,16 @@ class AvatarUploaded extends ProfileState {
   List<Object?> get props => [avatarUrl, user];
 }
 
+/// Avatar deleted successfully
+class AvatarDeleted extends ProfileState {
+  final User user;
+
+  const AvatarDeleted({required this.user});
+
+  @override
+  List<Object?> get props => [user];
+}
+
 /// Error state
 class ProfileError extends ProfileState {
   final String message;

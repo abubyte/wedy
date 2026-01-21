@@ -10,32 +10,88 @@ import 'package:wedy/shared/widgets/circular_button.dart';
 class HelpPage extends StatelessWidget {
   const HelpPage({super.key});
 
-  Future<void> _makePhoneCall(String phoneNumber) async {
+  Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
     final uri = Uri.parse('tel:$phoneNumber');
-    // if (await canLaunchUrl(uri)) {
-    await launchUrl(uri);
-    // }
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Qo\'ng\'iroq qilish imkoni yo\'q')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xatolik: ${e.toString()}')),
+        );
+      }
+    }
   }
 
-  Future<void> _openTelegram() async {
+  Future<void> _openTelegram(BuildContext context) async {
     final uri = Uri.parse('https://t.me/wedysupportbot');
-    // if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-    // }
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Telegram ochish imkoni yo\'q')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xatolik: ${e.toString()}')),
+        );
+      }
+    }
   }
 
-  Future<void> _openWhatsApp() async {
+  Future<void> _openWhatsApp(BuildContext context) async {
     final uri = Uri.parse('https://wa.me/998886116165');
-    // if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-    // }
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('WhatsApp ochish imkoni yo\'q')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xatolik: ${e.toString()}')),
+        );
+      }
+    }
   }
 
-  Future<void> _openWebsite() async {
+  Future<void> _openWebsite(BuildContext context) async {
     final uri = Uri.parse('https://wedy.uz');
-    // if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-    // }
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Veb-sayt ochish imkoni yo\'q')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Xatolik: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
@@ -60,57 +116,31 @@ class HelpPage extends StatelessWidget {
               ),
               const SizedBox(height: AppDimensions.spacingM),
 
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                  border: Border.all(color: AppColors.border, width: .5),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.spacingM,
-                  vertical: AppDimensions.spacingS,
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: AppDimensions.spacingXS),
-                    GestureDetector(
-                      onTap: () => _makePhoneCall('+998886116165'),
-                      child: Row(
-                        children: [
-                          const Icon(IconsaxPlusLinear.call_calling, size: 24, color: Colors.black),
-                          const SizedBox(width: AppDimensions.spacingM),
-                          Text(
-                            '+998 88 611 61 65',
-                            style: AppTextStyles.bodyRegular.copyWith(fontSize: 14, fontWeight: FontWeight.w500),
-                          ),
-                          const Spacer(),
-                          const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                        ],
+              GestureDetector(
+                onTap: () => _makePhoneCall(context, '+998886116165'),
+                child: Container(
+                  height: 43,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                    border: Border.all(color: AppColors.border, width: .5),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.spacingM,
+                    vertical: AppDimensions.spacingS,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(IconsaxPlusLinear.call_calling, size: 24, color: Colors.black),
+                      const SizedBox(width: AppDimensions.spacingM),
+                      Text(
+                        '+998 88 611 61 65',
+                        style: AppTextStyles.bodyRegular.copyWith(fontSize: 14, fontWeight: FontWeight.w500),
                       ),
-                    ),
-                    const SizedBox(height: AppDimensions.spacingS),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
-                      child: Divider(height: 1, color: AppColors.border),
-                    ),
-                    const SizedBox(height: AppDimensions.spacingS),
-                    GestureDetector(
-                      onTap: () => _makePhoneCall('+998886116165'),
-                      child: Row(
-                        children: [
-                          const Icon(IconsaxPlusLinear.call_calling, size: 24, color: Colors.black),
-                          const SizedBox(width: AppDimensions.spacingM),
-                          Text(
-                            '+998 88 611 61 65',
-                            style: AppTextStyles.bodyRegular.copyWith(fontSize: 14, fontWeight: FontWeight.w500),
-                          ),
-                          const Spacer(),
-                          const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.spacingXS),
-                  ],
+                      const Spacer(),
+                      const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: AppDimensions.spacingM),
@@ -129,7 +159,7 @@ class HelpPage extends StatelessWidget {
                   children: [
                     const SizedBox(height: AppDimensions.spacingXS),
                     GestureDetector(
-                      onTap: () => _openTelegram(),
+                      onTap: () => _openTelegram(context),
                       child: Row(
                         children: [
                           const Icon(IconsaxPlusLinear.send_2, size: 24, color: Colors.black),
@@ -150,7 +180,7 @@ class HelpPage extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimensions.spacingS),
                     GestureDetector(
-                      onTap: () => _openWhatsApp(),
+                      onTap: () => _openWhatsApp(context),
                       child: Row(
                         children: [
                           const Icon(IconsaxPlusLinear.message, size: 24, color: Colors.black),
@@ -171,7 +201,7 @@ class HelpPage extends StatelessWidget {
               const SizedBox(height: AppDimensions.spacingM),
 
               GestureDetector(
-                onTap: () => _openWebsite(),
+                onTap: () => _openWebsite(context),
                 child: Container(
                   height: 43,
                   decoration: BoxDecoration(

@@ -15,6 +15,7 @@ import 'package:wedy/features/auth/presentation/bloc/auth_state.dart';
 import 'package:wedy/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:wedy/features/profile/presentation/bloc/profile_event.dart';
 import 'package:wedy/features/profile/presentation/bloc/profile_state.dart';
+import 'package:wedy/core/config/app_config.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -85,6 +86,12 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(const SnackBar(content: Text('Profil yangilandi'), backgroundColor: AppColors.success));
+                // Update auth state with new user data
+                context.read<AuthBloc>().add(const CheckAuthStatusEvent());
+              } else if (state is AvatarDeleted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Rasm o\'chirildi'), backgroundColor: AppColors.success));
                 // Update auth state with new user data
                 context.read<AuthBloc>().add(const CheckAuthStatusEvent());
               }
@@ -523,7 +530,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   void _showAvatarEditOptions() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
+      builder: (bottomSheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -531,7 +538,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
               leading: const Icon(IconsaxPlusLinear.camera),
               title: const Text('Kameradan olish'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(bottomSheetContext);
                 _pickImageFromCamera();
               },
             ),
@@ -539,7 +546,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
               leading: const Icon(IconsaxPlusLinear.gallery),
               title: const Text('Galereyadan tanlash'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(bottomSheetContext);
                 _pickImageFromGallery();
               },
             ),
@@ -547,12 +554,36 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
               leading: const Icon(IconsaxPlusLinear.trash, color: Colors.red),
               title: const Text('O\'chirish', style: TextStyle(color: Colors.red)),
               onTap: () {
-                Navigator.pop(context);
-                // TODO: Implement delete avatar
+                Navigator.pop(bottomSheetContext);
+                _deleteAvatar();
               },
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _deleteAvatar() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Rasmni o\'chirish'),
+        content: const Text('Haqiqatan ham profil rasmingizni o\'chirmoqchimisiz?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Bekor qilish'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<ProfileBloc>().add(const DeleteAvatarEvent());
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('O\'chirish'),
+          ),
+        ],
       ),
     );
   }
@@ -598,9 +629,20 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           await launchUrl(webUrl, mode: LaunchMode.externalApplication);
         }
       } else if (Platform.isIOS) {
-        // For iOS, open App Store (you'll need to set the app ID)
-        final url = Uri.parse('https://apps.apple.com/app/id1234567890?action=write-review');
-        await launchUrl(url, mode: LaunchMode.externalApplication);
+        final iosAppStoreId = AppConfig.instance.iosAppStoreId;
+        if (iosAppStoreId != null) {
+          final url = Uri.parse('https://apps.apple.com/app/id$iosAppStoreId?action=write-review');
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ilova hali App Store\'da mavjud emas'),
+                backgroundColor: AppColors.warning,
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -634,73 +676,5 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         ).showSnackBar(SnackBar(content: Text('Galereya xatosi: ${e.toString()}'), backgroundColor: AppColors.error));
       }
     }
-  }
-
-  void _showEditProfileDialog(BuildContext context, user) {
-    final nameController = TextEditingController(text: user.name);
-    final phoneController = TextEditingController(text: user.phoneNumber);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Profilni tahrirlash'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Ism', hintText: 'Ismingizni kiriting'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: phoneController,
-              decoration: const InputDecoration(labelText: 'Telefon raqam', hintText: 'Telefon raqamingizni kiriting'),
-              keyboardType: TextInputType.phone,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
-          TextButton(
-            onPressed: () {
-              final newName = nameController.text.trim();
-              final newPhone = phoneController.text.trim();
-
-              if (newName.isNotEmpty || newPhone.isNotEmpty) {
-                context.read<ProfileBloc>().add(
-                  UpdateProfileEvent(
-                    name: newName.isNotEmpty ? newName : null,
-                    phoneNumber: newPhone.isNotEmpty && newPhone != user.phoneNumber ? newPhone : null,
-                  ),
-                );
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Saqlash'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Chiqish'),
-        content: const Text('Haqiqatan ham chiqmoqchimisiz?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
-          TextButton(
-            onPressed: () {
-              context.read<AuthBloc>().add(const LogoutEvent());
-              Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Chiqish'),
-          ),
-        ],
-      ),
-    );
   }
 }

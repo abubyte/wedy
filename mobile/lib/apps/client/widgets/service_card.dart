@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -124,10 +126,22 @@ class ClientServiceCard extends StatelessWidget {
           child: SizedBox(
             width: double.infinity,
             height: double.infinity,
-            child: Image.network(
-              imageUrl,
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+              placeholder: (context, url) => Shimmer.fromColors(
+                baseColor: const Color(0xFFE5E7EB),
+                highlightColor: const Color(0xFFFFFFFF),
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
                 color: AppColors.surfaceMuted,
                 alignment: Alignment.center,
                 child: const Icon(IconsaxPlusLinear.image, color: AppColors.textMuted),

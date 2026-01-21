@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,6 +26,7 @@ class WedyClientApp extends StatefulWidget {
 
 class _WedyClientAppState extends State<WedyClientApp> {
   final DeepLinkService _deepLinkService = DeepLinkService();
+  StreamSubscription<String>? _deepLinkSubscription;
 
   @override
   void initState() {
@@ -58,9 +61,15 @@ class _WedyClientAppState extends State<WedyClientApp> {
     }
   }
 
+  @override
+  void dispose() {
+    _deepLinkSubscription?.cancel();
+    super.dispose();
+  }
+
   /// Listen to deep links when app is running
   void _listenToDeepLinks() {
-    _deepLinkService.deepLinkStream.listen((deepLink) {
+    _deepLinkSubscription = _deepLinkService.deepLinkStream.listen((deepLink) {
       if (mounted) {
         _navigateFromDeepLink(deepLink);
       }

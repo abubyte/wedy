@@ -86,6 +86,23 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> deleteAvatar() async {
+    try {
+      final dio = ApiClient.instance;
+      await dio.delete('/api/v1/users/avatar');
+
+      // Reload profile to get updated user data
+      await getProfile();
+
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(NetworkFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
+
   /// Handle Dio errors and convert to appropriate Failure
   Failure _handleDioError(DioException error) {
     if (error.response != null) {

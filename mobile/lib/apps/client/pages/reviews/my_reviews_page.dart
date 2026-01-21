@@ -273,6 +273,64 @@ class _ReviewCard extends StatelessWidget {
 
   const _ReviewCard({required this.review, this.service, required this.onDelete});
 
+  Widget _buildServiceImage(ServiceListItem? service) {
+    final imageUrl = service?.mainImageUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        errorWidget: (context, url, error) =>
+            const Icon(IconsaxPlusLinear.image, size: 40, color: Colors.grey),
+      );
+    }
+    return const Icon(IconsaxPlusLinear.image, size: 40, color: Colors.grey);
+  }
+
+  String _formatPrice(double price) {
+    return price.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]} ',
+    );
+  }
+
+  Widget _buildPriceWidget(ServiceListItem? service) {
+    if (service == null) {
+      return Text(
+        'Yuklanmoqda...',
+        style: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+      );
+    }
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: _formatPrice(service.price),
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          TextSpan(
+            text: " so'm",
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 1,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -299,14 +357,7 @@ class _ReviewCard extends StatelessWidget {
                       width: 50,
                       height: 50,
                       color: AppColors.border,
-                      child: service?.mainImageUrl != null && service!.mainImageUrl!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: service!.mainImageUrl!,
-                              fit: BoxFit.cover,
-                              errorWidget: (context, url, error) =>
-                                  const Icon(IconsaxPlusLinear.image, size: 40, color: Colors.grey),
-                            )
-                          : const Icon(IconsaxPlusLinear.image, size: 40, color: Colors.grey),
+                      child: _buildServiceImage(service),
                     ),
                   ),
                 ),
@@ -319,38 +370,7 @@ class _ReviewCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Price
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: service != null
-                                    ? service!.price
-                                          .toStringAsFixed(0)
-                                          .replaceAllMapped(
-                                            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                                            (Match m) => '${m[1]} ',
-                                          )
-                                    : 'Yuklanmoqda...',
-                                style: AppTextStyles.bodyLarge.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              TextSpan(
-                                text: " so'm",
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 10,
-                                  height: 1.6,
-                                ),
-                              ),
-                            ],
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
+                        _buildPriceWidget(service),
 
                         // Service name
                         Text(

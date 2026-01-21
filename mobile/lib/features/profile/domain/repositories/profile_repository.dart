@@ -12,4 +12,7 @@ abstract class ProfileRepository {
 
   /// Upload user avatar
   Future<Either<Failure, String>> uploadAvatar(String imagePath);
+
+  /// Delete user avatar
+  Future<Either<Failure, void>> deleteAvatar();
 }

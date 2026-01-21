@@ -140,6 +140,38 @@ async def upload_avatar(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Avatar upload failed: {str(e)}")
 
 
+@router.delete("/avatar", response_model=SuccessResponse)
+async def delete_avatar(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Delete user avatar from S3 and clear avatar_url."""
+    try:
+        user_repo = UserRepository(db)
+
+        # Delete from S3 if exists
+        if current_user.avatar_url:
+            try:
+                s3_image_manager.delete_image(current_user.avatar_url)
+            except Exception:
+                # Log error but continue - S3 deletion is not critical
+                pass
+
+        # Clear avatar URL
+        current_user.avatar_url = None
+        await user_repo.update(current_user)
+
+        return SuccessResponse(
+            success=True,
+            message="Avatar deleted successfully"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Avatar deletion failed: {str(e)}"
+        )
+
+
 @router.get("/interactions", response_model=UserInteractionsResponse)
 async def get_user_interactions(
     current_user: User = Depends(get_current_user),

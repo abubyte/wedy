@@ -34,3 +34,8 @@ class UploadAvatarEvent extends ProfileEvent {
   @override
   List<Object?> get props => [imagePath];
 }
+
+/// Event to delete avatar
+class DeleteAvatarEvent extends ProfileEvent {
+  const DeleteAvatarEvent();
+}

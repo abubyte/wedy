@@ -15,6 +15,7 @@ class ApiConstants {
   // User endpoints
   static String get userProfile => '$apiVersion/users/profile';
   static String get uploadAvatar => '$apiVersion/users/avatar';
+  static String get deleteAvatar => '$apiVersion/users/avatar';
   static String get userInteractions => '$apiVersion/users/interactions';
 
   // Services endpoints
