@@ -139,10 +139,10 @@ void main() {
   group('WedyServicePage - Service Details Loaded', () {
     testWidgets('should display service details when service is loaded', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(ServiceDetailsLoaded(tService));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServiceDetailsLoaded(tService), serviceId: 'service1'));
+      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
 
       // Assert
       expect(find.text('Test Service'), findsOneWidget);
@@ -155,10 +155,10 @@ void main() {
 
     testWidgets('should display service statistics', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(ServiceDetailsLoaded(tService));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServiceDetailsLoaded(tService), serviceId: 'service1'));
+      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
 
       // Assert
       expect(find.text('Statistika'), findsOneWidget);
@@ -169,10 +169,10 @@ void main() {
 
     testWidgets('should display gallery section when service has images', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(ServiceDetailsLoaded(tService));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServiceDetailsLoaded(tService), serviceId: 'service1'));
+      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
 
       // Assert
       expect(find.text('Galareya'), findsOneWidget);
@@ -180,10 +180,10 @@ void main() {
 
     testWidgets('should display contact tabs', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(ServiceDetailsLoaded(tService));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServiceDetailsLoaded(tService), serviceId: 'service1'));
+      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
 
       // Assert
       // Contact tabs should be visible (phone, location, social)
@@ -192,10 +192,10 @@ void main() {
 
     testWidgets('should display location card when location data is available', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(ServiceDetailsLoaded(tService));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServiceDetailsLoaded(tService), serviceId: 'service1'));
+      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
 
       // Assert
       // Location card should be visible when latitude and longitude are available

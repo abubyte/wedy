@@ -95,19 +95,19 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
       bool needsLoad = false;
 
       if (widget.hotOffers) {
-        final hasFeatured = currentState is UniversalServicesState
+        final hasFeatured = currentState is ServicesLoaded
             ? currentState.featuredServices != null && currentState.featuredServices!.isNotEmpty
             : false;
         needsLoad = !_hasCheckedInitialLoad || (!hasFeatured && currentState is! ServiceLoading);
       } else if (category != null) {
-        final hasCategory = currentState is UniversalServicesState
+        final hasCategory = currentState is ServicesLoaded
             ? currentState.categoryServices[category.id] != null &&
                   currentState.categoryServices[category.id]!.isNotEmpty
             : false;
         needsLoad = !_hasCheckedInitialLoad || (!hasCategory && currentState is! ServiceLoading);
       } else {
-        final hasPaginated = currentState is UniversalServicesState
-            ? currentState.currentPaginatedServices != null && currentState.currentPaginatedServices!.isNotEmpty
+        final hasPaginated = currentState is ServicesLoaded
+            ? currentState.paginatedServices != null && currentState.paginatedServices!.isNotEmpty
             : false;
         needsLoad = !_hasCheckedInitialLoad || (!hasPaginated && currentState is! ServiceLoading);
       }
@@ -135,7 +135,7 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
           if (_refreshController.isRefresh) {
-            if (state is UniversalServicesState || state is ServicesLoaded) {
+            if (state is ServicesLoaded) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted && _refreshController.isRefresh) {
                   _refreshController.refreshCompleted();
@@ -152,20 +152,20 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
         },
         child: BlocBuilder<ServiceBloc, ServiceState>(
           builder: (context, state) {
-            // Get services from UniversalServicesState or fallback to ServicesLoaded
-            // If searching, use currentPaginatedServices (search results)
+            // Get services from ServicesLoaded
+            // If searching, use paginatedServices (search results)
             // Otherwise use featured/category services
             final services = _isSearching
-                ? (state is UniversalServicesState
-                      ? (state.currentPaginatedServices ?? <ServiceListItem>[])
-                      : (state is ServicesLoaded ? state.allServices : <ServiceListItem>[]))
-                : (state is UniversalServicesState
+                ? (state is ServicesLoaded
+                      ? (state.paginatedServices ?? <ServiceListItem>[])
+                      : <ServiceListItem>[])
+                : (state is ServicesLoaded
                       ? (widget.hotOffers
                             ? (state.featuredServices ?? <ServiceListItem>[])
                             : (widget.category != null
                                   ? (state.categoryServices[widget.category!.id] ?? <ServiceListItem>[])
-                                  : (state.currentPaginatedServices ?? <ServiceListItem>[])))
-                      : (state is ServicesLoaded ? state.allServices : <ServiceListItem>[]));
+                                  : (state.paginatedServices ?? <ServiceListItem>[])))
+                      : <ServiceListItem>[]);
             final isLoading = state is ServiceLoading || state is ServiceInitial;
             final error = state is ServiceError ? state.message : null;
 

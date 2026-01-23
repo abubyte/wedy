@@ -114,10 +114,10 @@ void main() {
 
     testWidgets('displays empty state when no saved services', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(const SavedServicesLoaded([]));
+      when(() => mockServiceBloc.state).thenReturn(const ServicesLoaded(savedServices: []));
 
       // Act
-      await tester.pumpWidget(createTestWidget(initialState: const SavedServicesLoaded([])));
+      await tester.pumpWidget(createTestWidget(initialState: const ServicesLoaded(savedServices: [])));
       await tester.pump();
 
       // Assert
@@ -127,10 +127,10 @@ void main() {
 
     testWidgets('displays saved services when loaded', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(SavedServicesLoaded(tSavedServices));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(savedServices: tSavedServices));
 
       // Act
-      await tester.pumpWidget(createTestWidget(initialState: SavedServicesLoaded(tSavedServices)));
+      await tester.pumpWidget(createTestWidget(initialState: ServicesLoaded(savedServices: tSavedServices)));
       await tester.pump();
 
       // Assert
@@ -153,10 +153,10 @@ void main() {
 
     testWidgets('dispatches LoadSavedServicesEvent on refresh', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(SavedServicesLoaded(tSavedServices));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(savedServices: tSavedServices));
 
       // Act
-      await tester.pumpWidget(createTestWidget(initialState: SavedServicesLoaded(tSavedServices)));
+      await tester.pumpWidget(createTestWidget(initialState: ServicesLoaded(savedServices: tSavedServices)));
       await tester.pump();
 
       // Find the SmartRefresher and trigger refresh
@@ -173,10 +173,10 @@ void main() {
 
     testWidgets('navigates to service details when service card is tapped', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(SavedServicesLoaded(tSavedServices));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(savedServices: tSavedServices));
 
       // Act
-      await tester.pumpWidget(createTestWidget(initialState: SavedServicesLoaded(tSavedServices)));
+      await tester.pumpWidget(createTestWidget(initialState: ServicesLoaded(savedServices: tSavedServices)));
       await tester.pump();
 
       // Find and tap a service card
@@ -191,10 +191,10 @@ void main() {
 
     testWidgets('dispatches InteractWithServiceEvent when favorite icon is tapped', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(SavedServicesLoaded(tSavedServices));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(savedServices: tSavedServices));
 
       // Act
-      await tester.pumpWidget(createTestWidget(initialState: SavedServicesLoaded(tSavedServices)));
+      await tester.pumpWidget(createTestWidget(initialState: ServicesLoaded(savedServices: tSavedServices)));
       await tester.pump();
 
       // Find favorite icon (heart icon) - this might need adjustment based on actual widget structure

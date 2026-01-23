@@ -52,18 +52,18 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
 
     // Reload if state doesn't match what we need (only check once per build cycle)
     final currentState = globalBloc.state;
-    final hasLikedServices = currentState is UniversalServicesState
+    final hasLikedServices = currentState is ServicesLoaded
         ? currentState.likedServices != null
-        : currentState is LikedServicesLoaded;
+        : false;
 
     if (!_hasCheckedInitialLoad || (!hasLikedServices && currentState is! ServiceLoading)) {
       _hasCheckedInitialLoad = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           final state = globalBloc.state;
-          final hasServices = state is UniversalServicesState
+          final hasServices = state is ServicesLoaded
               ? state.likedServices != null
-              : state is LikedServicesLoaded;
+              : false;
           if (!hasServices && state is! ServiceLoading) {
             globalBloc.add(const LoadLikedServicesEvent());
           }
@@ -78,7 +78,7 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
           // Complete refresh when data is loaded or error occurs (only if refresh is active)
           if (!_refreshController.isRefresh) return;
 
-          if ((state is UniversalServicesState && state.likedServices != null) || state is LikedServicesLoaded) {
+          if (state is ServicesLoaded && state.likedServices != null) {
             if (mounted) {
               _refreshController.refreshCompleted();
             }
@@ -90,9 +90,9 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
         },
         child: BlocBuilder<ServiceBloc, ServiceState>(
           builder: (context, state) {
-            final likedServices = state is UniversalServicesState
+            final likedServices = state is ServicesLoaded
                 ? (state.likedServices ?? <ServiceListItem>[])
-                : (state is LikedServicesLoaded ? state.likedServices : <ServiceListItem>[]);
+                : <ServiceListItem>[];
             final isEmpty = likedServices.isEmpty && state is! ServiceLoading && state is! ServiceInitial;
 
             return Scaffold(

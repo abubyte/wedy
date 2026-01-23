@@ -71,14 +71,12 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
       child: BlocListener<ServiceBloc, ServiceState>(
         listenWhen: (previous, current) {
           // Listen when services are loaded for this category
-          return current is UniversalServicesState || current is ServicesLoaded;
+          return current is ServicesLoaded;
         },
         listener: (context, state) {
           List<ServiceListItem>? categoryServices;
-          if (state is UniversalServicesState) {
+          if (state is ServicesLoaded) {
             categoryServices = state.categoryServices[widget.category.id];
-          } else if (state is ServicesLoaded) {
-            categoryServices = state.allServices.where((s) => s.categoryId == widget.category.id).toList();
           }
 
           if (categoryServices != null && categoryServices.isNotEmpty) {
@@ -95,10 +93,8 @@ class _CategoryServicesSectionState extends State<CategoryServicesSection> {
 
             // Sync liked state from current state (for optimistic updates)
             List<ServiceListItem>? stateServices;
-            if (state is UniversalServicesState) {
+            if (state is ServicesLoaded) {
               stateServices = state.categoryServices[widget.category.id];
-            } else if (state is ServicesLoaded) {
-              stateServices = state.allServices.where((s) => s.categoryId == widget.category.id).toList();
             }
 
             if (stateServices != null && stateServices.isNotEmpty) {

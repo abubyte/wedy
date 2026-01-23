@@ -1,20 +1,15 @@
-import 'package:equatable/equatable.dart';
-
-/// Events for merchant service management
-abstract class MerchantServiceEvent extends Equatable {
+/// Merchant service events using Dart 3 sealed classes for exhaustiveness checking
+sealed class MerchantServiceEvent {
   const MerchantServiceEvent();
-
-  @override
-  List<Object?> get props => [];
 }
 
 /// Load merchant's services
-class LoadMerchantServicesEvent extends MerchantServiceEvent {
+final class LoadMerchantServicesEvent extends MerchantServiceEvent {
   const LoadMerchantServicesEvent();
 }
 
 /// Create a new service
-class CreateServiceEvent extends MerchantServiceEvent {
+final class CreateServiceEvent extends MerchantServiceEvent {
   final String name;
   final String description;
   final int categoryId;
@@ -32,13 +27,10 @@ class CreateServiceEvent extends MerchantServiceEvent {
     this.latitude,
     this.longitude,
   });
-
-  @override
-  List<Object?> get props => [name, description, categoryId, price, locationRegion, latitude, longitude];
 }
 
 /// Update a service
-class UpdateServiceEvent extends MerchantServiceEvent {
+final class UpdateServiceEvent extends MerchantServiceEvent {
   final String serviceId;
   final String? name;
   final String? description;
@@ -58,22 +50,16 @@ class UpdateServiceEvent extends MerchantServiceEvent {
     this.latitude,
     this.longitude,
   });
-
-  @override
-  List<Object?> get props => [serviceId, name, description, categoryId, price, locationRegion, latitude, longitude];
 }
 
 /// Delete a service
-class DeleteServiceEvent extends MerchantServiceEvent {
+final class DeleteServiceEvent extends MerchantServiceEvent {
   final String serviceId;
 
   const DeleteServiceEvent(this.serviceId);
-
-  @override
-  List<Object?> get props => [serviceId];
 }
 
 /// Refresh merchant services
-class RefreshMerchantServicesEvent extends MerchantServiceEvent {
+final class RefreshMerchantServicesEvent extends MerchantServiceEvent {
   const RefreshMerchantServicesEvent();
 }

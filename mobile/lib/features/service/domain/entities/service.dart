@@ -27,7 +27,7 @@ class Service {
   final bool isLiked;
   final bool isSaved;
 
-  Service({
+  const Service({
     required this.id,
     required this.name,
     required this.description,
@@ -63,6 +63,80 @@ class Service {
   /// Get social media contacts only
   List<MerchantContact> get socialMediaContacts =>
       contacts.where((c) => c.isSocialMedia).toList()..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+
+  Service copyWith({
+    String? id,
+    String? name,
+    String? description,
+    double? price,
+    String? priceType,
+    String? locationRegion,
+    double? Function()? latitude,
+    double? Function()? longitude,
+    int? viewCount,
+    int? likeCount,
+    int? saveCount,
+    int? shareCount,
+    double? overallRating,
+    int? totalReviews,
+    bool? isActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    MerchantBasicInfo? merchant,
+    int? categoryId,
+    String? categoryName,
+    List<ServiceImage>? images,
+    List<MerchantContact>? contacts,
+    bool? isFeatured,
+    DateTime? Function()? featuredUntil,
+    bool? isLiked,
+    bool? isSaved,
+  }) {
+    return Service(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      price: price ?? this.price,
+      priceType: priceType ?? this.priceType,
+      locationRegion: locationRegion ?? this.locationRegion,
+      latitude: latitude != null ? latitude() : this.latitude,
+      longitude: longitude != null ? longitude() : this.longitude,
+      viewCount: viewCount ?? this.viewCount,
+      likeCount: likeCount ?? this.likeCount,
+      saveCount: saveCount ?? this.saveCount,
+      shareCount: shareCount ?? this.shareCount,
+      overallRating: overallRating ?? this.overallRating,
+      totalReviews: totalReviews ?? this.totalReviews,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      merchant: merchant ?? this.merchant,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      images: images ?? this.images,
+      contacts: contacts ?? this.contacts,
+      isFeatured: isFeatured ?? this.isFeatured,
+      featuredUntil: featuredUntil != null ? featuredUntil() : this.featuredUntil,
+      isLiked: isLiked ?? this.isLiked,
+      isSaved: isSaved ?? this.isSaved,
+    );
+  }
+
+  /// Create a copy with toggled like status and updated count
+  Service toggleLike() {
+    return copyWith(
+      isLiked: !isLiked,
+      likeCount: isLiked ? likeCount - 1 : likeCount + 1,
+    );
+  }
+
+  /// Create a copy with toggled save status and updated count
+  Service toggleSave() {
+    return copyWith(
+      isSaved: !isSaved,
+      saveCount: isSaved ? saveCount - 1 : saveCount + 1,
+    );
+  }
 }
 
 /// Service list item (simplified version for listings)
@@ -87,7 +161,7 @@ class ServiceListItem {
   final bool isLiked;
   final bool isSaved;
 
-  ServiceListItem({
+  const ServiceListItem({
     required this.id,
     required this.name,
     required this.description,
@@ -108,6 +182,76 @@ class ServiceListItem {
     this.isLiked = false,
     this.isSaved = false,
   });
+
+  ServiceListItem copyWith({
+    String? id,
+    String? name,
+    String? description,
+    double? price,
+    String? priceType,
+    String? locationRegion,
+    double? overallRating,
+    int? totalReviews,
+    int? viewCount,
+    int? likeCount,
+    int? saveCount,
+    DateTime? createdAt,
+    MerchantBasicInfo? merchant,
+    int? categoryId,
+    String? categoryName,
+    String? Function()? mainImageUrl,
+    bool? isFeatured,
+    bool? isLiked,
+    bool? isSaved,
+  }) {
+    return ServiceListItem(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      price: price ?? this.price,
+      priceType: priceType ?? this.priceType,
+      locationRegion: locationRegion ?? this.locationRegion,
+      overallRating: overallRating ?? this.overallRating,
+      totalReviews: totalReviews ?? this.totalReviews,
+      viewCount: viewCount ?? this.viewCount,
+      likeCount: likeCount ?? this.likeCount,
+      saveCount: saveCount ?? this.saveCount,
+      createdAt: createdAt ?? this.createdAt,
+      merchant: merchant ?? this.merchant,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      mainImageUrl: mainImageUrl != null ? mainImageUrl() : this.mainImageUrl,
+      isFeatured: isFeatured ?? this.isFeatured,
+      isLiked: isLiked ?? this.isLiked,
+      isSaved: isSaved ?? this.isSaved,
+    );
+  }
+
+  /// Create a copy with toggled like status and updated count
+  ServiceListItem toggleLike() {
+    return copyWith(
+      isLiked: !isLiked,
+      likeCount: isLiked ? likeCount - 1 : likeCount + 1,
+    );
+  }
+
+  /// Create a copy with toggled save status and updated count
+  ServiceListItem toggleSave() {
+    return copyWith(
+      isSaved: !isSaved,
+      saveCount: isSaved ? saveCount - 1 : saveCount + 1,
+    );
+  }
+
+  /// Update with actual API response counts
+  ServiceListItem withInteractionResponse(String interactionType, int newCount, bool isActive) {
+    if (interactionType == 'like') {
+      return copyWith(isLiked: isActive, likeCount: newCount);
+    } else if (interactionType == 'save') {
+      return copyWith(isSaved: isActive, saveCount: newCount);
+    }
+    return this;
+  }
 }
 
 /// Merchant service (simplified version for merchant's own services)
@@ -131,7 +275,7 @@ class MerchantService {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  MerchantService({
+  const MerchantService({
     required this.id,
     required this.name,
     required this.description,
@@ -159,7 +303,7 @@ class MerchantServicesResponse {
   final int activeCount;
   final int inactiveCount;
 
-  MerchantServicesResponse({required this.services, required this.activeCount, required this.inactiveCount});
+  const MerchantServicesResponse({required this.services, required this.activeCount, required this.inactiveCount});
 }
 
 /// Merchant basic information
@@ -172,7 +316,7 @@ class MerchantBasicInfo {
   final bool isVerified;
   final String? avatarUrl;
 
-  MerchantBasicInfo({
+  const MerchantBasicInfo({
     required this.id,
     required this.businessName,
     required this.overallRating,
@@ -190,7 +334,7 @@ class ServiceImage {
   final String fileName;
   final int displayOrder;
 
-  ServiceImage({required this.id, required this.s3Url, required this.fileName, required this.displayOrder});
+  const ServiceImage({required this.id, required this.s3Url, required this.fileName, required this.displayOrder});
 }
 
 /// Merchant contact (phone or social media)
@@ -201,7 +345,7 @@ class MerchantContact {
   final String? platformName; // Platform name for social media (instagram, telegram, etc.)
   final int displayOrder;
 
-  MerchantContact({
+  const MerchantContact({
     required this.id,
     required this.contactType,
     required this.contactValue,
@@ -225,7 +369,7 @@ class ServiceSearchFilters {
   final String? sortBy;
   final String? sortOrder;
 
-  ServiceSearchFilters({
+  const ServiceSearchFilters({
     this.query,
     this.categoryId,
     this.locationRegion,
@@ -236,6 +380,30 @@ class ServiceSearchFilters {
     this.sortBy,
     this.sortOrder,
   });
+
+  ServiceSearchFilters copyWith({
+    String? Function()? query,
+    int? Function()? categoryId,
+    String? Function()? locationRegion,
+    double? Function()? minPrice,
+    double? Function()? maxPrice,
+    double? Function()? minRating,
+    bool? Function()? isVerifiedMerchant,
+    String? Function()? sortBy,
+    String? Function()? sortOrder,
+  }) {
+    return ServiceSearchFilters(
+      query: query != null ? query() : this.query,
+      categoryId: categoryId != null ? categoryId() : this.categoryId,
+      locationRegion: locationRegion != null ? locationRegion() : this.locationRegion,
+      minPrice: minPrice != null ? minPrice() : this.minPrice,
+      maxPrice: maxPrice != null ? maxPrice() : this.maxPrice,
+      minRating: minRating != null ? minRating() : this.minRating,
+      isVerifiedMerchant: isVerifiedMerchant != null ? isVerifiedMerchant() : this.isVerifiedMerchant,
+      sortBy: sortBy != null ? sortBy() : this.sortBy,
+      sortOrder: sortOrder != null ? sortOrder() : this.sortOrder,
+    );
+  }
 }
 
 /// Paginated service response
@@ -247,7 +415,7 @@ class PaginatedServiceResponse {
   final bool hasMore;
   final int totalPages;
 
-  PaginatedServiceResponse({
+  const PaginatedServiceResponse({
     required this.services,
     required this.total,
     required this.page,

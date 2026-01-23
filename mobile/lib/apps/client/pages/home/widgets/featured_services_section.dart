@@ -29,18 +29,18 @@ class _FeaturedServicesSectionState extends State<FeaturedServicesSection> {
 
     // Reload if state doesn't match what we need (only check once per build cycle)
     final currentState = globalBloc.state;
-    final hasFeaturedServices = currentState is UniversalServicesState
+    final hasFeaturedServices = currentState is ServicesLoaded
         ? currentState.featuredServices != null && currentState.featuredServices!.isNotEmpty
-        : (currentState is ServicesLoaded && currentState.response.services.any((s) => s.isFeatured));
+        : false;
 
     if (!_hasCheckedInitialLoad || (!hasFeaturedServices && currentState is! ServiceLoading)) {
       _hasCheckedInitialLoad = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           final state = globalBloc.state;
-          final hasFeatured = state is UniversalServicesState
+          final hasFeatured = state is ServicesLoaded
               ? state.featuredServices != null && state.featuredServices!.isNotEmpty
-              : (state is ServicesLoaded && state.response.services.any((s) => s.isFeatured));
+              : false;
           if (!hasFeatured && state is! ServiceLoading) {
             globalBloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 10));
           }
@@ -63,9 +63,9 @@ class _FeaturedServicesSectionState extends State<FeaturedServicesSection> {
             return const SizedBox.shrink();
           }
 
-          final featuredServices = state is UniversalServicesState
+          final featuredServices = state is ServicesLoaded
               ? (state.featuredServices ?? <ServiceListItem>[])
-              : (state is ServicesLoaded ? state.allServices : <ServiceListItem>[]);
+              : <ServiceListItem>[];
 
           if (featuredServices.isEmpty) {
             return const SizedBox.shrink();

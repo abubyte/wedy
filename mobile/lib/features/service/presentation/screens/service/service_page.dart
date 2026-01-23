@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:wedy/core/utils/shimmer_helper.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 import 'package:wedy/shared/widgets/circular_button.dart';
 import 'package:wedy/shared/widgets/section_header.dart';
@@ -70,17 +69,13 @@ class _WedyServicePageState extends State<WedyServicePage> {
     // Load service if serviceId is provided and current state doesn't have it
     if (widget.serviceId != null) {
       final currentState = globalBloc.state;
-      final hasService =
-          (currentState is UniversalServicesState && currentState.currentServiceDetails?.id == widget.serviceId) ||
-          (currentState is ServiceDetailsLoaded && currentState.service.id == widget.serviceId);
+      final hasService = currentState is ServicesLoaded && currentState.currentServiceDetails?.id == widget.serviceId;
 
       if (!hasService && currentState is! ServiceLoading) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             final state = globalBloc.state;
-            final hasCurrentService =
-                (state is UniversalServicesState && state.currentServiceDetails?.id == widget.serviceId) ||
-                (state is ServiceDetailsLoaded && state.service.id == widget.serviceId);
+            final hasCurrentService = state is ServicesLoaded && state.currentServiceDetails?.id == widget.serviceId;
             if (!hasCurrentService && state is! ServiceLoading) {
               globalBloc.add(LoadServiceByIdEvent(widget.serviceId!));
             }
@@ -105,8 +100,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
           builder: (context, state) {
             // Show loading if we're loading or if we have a serviceId but haven't loaded yet (initial state)
             if (state is ServiceLoading ||
-                ((state is UniversalServicesState && state.currentServiceDetails == null) &&
-                    widget.serviceId != null) ||
+                (state is ServicesLoaded && state.currentServiceDetails == null && widget.serviceId != null) ||
                 (state is ServiceInitial && widget.serviceId != null)) {
               return Scaffold(
                 appBar: AppBar(title: const Text('Yuklanmoqda...')),
@@ -137,17 +131,13 @@ class _WedyServicePageState extends State<WedyServicePage> {
               );
             }
 
-            final service = state is UniversalServicesState
-                ? state.currentServiceDetails
-                : (state is ServiceDetailsLoaded ? state.service : null);
+            final service = state is ServicesLoaded ? state.currentServiceDetails : null;
 
             // Show "not found" only if we don't have a serviceId (invalid route)
             // or if we've finished loading (not initial) and got no service
             if (service == null) {
               // If we have a serviceId but no service, and we're not in initial state, show not found
-              if (widget.serviceId != null &&
-                  state is! ServiceInitial &&
-                  !(state is UniversalServicesState && state.currentServiceDetails == null)) {
+              if (widget.serviceId != null && state is! ServiceInitial && state is ServicesLoaded) {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Xizmat topilmadi')),
                   body: const Center(child: Text('Xizmat ma\'lumotlari topilmadi')),

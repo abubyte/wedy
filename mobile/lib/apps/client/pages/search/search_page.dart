@@ -61,9 +61,6 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
       _filters = ServiceSearchFilters(query: widget.initialQuery);
     }
 
-    // Load categories for filter dropdown
-    context.read<CategoryBloc>().add(const LoadCategoriesEvent());
-
     // Perform initial load/search
     if (widget.hotOffers) {
       // Load featured services
@@ -204,7 +201,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
   void _loadMore() {
     if (_isLoadingMore) return;
     final state = context.read<ServiceBloc>().state;
-    if (state is UniversalServicesState && state.currentPaginatedResponse?.hasMore == true) {
+    if (state is ServicesLoaded && state.hasMore) {
       _isLoadingMore = true;
       context.read<ServiceBloc>().add(const LoadMoreServicesEvent());
       // Reset flag after a delay to allow the bloc to process
@@ -229,20 +226,20 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
           // Reset loading more flag when state changes
-          if (_isLoadingMore && (state is UniversalServicesState || state is ServiceError)) {
+          if (_isLoadingMore && (state is ServicesLoaded || state is ServiceError)) {
             _isLoadingMore = false;
           }
 
           if (!_refreshController.isRefresh) return;
 
           bool shouldComplete = false;
-          if (state is UniversalServicesState) {
+          if (state is ServicesLoaded) {
             if (widget.hotOffers) {
               shouldComplete = state.featuredServices != null;
             } else if (widget.category != null) {
               shouldComplete = state.categoryServices[widget.category!.id] != null;
             } else {
-              shouldComplete = state.currentPaginatedServices != null;
+              shouldComplete = state.paginatedServices != null;
             }
           }
 
@@ -263,25 +260,25 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
         child: BlocBuilder<ServiceBloc, ServiceState>(
           builder: (context, serviceState) {
             final isInitial = _isInitial && !widget.hotOffers && widget.category == null;
-            // Read from UniversalServicesState based on context
-            final universalState = serviceState is UniversalServicesState ? serviceState : null;
+            // Read from ServicesLoaded state based on context
+            final loadedState = serviceState is ServicesLoaded ? serviceState : null;
 
             // Get services based on context
-            // If searching (query exists) or filters are applied, use currentPaginatedServices (search results)
+            // If searching (query exists) or filters are applied, use paginatedServices (search results)
             // Otherwise use featured/category services
             final hasSearchQuery = _searchController.text.trim().isNotEmpty;
             final hasActiveFilters = _hasActiveFilters();
             final shouldUsePaginatedServices = hasSearchQuery || hasActiveFilters;
 
             final services = shouldUsePaginatedServices
-                ? (universalState?.currentPaginatedServices ?? <ServiceListItem>[])
+                ? (loadedState?.paginatedServices ?? <ServiceListItem>[])
                 : (widget.hotOffers
-                      ? (universalState?.featuredServices ?? <ServiceListItem>[])
+                      ? (loadedState?.featuredServices ?? <ServiceListItem>[])
                       : (widget.category != null
-                            ? (universalState?.categoryServices[widget.category!.id] ?? <ServiceListItem>[])
-                            : (universalState?.currentPaginatedServices ?? <ServiceListItem>[])));
+                            ? (loadedState?.categoryServices[widget.category!.id] ?? <ServiceListItem>[])
+                            : (loadedState?.paginatedServices ?? <ServiceListItem>[])));
 
-            final paginatedResponse = universalState?.currentPaginatedResponse;
+            final paginatedResponse = loadedState?.currentPaginatedResponse;
             final isLoading = serviceState is ServiceLoading || serviceState is ServiceInitial;
             final hasError = serviceState is ServiceError;
             final isEmpty = !isLoading && !hasError && services.isEmpty;

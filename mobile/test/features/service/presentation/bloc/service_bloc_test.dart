@@ -145,7 +145,7 @@ void main() {
         act: (bloc) => bloc.add(const LoadServicesEvent()),
         expect: () => [
           const ServiceLoading(),
-          ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem]),
+          ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
         ],
         verify: (_) {
           verify(() => mockGetServices(featured: null, filters: null, page: 1, limit: 20)).called(1);
@@ -191,7 +191,7 @@ void main() {
         act: (bloc) => bloc.add(const LoadServicesEvent()),
         expect: () => [
           const ServiceLoading(),
-          ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem]),
+          ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
         ],
       );
 
@@ -215,7 +215,7 @@ void main() {
         },
         expect: () => [
           const ServiceLoading(),
-          ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem]),
+          ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
         ],
       );
     });
@@ -234,13 +234,13 @@ void main() {
           ).thenAnswer((_) async => Right(tPaginatedResponse));
           return bloc;
         },
-        seed: () => ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem]),
+        seed: () => ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
         wait: const Duration(milliseconds: 100),
         act: (bloc) => bloc.add(const LoadMoreServicesEvent()),
         expect: () => [
           const ServiceLoading(),
-          ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem]),
-          ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem, tServiceListItem]),
+          ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
+          ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem, tServiceListItem]),
         ],
       );
 
@@ -274,7 +274,7 @@ void main() {
             hasMore: false,
             totalPages: 1,
           );
-          return ServicesLoaded(response: responseNoMore, allServices: [tServiceListItem]);
+          return ServicesLoaded(currentPaginatedResponse: responseNoMore, paginatedServices: [tServiceListItem]);
         },
         act: (bloc) => bloc.add(const LoadMoreServicesEvent()),
         expect: () => [],
@@ -297,7 +297,7 @@ void main() {
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadServiceByIdEvent('service1')),
-        expect: () => [const ServiceLoading(), ServiceDetailsLoaded(tService)],
+        expect: () => [const ServiceLoading(), ServicesLoaded(currentServiceDetails: tService)],
         verify: (_) {
           verify(() => mockGetServiceById('service1')).called(1);
         },
@@ -336,14 +336,16 @@ void main() {
 
     group('InteractWithServiceEvent', () {
       blocTest<ServiceBloc, ServiceState>(
-        'emits [ServiceInteractionSuccess] when interaction is successful (like)',
+        'emits [ServicesLoaded] with optimistic update then final state when like is successful',
         build: () {
           when(() => mockInteractWithService('service1', 'like')).thenAnswer((_) async => Right(tInteractionResponse));
           return bloc;
         },
+        seed: () => ServicesLoaded(paginatedServices: [tServiceListItem]),
         act: (bloc) => bloc.add(const InteractWithServiceEvent(serviceId: 'service1', interactionType: 'like')),
         expect: () => [
-          const ServiceInteractionSuccess(message: 'Service liked successfully', newCount: 51, interactionType: 'like'),
+          isA<ServicesLoaded>(), // Optimistic update
+          isA<ServicesLoaded>(), // Final state with API response
         ],
         verify: (_) {
           verify(() => mockInteractWithService('service1', 'like')).called(1);
@@ -351,7 +353,7 @@ void main() {
       );
 
       blocTest<ServiceBloc, ServiceState>(
-        'emits [ServiceInteractionSuccess] when interaction is successful (save)',
+        'emits [ServicesLoaded] with optimistic update then final state when save is successful',
         build: () {
           final saveResponse = ServiceInteractionResponse(
             success: true,
@@ -361,22 +363,29 @@ void main() {
           when(() => mockInteractWithService('service1', 'save')).thenAnswer((_) async => Right(saveResponse));
           return bloc;
         },
+        seed: () => ServicesLoaded(paginatedServices: [tServiceListItem]),
         act: (bloc) => bloc.add(const InteractWithServiceEvent(serviceId: 'service1', interactionType: 'save')),
         expect: () => [
-          const ServiceInteractionSuccess(message: 'Service saved successfully', newCount: 26, interactionType: 'save'),
+          isA<ServicesLoaded>(), // Optimistic update
+          isA<ServicesLoaded>(), // Final state with API response
         ],
       );
 
       blocTest<ServiceBloc, ServiceState>(
-        'emits [ServiceError] when interaction fails',
+        'reverts optimistic update and emits [ServiceError] when interaction fails',
         build: () {
           when(
             () => mockInteractWithService('service1', 'like'),
           ).thenAnswer((_) async => const Left(NetworkFailure('Network error')));
           return bloc;
         },
+        seed: () => ServicesLoaded(paginatedServices: [tServiceListItem]),
         act: (bloc) => bloc.add(const InteractWithServiceEvent(serviceId: 'service1', interactionType: 'like')),
-        expect: () => [const ServiceError('Network error. Please check your internet connection.')],
+        expect: () => [
+          isA<ServicesLoaded>(), // Optimistic update
+          isA<ServicesLoaded>(), // Revert to previous state
+          const ServiceError('Network error. Please check your internet connection.'),
+        ],
         verify: (_) {
           verify(() => mockInteractWithService('service1', 'like')).called(1);
         },
@@ -397,11 +406,11 @@ void main() {
           ).thenAnswer((_) async => Right(tPaginatedResponse));
           return bloc;
         },
-        seed: () => ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem]),
+        seed: () => ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
         act: (bloc) => bloc.add(const RefreshServicesEvent()),
         expect: () => [
           const ServiceLoading(),
-          ServicesLoaded(response: tPaginatedResponse, allServices: [tServiceListItem]),
+          ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
         ],
       );
     });
@@ -455,7 +464,7 @@ void main() {
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadSavedServicesEvent()),
-        expect: () => [const ServiceLoading(), SavedServicesLoaded(tSavedServices)],
+        expect: () => [const ServiceLoading(), ServicesLoaded(savedServices: tSavedServices)],
         verify: (_) {
           verify(() => mockGetSavedServices()).called(1);
         },
@@ -468,7 +477,7 @@ void main() {
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadSavedServicesEvent()),
-        expect: () => [const ServiceLoading(), const SavedServicesLoaded([])],
+        expect: () => [const ServiceLoading(), const ServicesLoaded(savedServices: [])],
         verify: (_) {
           verify(() => mockGetSavedServices()).called(1);
         },

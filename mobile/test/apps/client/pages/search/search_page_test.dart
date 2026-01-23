@@ -181,11 +181,11 @@ void main() {
         hasMore: false,
         totalPages: 0,
       );
-      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(response: emptyResponse, allServices: const []));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentPaginatedResponse: emptyResponse, paginatedServices: const []));
 
       // Act
       await tester.pumpWidget(createTestWidget(
-        serviceState: ServicesLoaded(response: emptyResponse, allServices: const []),
+        serviceState: ServicesLoaded(currentPaginatedResponse: emptyResponse, paginatedServices: const []),
       ));
       await tester.pump();
 
@@ -195,11 +195,11 @@ void main() {
 
     testWidgets('displays search results when loaded', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(response: tPaginatedResponse, allServices: tServices));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: tServices));
 
       // Act
       await tester.pumpWidget(createTestWidget(
-        serviceState: ServicesLoaded(response: tPaginatedResponse, allServices: tServices),
+        serviceState: ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: tServices),
       ));
       await tester.pump();
 
@@ -275,11 +275,11 @@ void main() {
 
     testWidgets('navigates to service details when service card is tapped', (WidgetTester tester) async {
       // Arrange
-      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(response: tPaginatedResponse, allServices: tServices));
+      when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: tServices));
 
       // Act
       await tester.pumpWidget(createTestWidget(
-        serviceState: ServicesLoaded(response: tPaginatedResponse, allServices: tServices),
+        serviceState: ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: tServices),
       ));
       await tester.pump();
 
@@ -296,13 +296,13 @@ void main() {
     testWidgets('shows filter button', (WidgetTester tester) async {
       // Arrange
       when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(
-        response: tPaginatedResponse,
-        allServices: tServices,
+        currentPaginatedResponse: tPaginatedResponse,
+        paginatedServices: tServices,
       ));
 
       // Act
       await tester.pumpWidget(createTestWidget(
-        serviceState: ServicesLoaded(response: tPaginatedResponse, allServices: tServices),
+        serviceState: ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: tServices),
       ));
       await tester.pump();
 
