@@ -1,25 +1,20 @@
-import 'package:equatable/equatable.dart';
-
-/// Events for tariff management
-abstract class TariffEvent extends Equatable {
+/// Tariff events using Dart 3 sealed classes for exhaustiveness checking
+sealed class TariffEvent {
   const TariffEvent();
-
-  @override
-  List<Object?> get props => [];
 }
 
 /// Load tariff plans
-class LoadTariffPlansEvent extends TariffEvent {
+final class LoadTariffPlansEvent extends TariffEvent {
   const LoadTariffPlansEvent();
 }
 
 /// Load subscription
-class LoadSubscriptionEvent extends TariffEvent {
+final class LoadSubscriptionEvent extends TariffEvent {
   const LoadSubscriptionEvent();
 }
 
 /// Create tariff payment
-class CreateTariffPaymentEvent extends TariffEvent {
+final class CreateTariffPaymentEvent extends TariffEvent {
   final String tariffPlanId;
   final int durationMonths;
   final String paymentMethod;
@@ -29,17 +24,14 @@ class CreateTariffPaymentEvent extends TariffEvent {
     required this.durationMonths,
     required this.paymentMethod,
   });
-
-  @override
-  List<Object?> get props => [tariffPlanId, durationMonths, paymentMethod];
 }
 
 /// Refresh tariff data
-class RefreshTariffEvent extends TariffEvent {
+final class RefreshTariffEvent extends TariffEvent {
   const RefreshTariffEvent();
 }
 
 /// Activate subscription (free 2-month activation for existing merchants)
-class ActivateSubscriptionEvent extends TariffEvent {
+final class ActivateSubscriptionEvent extends TariffEvent {
   const ActivateSubscriptionEvent();
 }

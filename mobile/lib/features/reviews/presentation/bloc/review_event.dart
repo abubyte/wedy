@@ -1,83 +1,62 @@
-import 'package:equatable/equatable.dart';
-
-/// Review events
-abstract class ReviewEvent extends Equatable {
+/// Review events using Dart 3 sealed classes for exhaustiveness checking
+sealed class ReviewEvent {
   const ReviewEvent();
-
-  @override
-  List<Object?> get props => [];
 }
 
 /// Load reviews for a service
-class LoadReviewsEvent extends ReviewEvent {
+final class LoadReviewsEvent extends ReviewEvent {
   final String serviceId;
   final int page;
   final int limit;
 
   const LoadReviewsEvent({required this.serviceId, this.page = 1, this.limit = 20});
-
-  @override
-  List<Object?> get props => [serviceId, page, limit];
 }
 
 /// Load more reviews (pagination)
-class LoadMoreReviewsEvent extends ReviewEvent {
+final class LoadMoreReviewsEvent extends ReviewEvent {
   const LoadMoreReviewsEvent();
 }
 
 /// Create a new review
-class CreateReviewEvent extends ReviewEvent {
+final class CreateReviewEvent extends ReviewEvent {
   final String serviceId;
   final int rating;
   final String? comment;
 
   const CreateReviewEvent({required this.serviceId, required this.rating, this.comment});
-
-  @override
-  List<Object?> get props => [serviceId, rating, comment];
 }
 
 /// Update an existing review
-class UpdateReviewEvent extends ReviewEvent {
+final class UpdateReviewEvent extends ReviewEvent {
   final String reviewId;
   final int? rating;
   final String? comment;
 
   const UpdateReviewEvent({required this.reviewId, this.rating, this.comment});
-
-  @override
-  List<Object?> get props => [reviewId, rating, comment];
 }
 
 /// Delete a review
-class DeleteReviewEvent extends ReviewEvent {
+final class DeleteReviewEvent extends ReviewEvent {
   final String reviewId;
 
   const DeleteReviewEvent(this.reviewId);
-
-  @override
-  List<Object?> get props => [reviewId];
 }
 
 /// Refresh reviews
-class RefreshReviewsEvent extends ReviewEvent {
+final class RefreshReviewsEvent extends ReviewEvent {
   const RefreshReviewsEvent();
 }
 
 /// Load reviews by user ID
-class LoadUserReviewsEvent extends ReviewEvent {
+final class LoadUserReviewsEvent extends ReviewEvent {
   final String userId;
   final int page;
   final int limit;
 
   const LoadUserReviewsEvent({required this.userId, this.page = 1, this.limit = 20});
-
-  @override
-  List<Object?> get props => [userId, page, limit];
 }
 
 /// Load more user reviews (pagination)
-class LoadMoreUserReviewsEvent extends ReviewEvent {
+final class LoadMoreUserReviewsEvent extends ReviewEvent {
   const LoadMoreUserReviewsEvent();
 }
-

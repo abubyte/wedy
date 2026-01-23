@@ -1,41 +1,30 @@
-import 'package:equatable/equatable.dart';
 import '../../domain/entities/category.dart';
 
-/// Base class for category states
-abstract class CategoryState extends Equatable {
+/// Category states using Dart 3 sealed classes for exhaustiveness checking
+sealed class CategoryState {
   const CategoryState();
-
-  @override
-  List<Object?> get props => [];
 }
 
 /// Initial state
-class CategoryInitial extends CategoryState {
+final class CategoryInitial extends CategoryState {
   const CategoryInitial();
 }
 
 /// Loading state
-class CategoryLoading extends CategoryState {
+final class CategoryLoading extends CategoryState {
   const CategoryLoading();
 }
 
 /// Categories loaded successfully
-class CategoriesLoaded extends CategoryState {
-  const CategoriesLoaded(this.categories);
-
+final class CategoriesLoaded extends CategoryState {
   final CategoriesResponse categories;
 
-  @override
-  List<Object?> get props => [categories];
+  const CategoriesLoaded(this.categories);
 }
 
 /// Error state
-class CategoryError extends CategoryState {
-  const CategoryError(this.message);
-
+final class CategoryError extends CategoryState {
   final String message;
 
-  @override
-  List<Object?> get props => [message];
+  const CategoryError(this.message);
 }
-

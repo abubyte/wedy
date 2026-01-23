@@ -1,67 +1,67 @@
-import 'package:equatable/equatable.dart';
 import '../../domain/entities/review.dart';
 
-/// Review states
-abstract class ReviewState extends Equatable {
+/// Review states using Dart 3 sealed classes for exhaustiveness checking
+sealed class ReviewState {
   const ReviewState();
-
-  @override
-  List<Object?> get props => [];
 }
 
 /// Initial state
-class ReviewInitial extends ReviewState {
+final class ReviewInitial extends ReviewState {
   const ReviewInitial();
 }
 
 /// Loading state
-class ReviewLoading extends ReviewState {
+final class ReviewLoading extends ReviewState {
   const ReviewLoading();
 }
 
-/// Reviews loaded state
-class ReviewsLoaded extends ReviewState {
+/// Reviews loaded state with pagination support
+final class ReviewsLoaded extends ReviewState {
   final PaginatedReviewResponse response;
-  final List<Review> allReviews; // Accumulated list for pagination
+  final List<Review> allReviews;
+  final bool hasMore;
 
-  const ReviewsLoaded({required this.response, required this.allReviews});
+  const ReviewsLoaded({
+    required this.response,
+    required this.allReviews,
+    this.hasMore = true,
+  });
 
-  @override
-  List<Object?> get props => [response, allReviews];
+  ReviewsLoaded copyWith({
+    PaginatedReviewResponse? response,
+    List<Review>? allReviews,
+    bool? hasMore,
+  }) {
+    return ReviewsLoaded(
+      response: response ?? this.response,
+      allReviews: allReviews ?? this.allReviews,
+      hasMore: hasMore ?? this.hasMore,
+    );
+  }
 }
 
 /// Review created successfully
-class ReviewCreated extends ReviewState {
+final class ReviewCreated extends ReviewState {
   final Review review;
 
   const ReviewCreated(this.review);
-
-  @override
-  List<Object?> get props => [review];
 }
 
 /// Review updated successfully
-class ReviewUpdated extends ReviewState {
+final class ReviewUpdated extends ReviewState {
   final Review review;
 
   const ReviewUpdated(this.review);
-
-  @override
-  List<Object?> get props => [review];
 }
 
 /// Review deleted successfully
-class ReviewDeleted extends ReviewState {
+final class ReviewDeleted extends ReviewState {
   const ReviewDeleted();
 }
 
 /// Error state
-class ReviewError extends ReviewState {
+final class ReviewError extends ReviewState {
   final String message;
 
   const ReviewError(this.message);
-
-  @override
-  List<Object?> get props => [message];
 }
-

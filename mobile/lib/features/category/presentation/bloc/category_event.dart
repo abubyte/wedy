@@ -1,15 +1,9 @@
-import 'package:equatable/equatable.dart';
-
-/// Base class for category events
-abstract class CategoryEvent extends Equatable {
+/// Category events using Dart 3 sealed classes for exhaustiveness checking
+sealed class CategoryEvent {
   const CategoryEvent();
-
-  @override
-  List<Object?> get props => [];
 }
 
 /// Event to load all categories
-class LoadCategoriesEvent extends CategoryEvent {
+final class LoadCategoriesEvent extends CategoryEvent {
   const LoadCategoriesEvent();
 }
-

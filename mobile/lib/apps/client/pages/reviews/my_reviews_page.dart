@@ -192,7 +192,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
 
                         return BlocListener<ServiceBloc, ServiceState>(
                           listener: (context, serviceState) {
-                            if (serviceState is UniversalServicesState && serviceState.currentServiceDetails != null) {
+                            if (serviceState is ServicesLoaded && serviceState.currentServiceDetails != null) {
                               final service = serviceState.currentServiceDetails!;
                               setState(() {
                                 _serviceCache[service.id] = ServiceListItem(
