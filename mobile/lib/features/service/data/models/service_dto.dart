@@ -109,7 +109,7 @@ class ServiceListItemDto {
   final String description;
   final double price;
   @JsonKey(name: 'price_type')
-  final String priceType;
+  final String? priceType;
   @JsonKey(name: 'location_region')
   final String locationRegion;
   @JsonKey(name: 'overall_rating')
@@ -195,7 +195,7 @@ class ServiceDetailDto {
   final String description;
   final double price;
   @JsonKey(name: 'price_type')
-  final String priceType;
+  final String? priceType;
   @JsonKey(name: 'location_region')
   final String locationRegion;
   final double? latitude;
@@ -426,7 +426,7 @@ class MerchantServiceDto {
   final String categoryName;
   final double price;
   @JsonKey(name: 'price_type')
-  final String priceType;
+  final String? priceType;
   @JsonKey(name: 'location_region')
   final String locationRegion;
   final double? latitude;

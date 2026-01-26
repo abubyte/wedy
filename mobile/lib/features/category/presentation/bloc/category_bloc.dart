@@ -3,7 +3,6 @@ import '../../domain/usecases/get_categories.dart';
 import 'category_event.dart';
 import 'category_state.dart';
 
-/// BLoC for managing category state
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   CategoryBloc({required GetCategories getCategoriesUseCase})
       : _getCategoriesUseCase = getCategoriesUseCase,

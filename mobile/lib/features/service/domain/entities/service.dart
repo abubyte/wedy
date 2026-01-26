@@ -4,7 +4,7 @@ class Service {
   final String name;
   final String description;
   final double price;
-  final String priceType;
+  final String? priceType;
   final String locationRegion;
   final double? latitude;
   final double? longitude;
@@ -145,7 +145,7 @@ class ServiceListItem {
   final String name;
   final String description;
   final double price;
-  final String priceType;
+  final String? priceType;
   final String locationRegion;
   final double overallRating;
   final int totalReviews;

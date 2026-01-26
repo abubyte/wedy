@@ -35,4 +35,20 @@ class UzbekistanData {
     'Sirdarya': 'Sirdaryo',
     'Karakalpakstan': 'Qoraqalpog\'iston',
   };
+
+  static const Map<String, String> regionValues = {
+    'Toshkent': 'Tashkent',
+    'Samarqand': 'Samarkand',
+    'Buxoro': 'Bukhara',
+    'Andijon': 'Andijan',
+    'Farg\'ona': 'Ferghana',
+    'Namangan': 'Namangan',
+    'Qashqadaryo': 'Kashkadarya',
+    'Surxondaryo': 'Surkhandarya',
+    'Xorazm': 'Khorezm',
+    'Navoiy': 'Navoiy',
+    'Jizzax': 'Jizzakh',
+    'Sirdaryo': 'Sirdarya',
+    'Qoraqalpog\'istan': 'Karakalpakstan',
+  };
 }

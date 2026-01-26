@@ -41,7 +41,7 @@ class _ReviewRemoteDataSource implements ReviewRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/v1/services/${serviceId}/reviews',
+          '/api/v1/services/${serviceId}/reviews/',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -83,7 +83,7 @@ class _ReviewRemoteDataSource implements ReviewRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/v1/reviews',
+          '/api/v1/reviews/',
           queryParameters: queryParameters,
           data: _data,
         )
@@ -117,7 +117,7 @@ class _ReviewRemoteDataSource implements ReviewRemoteDataSource {
     )
         .compose(
           _dio.options,
-          '/api/v1/reviews',
+          '/api/v1/reviews/',
           queryParameters: queryParameters,
           data: _data,
         )

@@ -1,5 +1,33 @@
 import '../../domain/entities/service.dart';
 
+/// Loading type enum for granular loading states
+enum ServiceLoadingType {
+  /// Loading service list (featured, category, search)
+  list,
+
+  /// Loading service details
+  details,
+
+  /// Loading more services (pagination)
+  loadMore,
+
+  /// Performing interaction (like/save)
+  interaction,
+
+  /// Loading saved/liked services
+  userServices,
+}
+
+/// Error type enum for specific error handling
+enum ServiceErrorType {
+  network,
+  server,
+  validation,
+  auth,
+  notFound,
+  unknown,
+}
+
 /// Service states using Dart 3 sealed classes for exhaustiveness checking
 sealed class ServiceState {
   const ServiceState();
@@ -10,9 +38,15 @@ final class ServiceInitial extends ServiceState {
   const ServiceInitial();
 }
 
-/// Loading state
+/// Loading state with type information
 final class ServiceLoading extends ServiceState {
-  const ServiceLoading();
+  final ServiceLoadingType type;
+  final ServicesLoaded? previousState;
+
+  const ServiceLoading({
+    this.type = ServiceLoadingType.list,
+    this.previousState,
+  });
 }
 
 /// Unified services state that holds all service data in a single immutable structure.
@@ -44,6 +78,11 @@ final class ServicesLoaded extends ServiceState {
   final int currentPage;
   final bool hasMore;
 
+  /// Interaction tracking for optimistic UI
+  final bool isInteracting;
+  final String? interactingServiceId;
+  final String? interactionType;
+
   const ServicesLoaded({
     this.featuredServices,
     this.categoryServices = const {},
@@ -54,6 +93,9 @@ final class ServicesLoaded extends ServiceState {
     this.paginatedServices,
     this.currentPage = 1,
     this.hasMore = true,
+    this.isInteracting = false,
+    this.interactingServiceId,
+    this.interactionType,
   });
 
   ServicesLoaded copyWith({
@@ -66,6 +108,9 @@ final class ServicesLoaded extends ServiceState {
     List<ServiceListItem>? Function()? paginatedServices,
     int? currentPage,
     bool? hasMore,
+    bool? isInteracting,
+    String? Function()? interactingServiceId,
+    String? Function()? interactionType,
   }) {
     return ServicesLoaded(
       featuredServices: featuredServices != null ? featuredServices() : this.featuredServices,
@@ -78,6 +123,9 @@ final class ServicesLoaded extends ServiceState {
       paginatedServices: paginatedServices != null ? paginatedServices() : this.paginatedServices,
       currentPage: currentPage ?? this.currentPage,
       hasMore: hasMore ?? this.hasMore,
+      isInteracting: isInteracting ?? this.isInteracting,
+      interactingServiceId: interactingServiceId != null ? interactingServiceId() : this.interactingServiceId,
+      interactionType: interactionType != null ? interactionType() : this.interactionType,
     );
   }
 
@@ -94,11 +142,26 @@ final class ServicesLoaded extends ServiceState {
       paginatedServices: () => paginatedServices?.map((s) => s.id == serviceId ? updater(s) : s).toList(),
     );
   }
+
+  /// Clear interaction state
+  ServicesLoaded clearInteraction() {
+    return copyWith(
+      isInteracting: false,
+      interactingServiceId: () => null,
+      interactionType: () => null,
+    );
+  }
 }
 
-/// Error state
+/// Error state with type information
 final class ServiceError extends ServiceState {
   final String message;
+  final ServiceErrorType type;
+  final ServicesLoaded? previousState;
 
-  const ServiceError(this.message);
+  const ServiceError(
+    this.message, {
+    this.type = ServiceErrorType.unknown,
+    this.previousState,
+  });
 }

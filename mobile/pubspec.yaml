@@ -1,7 +1,7 @@
 name: wedy
 description: Wedding Services Platform - Shared codebase for Client and Merchant apps
 publish_to: 'none'
-version: 2.0.0+9
+version: 2.0.1+10
 
 environment:
   sdk: ^3.9.0
@@ -80,6 +80,7 @@ dependencies:
   # Dependency Injection
   get_it: ^7.6.4
   pinput: ^6.0.1
+  upgrader: ^12.5.0
 
 dev_dependencies:
   flutter_test:

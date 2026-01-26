@@ -148,7 +148,6 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
       (failure) => emit(ReviewError(failure.toUserMessage(entityName: 'Review'))),
       (review) {
         emit(ReviewCreated(review));
-        // Reload reviews after creating
         final serviceIdToReload = _currentServiceId ?? event.serviceId;
         add(LoadReviewsEvent(serviceId: serviceIdToReload));
       },

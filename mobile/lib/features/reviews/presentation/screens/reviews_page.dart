@@ -24,7 +24,9 @@ class ReviewsPage extends StatefulWidget {
 }
 
 class _ReviewsPageState extends State<ReviewsPage> {
-  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final RefreshController _refreshController = RefreshController(
+    initialRefresh: false,
+  );
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -36,7 +38,9 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
   void _onRefresh() {
     if (widget.serviceId != null) {
-      context.read<ReviewBloc>().add(LoadReviewsEvent(serviceId: widget.serviceId!));
+      context.read<ReviewBloc>().add(
+        LoadReviewsEvent(serviceId: widget.serviceId!),
+      );
     }
   }
 
@@ -49,7 +53,9 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final serviceId = widget.serviceId ?? GoRouterState.of(context).uri.queryParameters['serviceId'];
+    final serviceId =
+        widget.serviceId ??
+        GoRouterState.of(context).uri.queryParameters['serviceId'];
 
     if (serviceId == null || serviceId.isEmpty) {
       return Scaffold(
@@ -58,148 +64,177 @@ class _ReviewsPageState extends State<ReviewsPage> {
       );
     }
 
-    return BlocProvider(
-      create: (context) {
-        final bloc = getIt<ReviewBloc>();
-        bloc.add(LoadReviewsEvent(serviceId: serviceId, page: 1, limit: 20));
-        return bloc;
-      },
-      child: BlocListener<ReviewBloc, ReviewState>(
-        listener: (context, state) {
-          if (!_refreshController.isRefresh) return;
-
-          if (state is ReviewsLoaded || state is ReviewError) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && _refreshController.isRefresh) {
-                if (state is ReviewsLoaded) {
-                  _refreshController.refreshCompleted();
-                } else {
-                  _refreshController.refreshFailed();
-                }
+    return BlocListener<ReviewBloc, ReviewState>(
+      listener: (context, state) {
+        if (!_refreshController.isRefresh) return;
+    
+        if (state is ReviewsLoaded || state is ReviewError) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _refreshController.isRefresh) {
+              if (state is ReviewsLoaded) {
+                _refreshController.refreshCompleted();
+              } else {
+                _refreshController.refreshFailed();
               }
-            });
-          }
-        },
-        child: Scaffold(
-          body: SafeArea(
-            child: SmartRefresher(
-              controller: _refreshController,
-              onRefresh: _onRefresh,
-              enablePullDown: true,
-              enablePullUp: false,
-              header: const ClassicHeader(
-                refreshingText: 'Yangilanmoqda...',
-                completeText: 'Yangilandi!',
-                idleText: 'Yangilash uchun torting',
-                releaseText: 'Yangilash uchun qo\'yib yuboring',
-                textStyle: TextStyle(color: AppColors.primary),
-              ),
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    if (notification is ScrollEndNotification) {
-                      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
-                        _loadMore();
-                      }
+            }
+          });
+        }
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: SmartRefresher(
+            controller: _refreshController,
+            onRefresh: _onRefresh,
+            enablePullDown: true,
+            enablePullUp: false,
+            header: const ClassicHeader(
+              refreshingText: 'Yangilanmoqda...',
+              completeText: 'Yangilandi!',
+              idleText: 'Yangilash uchun torting',
+              releaseText: 'Yangilash uchun qo\'yib yuboring',
+              textStyle: TextStyle(color: AppColors.primary),
+            ),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollEndNotification) {
+                    if (_scrollController.position.pixels >=
+                        _scrollController.position.maxScrollExtent * 0.8) {
+                      _loadMore();
                     }
-                    return false;
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.spacingL),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Back button and header
-                        Row(
-                          children: [
-                            const WedyCircularButton(),
-                            const SizedBox(width: AppDimensions.spacingM),
-                            Expanded(
-                              child: Text(
-                                'Fikrlar',
-                                style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 24),
+                  }
+                  return false;
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.spacingL),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Back button and header
+                      Row(
+                        children: [
+                          const WedyCircularButton(),
+                          const SizedBox(width: AppDimensions.spacingM),
+                          Expanded(
+                            child: Text(
+                              'Fikrlar',
+                              style: AppTextStyles.headline2.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 24,
                               ),
                             ),
-                            ElevatedButton.icon(
-                              onPressed: () => _showAddReviewDialog(context, serviceId),
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Fikr qo\'shish'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                              ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () =>
+                                _showAddReviewDialog(context, serviceId),
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Fikr qo\'shish'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: AppDimensions.spacingL),
-
-                        // Reviews list
-                        BlocBuilder<ReviewBloc, ReviewState>(
-                          builder: (context, state) {
-                            if (state is ReviewLoading || state is ReviewInitial) {
-                              return const Padding(
-                                padding: EdgeInsets.all(AppDimensions.spacingL),
-                                child: Center(child: CircularProgressIndicator()),
-                              );
-                            }
-
-                            if (state is ReviewError) {
-                              return Padding(
-                                padding: const EdgeInsets.all(AppDimensions.spacingL),
-                                child: Center(
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        state.message,
-                                        style: AppTextStyles.bodyRegular.copyWith(color: AppColors.error),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: AppDimensions.spacingM),
-                                      ElevatedButton(onPressed: _onRefresh, child: const Text('Qayta urinish')),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-
-                            final reviews = state is ReviewsLoaded ? state.allReviews : <Review>[];
-
-                            if (reviews.isEmpty) {
-                              return Padding(
-                                padding: const EdgeInsets.all(AppDimensions.spacingL),
-                                child: Center(
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Hozircha fikrlar yo\'q',
-                                        style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textSecondary),
-                                      ),
-                                      const SizedBox(height: AppDimensions.spacingM),
-                                      ElevatedButton(
-                                        onPressed: () => _showAddReviewDialog(context, serviceId),
-                                        child: const Text('Birinchi fikrni qo\'shing'),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-
-                            return Column(
-                              children: [
-                                ...reviews.map((review) => _ReviewCard(review: review)),
-                                if (state is ReviewsLoaded && state.response.hasMore)
-                                  const Padding(
-                                    padding: EdgeInsets.all(AppDimensions.spacingM),
-                                    child: Center(child: CircularProgressIndicator()),
-                                  ),
-                              ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppDimensions.spacingL),
+    
+                      // Reviews list
+                      BlocBuilder<ReviewBloc, ReviewState>(
+                        builder: (context, state) {
+                          if (state is ReviewLoading ||
+                              state is ReviewInitial) {
+                            return const Padding(
+                              padding: EdgeInsets.all(AppDimensions.spacingL),
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
                             );
-                          },
-                        ),
-                      ],
-                    ),
+                          }
+    
+                          if (state is ReviewError) {
+                            return Padding(
+                              padding: const EdgeInsets.all(
+                                AppDimensions.spacingL,
+                              ),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      state.message,
+                                      style: AppTextStyles.bodyRegular
+                                          .copyWith(color: AppColors.error),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(
+                                      height: AppDimensions.spacingM,
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: _onRefresh,
+                                      child: const Text('Qayta urinish'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+    
+                          final reviews = state is ReviewsLoaded
+                              ? state.allReviews
+                              : <Review>[];
+    
+                          if (reviews.isEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.all(
+                                AppDimensions.spacingL,
+                              ),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Hozircha fikrlar yo\'q',
+                                      style: AppTextStyles.bodyLarge.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      height: AppDimensions.spacingM,
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => _showAddReviewDialog(
+                                        context,
+                                        serviceId,
+                                      ),
+                                      child: const Text(
+                                        'Birinchi fikrni qo\'shing',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+    
+                          return Column(
+                            children: [
+                              ...reviews.map(
+                                (review) => _ReviewCard(review: review),
+                              ),
+                              if (state is ReviewsLoaded &&
+                                  state.response.hasMore)
+                                const Padding(
+                                  padding: EdgeInsets.all(
+                                    AppDimensions.spacingM,
+                                  ),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -213,8 +248,8 @@ class _ReviewsPageState extends State<ReviewsPage> {
   void _showAddReviewDialog(BuildContext context, String serviceId) {
     showDialog(
       context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: context.read<ReviewBloc>(),
+      builder: (dialogContext) => BlocProvider<ReviewBloc>(
+        create: (context) => getIt<ReviewBloc>(),
         child: AddReviewDialog(serviceId: serviceId),
       ),
     );
@@ -255,11 +290,14 @@ class _ReviewCard extends StatelessWidget {
                 ),
                 child: avatarUrl != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusPill,
+                        ),
                         child: Image.network(
                           avatarUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(IconsaxPlusLinear.user, size: 24),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(IconsaxPlusLinear.user, size: 24),
                         ),
                       )
                     : const Icon(IconsaxPlusLinear.user, size: 24),
@@ -277,13 +315,22 @@ class _ReviewCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(date, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                    Text(
+                      date,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Row(
                 children: [
-                  const Icon(IconsaxPlusBold.star_1, size: 16, color: Colors.amber),
+                  const Icon(
+                    IconsaxPlusBold.star_1,
+                    size: 16,
+                    color: Colors.amber,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     review.rating.toString(),
@@ -298,7 +345,12 @@ class _ReviewCard extends StatelessWidget {
           ),
           if (review.comment != null && review.comment!.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.spacingM),
-            Text(review.comment!, style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textSecondary)),
+            Text(
+              review.comment!,
+              style: AppTextStyles.bodyRegular.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
           ],
         ],
       ),

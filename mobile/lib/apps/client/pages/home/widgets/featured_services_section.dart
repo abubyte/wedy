@@ -1,82 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wedy/apps/client/pages/home/blocs/featured_services/featured_services_bloc.dart';
+import 'package:wedy/apps/client/pages/home/blocs/featured_services/featured_services_state.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/utils/shimmer_helper.dart';
-import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
-import 'package:wedy/features/service/presentation/bloc/service_event.dart';
-import 'package:wedy/features/service/presentation/bloc/service_state.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
 import 'hot_offers_banner_widget.dart';
 
-/// Widget that displays featured services with its own ServiceBloc
-class FeaturedServicesSection extends StatefulWidget {
-  const FeaturedServicesSection({super.key, this.isLoading = false});
-
-  final bool isLoading;
-
-  @override
-  State<FeaturedServicesSection> createState() => _FeaturedServicesSectionState();
-}
-
-class _FeaturedServicesSectionState extends State<FeaturedServicesSection> {
-  bool _hasCheckedInitialLoad = false;
+class FeaturedServicesSection extends StatelessWidget {
+  const FeaturedServicesSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Use the global ServiceBloc instance to sync state across pages
-    final globalBloc = context.read<ServiceBloc>();
-
-    // Reload if state doesn't match what we need (only check once per build cycle)
-    final currentState = globalBloc.state;
-    final hasFeaturedServices = currentState is ServicesLoaded
-        ? currentState.featuredServices != null && currentState.featuredServices!.isNotEmpty
-        : false;
-
-    if (!_hasCheckedInitialLoad || (!hasFeaturedServices && currentState is! ServiceLoading)) {
-      _hasCheckedInitialLoad = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          final state = globalBloc.state;
-          final hasFeatured = state is ServicesLoaded
-              ? state.featuredServices != null && state.featuredServices!.isNotEmpty
-              : false;
-          if (!hasFeatured && state is! ServiceLoading) {
-            globalBloc.add(const LoadServicesEvent(featured: true, page: 1, limit: 10));
-          }
-        }
-      });
-    }
-
-    return BlocProvider.value(
-      value: globalBloc,
-      child: BlocBuilder<ServiceBloc, ServiceState>(
-        builder: (context, state) {
-          if (widget.isLoading || state is ServiceLoading || state is ServiceInitial) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-              child: _HotOffersBannerShimmer(),
-            );
-          }
-
-          if (state is ServiceError) {
-            return const SizedBox.shrink();
-          }
-
-          final featuredServices = state is ServicesLoaded
-              ? (state.featuredServices ?? <ServiceListItem>[])
-              : <ServiceListItem>[];
-
-          if (featuredServices.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-            child: HotOffersBannerWidget(services: featuredServices),
+    return BlocBuilder<FeaturedServicesBloc, FeaturedServicesState>(
+      builder: (context, state) {
+        if (state.status == StateStatus.loading) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+            child: _HotOffersBannerShimmer(),
           );
-        },
-      ),
+        }
+
+        if (state.status == StateStatus.error) {
+          return const SizedBox.shrink();
+        }
+
+        final featuredServices = state.status == StateStatus.loaded
+            ? state.data
+            : <ServiceListItem>[];
+
+        if (featuredServices.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacingL,
+          ),
+          child: HotOffersBannerWidget(services: featuredServices),
+        );
+      },
     );
   }
 }
@@ -98,10 +62,17 @@ class _HotOffersBannerShimmer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacingS,
+            ),
             child: Row(
               children: [
-                Expanded(child: ShimmerHelper.shimmerContainer(height: 24, borderRadius: 4.0)),
+                Expanded(
+                  child: ShimmerHelper.shimmerContainer(
+                    height: 24,
+                    borderRadius: 4.0,
+                  ),
+                ),
                 const SizedBox(width: AppDimensions.spacingM),
                 ShimmerHelper.shimmerCircle(width: 24, height: 24),
               ],
@@ -109,8 +80,14 @@ class _HotOffersBannerShimmer extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacingS),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
-            child: ShimmerHelper.shimmerContainer(height: 14, width: 200, borderRadius: 4.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacingS,
+            ),
+            child: ShimmerHelper.shimmerContainer(
+              height: 14,
+              width: 200,
+              borderRadius: 4.0,
+            ),
           ),
           const SizedBox(height: AppDimensions.spacingS),
           Padding(
@@ -131,7 +108,10 @@ class _HotOffersBannerShimmer extends StatelessWidget {
                         left: index == 0 ? AppDimensions.spacingS : 0,
                         right: index == 2 ? AppDimensions.spacingS : 0,
                       ),
-                      child: AspectRatio(aspectRatio: .7, child: ShimmerHelper.shimmerRounded(height: 211)),
+                      child: AspectRatio(
+                        aspectRatio: .7,
+                        child: ShimmerHelper.shimmerRounded(height: 211),
+                      ),
                     ),
                   );
                 },

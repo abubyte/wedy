@@ -1,13 +1,20 @@
 // ignore_for_file: strict_top_level_inference
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
+import 'package:wedy/core/di/injection_container.dart' as di;
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
+import 'package:wedy/features/gallery/presentation/bloc/gallery_bloc.dart';
+import 'package:wedy/features/gallery/presentation/bloc/gallery_event.dart';
+import 'package:wedy/features/gallery/presentation/bloc/gallery_state.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_bloc.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_event.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_state.dart';
@@ -26,6 +33,8 @@ class MerchantProfilePage extends StatefulWidget {
 }
 
 class _MerchantProfilePageState extends State<MerchantProfilePage> {
+  final ImagePicker _imagePicker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -34,52 +43,52 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: BlocConsumer<MerchantServiceBloc, MerchantServiceState>(
-        listener: (context, state) {
-          if (state is ServiceCreated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Xizmat muvaffaqiyatli yaratildi'), backgroundColor: AppColors.success),
-            );
-            // Service list will be automatically reloaded by the bloc
-          } else if (state is ServiceUpdated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Xizmat muvaffaqiyatli yangilandi'), backgroundColor: AppColors.success),
-            );
-            // Service list will be automatically reloaded by the bloc
-          } else if (state is ServiceDeleted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Xizmat muvaffaqiyatli o\'chirildi'), backgroundColor: AppColors.success),
-            );
-            // Service list will be automatically reloaded by the bloc
-          } else if (state is MerchantServiceError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
-          }
-        },
-        builder: (context, state) {
-          if (state is MerchantServiceLoading || state is MerchantServiceInitial) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is MerchantServiceLoaded) {
-            final service = state.service;
-
-            // Show empty state if no service
-            if (service == null) {
-              return _buildEmptyState();
+    return BlocProvider(
+      create: (context) => di.getIt<GalleryBloc>()..add(const LoadGalleryEvent()),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: BlocConsumer<MerchantServiceBloc, MerchantServiceState>(
+          listener: (context, state) {
+            if (state is MerchantServiceLoaded) {
+              final operation = state.data.lastOperation;
+              if (operation is ServiceCreatedOperation) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Xizmat muvaffaqiyatli yaratildi'), backgroundColor: AppColors.success),
+                );
+              } else if (operation is ServiceUpdatedOperation) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Xizmat muvaffaqiyatli yangilandi'), backgroundColor: AppColors.success),
+                );
+              } else if (operation is ServiceDeletedOperation) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Xizmat muvaffaqiyatli o\'chirildi'), backgroundColor: AppColors.success),
+                );
+              }
+            } else if (state is MerchantServiceError) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
             }
+          },
+          builder: (context, state) {
+            if (state is MerchantServiceLoading || state is MerchantServiceInitial) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is MerchantServiceLoaded) {
+              final service = state.service;
 
-            // Show service
-            return _buildServiceProfile(service);
-          } else if (state is ServiceCreated || state is ServiceUpdated) {
-            // Show loading while service is being reloaded after create/update
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is MerchantServiceError) {
-            return _buildErrorState(state.message);
-          }
-          return const SizedBox.shrink();
-        },
+              // Show empty state if no service
+              if (service == null) {
+                return _buildEmptyState();
+              }
+
+              // Show service
+              return _buildServiceProfile(service);
+            } else if (state is MerchantServiceError) {
+              return _buildErrorState(state.message);
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
@@ -141,6 +150,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
         onRefresh: () async {
           final bloc = context.read<MerchantServiceBloc>();
           bloc.add(const RefreshMerchantServicesEvent());
+          context.read<GalleryBloc>().add(const RefreshGalleryEvent());
           // Wait for the bloc to finish loading
           await bloc.stream.firstWhere((state) => state is! MerchantServiceLoading && state is! MerchantServiceInitial);
         },
@@ -299,64 +309,195 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
   }
 
   Widget _buildGallerySection(service) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return BlocConsumer<GalleryBloc, GalleryState>(
+      listener: (context, state) {
+        if (state is GalleryLoaded && state.data.lastOperation != null) {
+          final operation = state.data.lastOperation!;
+          if (operation is ImageAddedOperation) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Rasm muvaffaqiyatli qo\'shildi'), backgroundColor: AppColors.success),
+            );
+          } else if (operation is ImageRemovedOperation) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Rasm muvaffaqiyatli o\'chirildi'), backgroundColor: AppColors.success),
+            );
+          }
+        } else if (state is GalleryError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+          );
+        }
+      },
+      builder: (context, state) {
+        List<dynamic> galleryItems = [];
+
+        // Get gallery images from state
+        if (state is GalleryLoaded) {
+          galleryItems = state.images;
+        } else if (state is GalleryLoading && state.previousImages != null) {
+          galleryItems = state.previousImages!;
+        } else if (state is GalleryError && state.previousImages != null) {
+          galleryItems = state.previousImages!;
+        }
+
+        // If no gallery images, show service main image
+        if (galleryItems.isEmpty && service.mainImageUrl != null) {
+          galleryItems = [service.mainImageUrl]; // Just the URL string
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+              child: SectionHeader(
+                title: 'Galereya',
+                // trailing: state is GalleryLoading  // TODO
+                //     ? const SizedBox(
+                //         width: 20,
+                //         height: 20,
+                //         child: CircularProgressIndicator(strokeWidth: 2),
+                //       )
+                //     : null,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.spacingM),
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                itemCount: galleryItems.length + 1, // +1 for add button
+                itemBuilder: (context, index) {
+                  // Last item is the add button
+                  if (index == galleryItems.length) {
+                    return _buildAddGalleryButton();
+                  }
+
+                  final item = galleryItems[index];
+                  // If it's a string, it's just a URL (fallback main image)
+                  if (item is String) {
+                    return _buildGalleryImageItem(item, null);
+                  }
+                  // Otherwise it's a GalleryImage
+                  return _buildGalleryImageItem(item.s3Url, item.id);
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildGalleryImageItem(String imageUrl, String? imageId) {
+    return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-          child: SectionHeader(
-            title: 'Galereya',
-            onTap: () {
-              // TODO: Navigate to full gallery
-            },
+        Container(
+          width: 300,
+          margin: const EdgeInsets.only(right: AppDimensions.spacingM),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+            color: AppColors.surface,
           ),
-        ),
-        const SizedBox(height: AppDimensions.spacingM),
-        SizedBox(
-          height: 200,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
-            itemCount: 1, // For now, just show main image
-            itemBuilder: (context, index) {
-              if (service.mainImageUrl != null) {
-                return Container(
-                  width: 300,
-                  margin: const EdgeInsets.only(right: AppDimensions.spacingM),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                    color: AppColors.surface,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                    child: CachedNetworkImage(
-                      imageUrl: service.mainImageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.surface,
-                        child: const Center(child: CircularProgressIndicator()),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppColors.surface,
-                        child: const Icon(IconsaxPlusLinear.image, size: 48, color: AppColors.textMuted),
-                      ),
-                    ),
-                  ),
-                );
-              }
-              return Container(
-                width: 300,
-                margin: const EdgeInsets.only(right: AppDimensions.spacingM),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                  color: AppColors.surface,
-                ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: AppColors.surface,
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: AppColors.surface,
                 child: const Icon(IconsaxPlusLinear.image, size: 48, color: AppColors.textMuted),
-              );
-            },
+              ),
+            ),
           ),
         ),
+        // Delete button (only if we have an imageId - meaning it's from gallery)
+        if (imageId != null)
+          Positioned(
+            top: AppDimensions.spacingS,
+            right: AppDimensions.spacingM + AppDimensions.spacingS,
+            child: GestureDetector(
+              onTap: () => _showDeleteGalleryImageDialog(imageId),
+              child: Container(
+                padding: const EdgeInsets.all(AppDimensions.spacingS),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                ),
+                child: const Icon(IconsaxPlusLinear.trash, size: 20, color: Colors.white),
+              ),
+            ),
+          ),
       ],
+    );
+  }
+
+  Widget _buildAddGalleryButton() {
+    return GestureDetector(
+      onTap: _pickAndAddGalleryImage,
+      child: Container(
+        width: 150,
+        margin: const EdgeInsets.only(right: AppDimensions.spacingM),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.border, width: 2, style: BorderStyle.solid),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(IconsaxPlusLinear.add, size: 48, color: AppColors.primary),
+            const SizedBox(height: AppDimensions.spacingS),
+            Text(
+              'Rasm qo\'shish',
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndAddGalleryImage() async {
+    final XFile? image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
+
+    if (image != null && mounted) {
+      final file = File(image.path);
+      context.read<GalleryBloc>().add(AddGalleryImageEvent(file: file));
+    }
+  }
+
+  void _showDeleteGalleryImageDialog(String imageId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Rasmni o\'chirish'),
+        content: const Text('Bu rasmni o\'chirishni xohlaysizmi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Bekor qilish'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<GalleryBloc>().add(RemoveGalleryImageEvent(imageId));
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('O\'chirish'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -463,14 +604,14 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
   void _showDeleteDialog(BuildContext context, service) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Xizmatni o\'chirish'),
         content: Text('${service.name} xizmatini o\'chirishni xohlaysizmi?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Bekor qilish')),
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Bekor qilish')),
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               context.read<MerchantServiceBloc>().add(DeleteServiceEvent(service.id));
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),

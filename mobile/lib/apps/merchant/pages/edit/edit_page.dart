@@ -47,6 +47,7 @@ class MerchantEditPage extends StatefulWidget {
 class _MerchantEditPageState extends State<MerchantEditPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
 
@@ -102,34 +103,49 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditMode ? 'Xizmatni tahrirlash' : 'Elon yaratish', style: AppTextStyles.headline2),
+        title: Text(
+          isEditMode ? 'Xizmatni tahrirlash' : 'Elon yaratish',
+          style: AppTextStyles.headline2,
+        ),
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
       body: BlocConsumer<MerchantServiceBloc, MerchantServiceState>(
         listener: (context, state) async {
-          if (state is ServiceCreated) {
-            // Upload images after service creation
-            await _uploadImages(state.service.id);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Xizmat muvaffaqiyatli yaratildi'), backgroundColor: AppColors.success),
-              );
-              context.pop();
-            }
-          } else if (state is ServiceUpdated) {
-            // Upload images after service update
-            await _uploadImages(state.service.id);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Xizmat muvaffaqiyatli yangilandi'), backgroundColor: AppColors.success),
-              );
-              context.pop();
+          if (state is MerchantServiceLoaded) {
+            final operation = state.data.lastOperation;
+            if (operation is ServiceCreatedOperation) {
+              // Upload images after service creation
+              await _uploadImages(operation.service.id);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Xizmat muvaffaqiyatli yaratildi'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                context.pop();
+              }
+            } else if (operation is ServiceUpdatedOperation) {
+              // Upload images after service update
+              await _uploadImages(operation.service.id);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Xizmat muvaffaqiyatli yangilandi'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                context.pop();
+              }
             }
           } else if (state is MerchantServiceError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+              ),
+            );
           }
         },
         builder: (context, state) {
@@ -140,7 +156,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
               key: _formKey,
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingL),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppDimensions.spacingL,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -155,7 +173,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                             decoration: ShapeDecoration(
                               color: AppColors.surface,
                               shape: DashedBorder(
-                                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusL,
+                                ),
                                 width: 1,
                                 color: AppColors.primary,
                                 dashSize: 3,
@@ -163,16 +183,23 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                               ),
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.radiusL,
+                              ),
                               child: pickedFile?.path == null
                                   ? const Center(
                                       child: Image(
-                                        image: AssetImage('assets/icons/image_icon.png'),
+                                        image: AssetImage(
+                                          'assets/icons/image_icon.png',
+                                        ),
                                         width: 77,
                                         height: 77,
                                       ),
                                     )
-                                  : Image(image: FileImage(File(pickedFile!.path)), fit: BoxFit.cover),
+                                  : Image(
+                                      image: FileImage(File(pickedFile!.path)),
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                           ),
                         ),
@@ -187,6 +214,19 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Nomni kiriting';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      // Name field
+                      _InputField(
+                        label: 'Foydalanuvchi nomi',
+                        padding: true,
+                        controller: _usernameController,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Foydalanuvchi nomini kiriting';
                           }
                           return null;
                         },
@@ -214,7 +254,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                               : <ServiceCategory>[];
 
                           // Initialize category from service when categories are loaded
-                          if (isEditMode && selectedCategory == null && categories.isNotEmpty) {
+                          if (isEditMode &&
+                              selectedCategory == null &&
+                              categories.isNotEmpty) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               final category = categories.firstWhere(
                                 (cat) => cat.id == widget.service!.categoryId,
@@ -260,7 +302,8 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                           });
                         },
                         validator: (value) {
-                          if (selectedRegion == null || selectedRegion!.isEmpty) {
+                          if (selectedRegion == null ||
+                              selectedRegion!.isEmpty) {
                             return 'Viloyatni tanlang';
                           }
                           return null;
@@ -269,7 +312,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
 
                       // Price type selector
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.spacingL,
+                        ),
                         alignment: Alignment.centerLeft,
                         child: Text(
                           'Xizmat narxi',
@@ -351,7 +396,12 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                           padding: true,
                           controller: _priceController,
                           keyboardType: TextInputType.number,
-                          suffix: Text('/so\'m', style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted)),
+                          suffix: Text(
+                            '/so\'m',
+                            style: AppTextStyles.bodyRegular.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                          ),
                           validator: (value) {
                             if (isCustomSelected) return null;
                             if (value == null || value.trim().isEmpty) {
@@ -370,7 +420,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                         height: 300,
                         child: ListView.separated(
                           separatorBuilder: (context, index) {
-                            return const SizedBox(width: AppDimensions.spacingM);
+                            return const SizedBox(
+                              width: AppDimensions.spacingM,
+                            );
                           },
                           itemCount: galleryImages.length + 1,
                           shrinkWrap: true,
@@ -378,25 +430,39 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                           itemBuilder: (context, index) {
                             if (index == galleryImages.length) {
                               return GestureDetector(
-                                onTap: isLoading ? null : () => _pickGalleryImage(),
+                                onTap: isLoading
+                                    ? null
+                                    : () => _pickGalleryImage(),
                                 child: Container(
                                   width: 300,
                                   height: 300,
                                   margin: EdgeInsets.only(
-                                    left: index == 0 ? AppDimensions.spacingL : 0,
-                                    right: index == galleryImages.length ? AppDimensions.spacingL : 0,
+                                    left: index == 0
+                                        ? AppDimensions.spacingL
+                                        : 0,
+                                    right: index == galleryImages.length
+                                        ? AppDimensions.spacingL
+                                        : 0,
                                   ),
                                   decoration: ShapeDecoration(
                                     color: AppColors.primaryLight,
                                     shape: DashedBorder(
-                                      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDimensions.radiusL,
+                                      ),
                                       width: 1,
                                       color: AppColors.primary,
                                       dashSize: 3,
                                       dashSpacing: 2,
                                     ),
                                   ),
-                                  child: const Center(child: Image(image: AssetImage('assets/icons/image_icon.png'))),
+                                  child: const Center(
+                                    child: Image(
+                                      image: AssetImage(
+                                        'assets/icons/image_icon.png',
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               );
                             }
@@ -405,12 +471,18 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                               height: 300,
                               margin: EdgeInsets.only(
                                 left: index == 0 ? AppDimensions.spacingL : 0,
-                                right: index == galleryImages.length ? AppDimensions.spacingL : 0,
+                                right: index == galleryImages.length
+                                    ? AppDimensions.spacingL
+                                    : 0,
                               ),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusL,
+                                ),
                                 image: DecorationImage(
-                                  image: FileImage(File(galleryImages[index].path)),
+                                  image: FileImage(
+                                    File(galleryImages[index].path),
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -420,7 +492,10 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                                     top: 8,
                                     right: 8,
                                     child: IconButton(
-                                      icon: const Icon(IconsaxPlusLinear.close_circle, color: Colors.white),
+                                      icon: const Icon(
+                                        IconsaxPlusLinear.close_circle,
+                                        color: Colors.white,
+                                      ),
                                       onPressed: () {
                                         setState(() {
                                           galleryImages.removeAt(index);
@@ -444,7 +519,11 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                         onLocationTap: () {
                           // TODO: Implement location picker
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Lokatsiya tanlash funksiyasi tez orada qo\'shiladi')),
+                            const SnackBar(
+                              content: Text(
+                                'Lokatsiya tanlash funksiyasi tez orada qo\'shiladi',
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -485,7 +564,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
 
                       // Submit button
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.spacingL,
+                        ),
                         child: WedyPrimaryButton(
                           label: isEditMode ? 'Saqlash' : 'Yaratish',
                           onPressed: isLoading ? null : _handleSubmit,
@@ -530,16 +611,22 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
     }
 
     if (selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kategoriyani tanlang')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Kategoriyani tanlang')));
       return;
     }
 
     if (selectedRegion == null || selectedRegion!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Viloyatni tanlang')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Viloyatni tanlang')));
       return;
     }
 
-    final price = isCustomSelected ? 0.0 : double.tryParse(_priceController.text.trim()) ?? 0.0;
+    final price = isCustomSelected
+        ? 0.0
+        : double.tryParse(_priceController.text.trim()) ?? 0.0;
 
     if (isEditMode) {
       // Update service
@@ -620,7 +707,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
               ),
               child: Text(
                 'Hozircha kontaktlar yo\'q',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textMuted,
+                ),
               ),
             )
           else
@@ -642,16 +731,23 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(contact.value, style: AppTextStyles.bodyRegular),
-                          if (contact.platformName != null && contact.platformName!.isNotEmpty)
+                          if (contact.platformName != null &&
+                              contact.platformName!.isNotEmpty)
                             Text(
                               contact.platformName!,
-                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textMuted,
+                              ),
                             ),
                         ],
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(IconsaxPlusLinear.trash, size: 20, color: AppColors.error),
+                      icon: const Icon(
+                        IconsaxPlusLinear.trash,
+                        size: 20,
+                        color: AppColors.error,
+                      ),
                       onPressed: isLoading ? null : () => onDelete(index),
                     ),
                   ],
@@ -667,13 +763,22 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
     final contactController = TextEditingController();
     String? selectedPlatform;
 
-    final platforms = ['Telegram', 'Instagram', 'Facebook', 'YouTube', 'TikTok', 'LinkedIn'];
+    final platforms = [
+      'Telegram',
+      'Instagram',
+      'Facebook',
+      'YouTube',
+      'TikTok',
+      'LinkedIn',
+    ];
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(isPhone ? 'Telefon raqam qo\'shish' : 'Ijtimoiy tarmoq qo\'shish'),
+          title: Text(
+            isPhone ? 'Telefon raqam qo\'shish' : 'Ijtimoiy tarmoq qo\'shish',
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -691,9 +796,15 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                 else ...[
                   DropdownButtonFormField<String>(
                     initialValue: selectedPlatform,
-                    decoration: const InputDecoration(labelText: 'Platforma', hintText: 'Platformani tanlang'),
+                    decoration: const InputDecoration(
+                      labelText: 'Platforma',
+                      hintText: 'Platformani tanlang',
+                    ),
                     items: platforms.map((platform) {
-                      return DropdownMenuItem(value: platform, child: Text(platform));
+                      return DropdownMenuItem(
+                        value: platform,
+                        child: Text(platform),
+                      );
                     }).toList(),
                     onChanged: (value) {
                       setDialogState(() {
@@ -715,24 +826,38 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Bekor qilish')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Bekor qilish'),
+            ),
             TextButton(
               onPressed: () {
                 final value = contactController.text.trim();
                 if (value.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qiymatni kiriting')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Qiymatni kiriting')),
+                  );
                   return;
                 }
                 if (!isPhone && selectedPlatform == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Platformani tanlang')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Platformani tanlang')),
+                  );
                   return;
                 }
 
                 setState(() {
                   if (isPhone) {
-                    phoneContacts.add(_ContactItem(value: value, platformName: null));
+                    phoneContacts.add(
+                      _ContactItem(value: value, platformName: null),
+                    );
                   } else {
-                    socialContacts.add(_ContactItem(value: value, platformName: selectedPlatform));
+                    socialContacts.add(
+                      _ContactItem(
+                        value: value,
+                        platformName: selectedPlatform,
+                      ),
+                    );
                   }
                 });
                 Navigator.pop(context);
@@ -776,7 +901,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
     } catch (e) {
       // Handle error silently or show message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Kontaktlarni saqlashda xatolik: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kontaktlarni saqlashda xatolik: $e')),
+        );
       }
     }
   }
@@ -798,7 +925,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Asosiy rasm yuklashda xatolik: ${failure.toString()}'),
+                content: Text(
+                  'Asosiy rasm yuklashda xatolik: ${failure.toString()}',
+                ),
                 backgroundColor: AppColors.error,
               ),
             );
@@ -831,9 +960,12 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Rasmlarni yuklashda xatolik: $e'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Rasmlarni yuklashda xatolik: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -859,14 +991,21 @@ class _PriceTypeChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _PriceTypeChip({required this.label, required this.isSelected, required this.onTap});
+  const _PriceTypeChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingM, vertical: AppDimensions.spacingS),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacingM,
+          vertical: AppDimensions.spacingS,
+        ),
         margin: EdgeInsets.only(
           left: label == 'Aniq narx' ? AppDimensions.spacingL : 0,
           right: label == 'Soatlik' ? AppDimensions.spacingL : 0,
@@ -877,7 +1016,11 @@ class _PriceTypeChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: AppTextStyles.bodyRegular.copyWith(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black),
+          style: AppTextStyles.bodyRegular.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
         ),
       ),
     );

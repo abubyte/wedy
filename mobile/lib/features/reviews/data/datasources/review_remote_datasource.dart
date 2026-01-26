@@ -9,10 +9,11 @@ part 'review_remote_datasource.g.dart';
 /// Remote data source for review API calls
 @RestApi()
 abstract class ReviewRemoteDataSource {
-  factory ReviewRemoteDataSource(Dio dio, {String baseUrl}) = _ReviewRemoteDataSource;
+  factory ReviewRemoteDataSource(Dio dio, {String baseUrl}) =
+      _ReviewRemoteDataSource;
 
   /// Get reviews for a specific service
-  @GET('/api/v1/services/{serviceId}/reviews')
+  @GET('/api/v1/services/{serviceId}/reviews/')
   Future<PaginatedReviewResponseDto> getServiceReviews(
     @Path('serviceId') String serviceId, {
     @Query('page') int page = 1,
@@ -20,7 +21,7 @@ abstract class ReviewRemoteDataSource {
   });
 
   /// Get reviews by user ID
-  @GET('/api/v1/reviews')
+  @GET('/api/v1/reviews/')
   Future<PaginatedReviewResponseDto> getUserReviews({
     @Query('user_id') String? userId,
     @Query('page') int page = 1,
@@ -28,12 +29,15 @@ abstract class ReviewRemoteDataSource {
   });
 
   /// Create a new review
-  @POST('/api/v1/reviews')
+  @POST('/api/v1/reviews/')
   Future<ReviewDto> createReview(@Body() ReviewCreateRequestDto request);
 
   /// Update an existing review
   @PUT('/api/v1/reviews/{reviewId}')
-  Future<ReviewDto> updateReview(@Path('reviewId') String reviewId, @Body() ReviewUpdateRequestDto request);
+  Future<ReviewDto> updateReview(
+    @Path('reviewId') String reviewId,
+    @Body() ReviewUpdateRequestDto request,
+  );
 
   /// Delete a review
   @DELETE('/api/v1/reviews/{reviewId}')
@@ -42,5 +46,8 @@ abstract class ReviewRemoteDataSource {
 
 /// Factory function to create ReviewRemoteDataSource instance
 ReviewRemoteDataSource createReviewRemoteDataSource() {
-  return ReviewRemoteDataSource(ApiClient.instance, baseUrl: ApiConstants.baseUrl);
+  return ReviewRemoteDataSource(
+    ApiClient.instance,
+    baseUrl: ApiConstants.baseUrl,
+  );
 }

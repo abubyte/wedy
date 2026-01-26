@@ -10,7 +10,8 @@ part 'auth_remote_datasource.g.dart';
 /// Remote data source for authentication API calls
 @RestApi()
 abstract class AuthRemoteDataSource {
-  factory AuthRemoteDataSource(Dio dio, {String baseUrl}) = _AuthRemoteDataSource;
+  factory AuthRemoteDataSource(Dio dio, {String baseUrl}) =
+      _AuthRemoteDataSource;
 
   /// Send OTP to phone number
   @POST('/api/v1/auth/send-otp')
@@ -22,7 +23,9 @@ abstract class AuthRemoteDataSource {
 
   /// Complete user registration
   @POST('/api/v1/auth/complete-registration')
-  Future<TokenResponseDto> completeRegistration(@Body() CompleteRegistrationRequestDto request);
+  Future<TokenResponseDto> completeRegistration(
+    @Body() CompleteRegistrationRequestDto request,
+  );
 
   /// Refresh access token
   @POST('/api/v1/auth/refresh')
@@ -34,6 +37,5 @@ abstract class AuthRemoteDataSource {
 }
 
 /// Factory function to create AuthRemoteDataSource instance
-AuthRemoteDataSource createAuthRemoteDataSource() {
-  return AuthRemoteDataSource(ApiClient.instance, baseUrl: ApiConstants.baseUrl);
-}
+AuthRemoteDataSource createAuthRemoteDataSource() =>
+    AuthRemoteDataSource(ApiClient.instance, baseUrl: ApiConstants.baseUrl);

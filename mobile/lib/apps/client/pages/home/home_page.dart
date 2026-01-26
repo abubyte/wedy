@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:wedy/apps/client/layouts/main_layout.dart';
+import 'package:wedy/apps/client/pages/home/blocs/featured_services/featured_services_bloc.dart';
+import 'package:wedy/apps/client/pages/home/blocs/featured_services/featured_services_event.dart';
 import 'package:wedy/core/utils/shimmer_helper.dart';
 import 'package:wedy/shared/navigation/route_names.dart';
 import 'package:wedy/core/di/injection_container.dart';
@@ -11,8 +13,6 @@ import 'package:wedy/features/category/presentation/bloc/category_bloc.dart';
 import 'package:wedy/features/category/presentation/bloc/category_event.dart';
 import 'package:wedy/features/category/presentation/bloc/category_state.dart';
 import 'package:wedy/features/category/domain/entities/category.dart';
-import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
-import 'package:wedy/features/service/presentation/bloc/service_state.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -32,7 +32,9 @@ class ClientHomePage extends StatefulWidget {
 }
 
 class _ClientHomePageState extends State<ClientHomePage> {
-  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final RefreshController _refreshController = RefreshController(
+    initialRefresh: false,
+  );
   CategoryBloc? _categoryBloc;
 
   @override
@@ -47,7 +49,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
   }
 
   void _onRefresh() {
-    // Refresh categories - completion will be handled by BlocListener
     _categoryBloc?.add(const LoadCategoriesEvent());
   }
 
@@ -55,10 +56,14 @@ class _ClientHomePageState extends State<ClientHomePage> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // BlocProvider(create: (context) => getIt<ServiceBloc>()..add(const LoadServicesEvent(page: 1, limit: 50))),
+        BlocProvider(
+          create: (context) =>
+              getIt<FeaturedServicesBloc>()..add(FetchFeaturedServices()),
+        ),
         BlocProvider(
           create: (context) {
-            final bloc = getIt<CategoryBloc>()..add(const LoadCategoriesEvent());
+            final bloc = getIt<CategoryBloc>()
+              ..add(const LoadCategoriesEvent());
             _categoryBloc = bloc;
             return bloc;
           },
@@ -66,7 +71,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
       ],
       child: BlocListener<CategoryBloc, CategoryState>(
         listener: (context, state) {
-          // Complete refresh when categories are loaded or error occurs (only if refresh is active)
           if (!_refreshController.isRefresh) return;
 
           if (state is CategoriesLoaded) {
@@ -85,76 +89,76 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 ? categoryState.categories.categories
                 : <ServiceCategory>[];
 
-            return BlocBuilder<ServiceBloc, ServiceState>(
-              builder: (context, serviceState) {
-                // Unified loading state: true if either categories or services are loading
-                final isCategoriesLoading = categoryState is CategoryLoading || categoryState is CategoryInitial;
-                final isServicesLoading = serviceState is ServiceLoading || serviceState is ServiceInitial;
-                final isLoading = isCategoriesLoading || isServicesLoading;
-
-                return ClientMainLayout(
-                  height: categories.length < 2 ? MediaQuery.of(context).size.height : null,
-                  refreshController: _refreshController,
-                  onRefresh: _onRefresh,
-                  refreshHeader: const ClassicHeader(
-                    refreshingText: 'Yangilanmoqda...',
-                    completeText: 'Yangilandi!',
-                    idleText: 'Yangilash uchun torting',
-                    releaseText: 'Yangilash uchun qo\'yib yuboring',
-                    textStyle: TextStyle(color: AppColors.primary),
+            return ClientMainLayout(
+              height: categories.length < 2
+                  ? MediaQuery.of(context).size.height
+                  : null,
+              refreshController: _refreshController,
+              onRefresh: _onRefresh,
+              refreshHeader: const ClassicHeader(
+                refreshingText: 'Yangilanmoqda...',
+                completeText: 'Yangilandi!',
+                idleText: 'Yangilash uchun torting',
+                releaseText: 'Yangilash uchun qo\'yib yuboring',
+                textStyle: TextStyle(color: AppColors.primary),
+              ),
+              expandedHeight: 195,
+              collapsedHeight: 70,
+              headerContent: ListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.spacingL,
+                      vertical: AppDimensions.spacingM,
+                    ),
+                    child: ClientSearchField(
+                      hintText: 'Qidirish',
+                      readOnly: true,
+                      onTap: () => context.pushNamed(RouteNames.search),
+                    ),
                   ),
-                  expandedHeight: 195,
-                  collapsedHeight: 70,
-                  headerContent: ListView(
+                  _CategoryScroller(categories: categories, isLoading: false),
+                  const SizedBox(height: AppDimensions.spacingM),
+                ],
+              ),
+              bodyChildren: [
+                const FeaturedServicesSection(),
+                const SizedBox(height: AppDimensions.spacingL),
+
+                // Services Section by Category - each category has its own ServiceBloc
+                // Use key to force recreation when categories reload
+                if (categories.isEmpty)
+                  // Show 2 shimmer placeholders when categories are loading
+                  Column(
+                    children: List.generate(
+                      2,
+                      (index) => _CategoryServicesShimmerPlaceholder(),
+                    ),
+                  )
+                else if (categories.isNotEmpty)
+                  ListView.builder(
+                    key: ValueKey(
+                      'categories_${categories.length}_${categoryState.hashCode}',
+                    ),
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingL,
-                          vertical: AppDimensions.spacingM,
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      return CategoryServicesSection(
+                        key: ValueKey(
+                          'category_${category.id}_${categoryState.hashCode}',
                         ),
-                        child: ClientSearchField(
-                          hintText: 'Qidirish',
-                          readOnly: true,
-                          onTap: () => context.pushNamed(RouteNames.search),
-                        ),
-                      ),
-                      _CategoryScroller(categories: categories, isLoading: isLoading),
-                      const SizedBox(height: AppDimensions.spacingM),
-                    ],
+                        category: category,
+                        isLoading: false,
+                      );
+                    },
+                    itemCount: categories.length,
                   ),
-                  bodyChildren: [
-                    // Hot Offers Section (Featured Services) - has its own ServiceBloc
-                    // Use key to force recreation on refresh
-                    FeaturedServicesSection(key: ValueKey('featured_${categoryState.hashCode}'), isLoading: isLoading),
-                    const SizedBox(height: AppDimensions.spacingL),
 
-                    // Services Section by Category - each category has its own ServiceBloc
-                    // Use key to force recreation when categories reload
-                    if (isLoading && categories.isEmpty)
-                      // Show 2 shimmer placeholders when categories are loading
-                      Column(children: List.generate(2, (index) => _CategoryServicesShimmerPlaceholder()))
-                    else if (categories.isNotEmpty)
-                      ListView.builder(
-                        key: ValueKey('categories_${categories.length}_${categoryState.hashCode}'),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          final category = categories[index];
-                          return CategoryServicesSection(
-                            key: ValueKey('category_${category.id}_${categoryState.hashCode}'),
-                            category: category,
-                            isLoading: isLoading,
-                          );
-                        },
-                        itemCount: categories.length,
-                      ),
-
-                    const SizedBox(height: AppDimensions.spacingM),
-                  ],
-                );
-              },
+                const SizedBox(height: AppDimensions.spacingM),
+              ],
             );
           },
         ),

@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:wedy/features/service/domain/usecases/get_featured_services.dart';
+import 'package:wedy/apps/client/pages/home/blocs/featured_services/featured_services_bloc.dart';
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -52,6 +54,23 @@ import '../../features/tariff/domain/usecases/get_subscription.dart';
 import '../../features/tariff/domain/usecases/create_tariff_payment.dart';
 import '../../features/tariff/domain/usecases/activate_subscription.dart';
 import '../../features/tariff/presentation/bloc/tariff_bloc.dart';
+import '../../features/analytics/data/datasources/analytics_remote_datasource.dart';
+import '../../features/analytics/data/repositories/analytics_repository_impl.dart';
+import '../../features/analytics/domain/repositories/analytics_repository.dart';
+import '../../features/analytics/domain/usecases/get_merchant_analytics.dart';
+import '../../features/analytics/presentation/bloc/analytics_bloc.dart';
+import '../../features/gallery/data/datasources/gallery_remote_datasource.dart';
+import '../../features/gallery/data/repositories/gallery_repository_impl.dart';
+import '../../features/gallery/domain/repositories/gallery_repository.dart';
+import '../../features/gallery/domain/usecases/get_gallery_images.dart';
+import '../../features/gallery/domain/usecases/add_gallery_image.dart';
+import '../../features/gallery/domain/usecases/remove_gallery_image.dart';
+import '../../features/gallery/presentation/bloc/gallery_bloc.dart';
+import '../../features/featured_services/data/datasources/featured_services_remote_datasource.dart';
+import '../../features/featured_services/data/repositories/featured_services_repository_impl.dart';
+import '../../features/featured_services/domain/repositories/featured_services_repository.dart';
+import '../../features/featured_services/domain/usecases/get_featured_services_tracking.dart';
+import '../../features/featured_services/domain/usecases/create_monthly_featured_service.dart';
 
 /// Service locator instance
 final getIt = GetIt.instance;
@@ -59,12 +78,15 @@ final getIt = GetIt.instance;
 /// Initialize dependency injection
 Future<void> init() async {
   // Data sources
-  getIt.registerLazySingleton<AuthRemoteDataSource>(() => createAuthRemoteDataSource());
+  getIt.registerLazySingleton<AuthRemoteDataSource>(
+    () => createAuthRemoteDataSource(),
+  );
   getIt.registerLazySingleton<AuthLocalDataSource>(() => AuthLocalDataSource());
 
   // Repositories
   getIt.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(remoteDataSource: getIt(), localDataSource: getIt()),
+    () =>
+        AuthRepositoryImpl(remoteDataSource: getIt(), localDataSource: getIt()),
   );
 
   // Use cases
@@ -74,11 +96,16 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => RefreshToken(getIt()));
 
   // Profile data sources
-  getIt.registerLazySingleton<ProfileRemoteDataSource>(() => createProfileRemoteDataSource());
+  getIt.registerLazySingleton<ProfileRemoteDataSource>(
+    () => createProfileRemoteDataSource(),
+  );
 
   // Profile repositories
   getIt.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepositoryImpl(remoteDataSource: getIt(), localDataSource: getIt()),
+    () => ProfileRepositoryImpl(
+      remoteDataSource: getIt(),
+      localDataSource: getIt(),
+    ),
   );
 
   // Profile use cases
@@ -108,14 +135,24 @@ Future<void> init() async {
     ),
   );
 
+  // Home BLoCs
+  getIt.registerFactory(
+    () => FeaturedServicesBloc(getFeaturedServicesUseCase: getIt()),
+  );
+
   // Service data sources
-  getIt.registerLazySingleton<ServiceRemoteDataSource>(() => createServiceRemoteDataSource());
+  getIt.registerLazySingleton<ServiceRemoteDataSource>(
+    () => createServiceRemoteDataSource(),
+  );
 
   // Service repositories
-  getIt.registerLazySingleton<ServiceRepository>(() => ServiceRepositoryImpl(remoteDataSource: getIt()));
+  getIt.registerLazySingleton<ServiceRepository>(
+    () => ServiceRepositoryImpl(remoteDataSource: getIt()),
+  );
 
   // Service use cases
   getIt.registerLazySingleton(() => GetServices(getIt()));
+  getIt.registerLazySingleton(() => GetFeaturedServices(getIt()));
   getIt.registerLazySingleton(() => GetServiceById(getIt()));
   getIt.registerLazySingleton(() => InteractWithService(getIt()));
   getIt.registerLazySingleton(() => GetSavedServices(getIt()));
@@ -149,10 +186,14 @@ Future<void> init() async {
   );
 
   // Category data sources
-  getIt.registerLazySingleton<CategoryRemoteDataSource>(() => createCategoryRemoteDataSource());
+  getIt.registerLazySingleton<CategoryRemoteDataSource>(
+    () => createCategoryRemoteDataSource(),
+  );
 
   // Category repositories
-  getIt.registerLazySingleton<CategoryRepository>(() => CategoryRepositoryImpl(remoteDataSource: getIt()));
+  getIt.registerLazySingleton<CategoryRepository>(
+    () => CategoryRepositoryImpl(remoteDataSource: getIt()),
+  );
 
   // Category use cases
   getIt.registerLazySingleton(() => GetCategories(getIt()));
@@ -161,10 +202,14 @@ Future<void> init() async {
   getIt.registerFactory(() => CategoryBloc(getCategoriesUseCase: getIt()));
 
   // Review data sources
-  getIt.registerLazySingleton<ReviewRemoteDataSource>(() => createReviewRemoteDataSource());
+  getIt.registerLazySingleton<ReviewRemoteDataSource>(
+    () => createReviewRemoteDataSource(),
+  );
 
   // Review repositories
-  getIt.registerLazySingleton<ReviewRepository>(() => ReviewRepositoryImpl(remoteDataSource: getIt()));
+  getIt.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepositoryImpl(remoteDataSource: getIt()),
+  );
 
   // Review use cases
   getIt.registerLazySingleton(() => GetReviews(getIt()));
@@ -185,10 +230,14 @@ Future<void> init() async {
   );
 
   // Tariff data sources
-  getIt.registerLazySingleton<TariffRemoteDataSource>(() => createTariffRemoteDataSource());
+  getIt.registerLazySingleton<TariffRemoteDataSource>(
+    () => createTariffRemoteDataSource(),
+  );
 
   // Tariff repositories
-  getIt.registerLazySingleton<TariffRepository>(() => TariffRepositoryImpl(remoteDataSource: getIt()));
+  getIt.registerLazySingleton<TariffRepository>(
+    () => TariffRepositoryImpl(remoteDataSource: getIt()),
+  );
 
   // Tariff use cases
   getIt.registerLazySingleton(() => GetTariffPlans(getIt()));
@@ -205,4 +254,66 @@ Future<void> init() async {
       activateSubscription: getIt(),
     ),
   );
+
+  // Analytics data sources
+  getIt.registerLazySingleton<AnalyticsRemoteDataSource>(
+    () => createAnalyticsRemoteDataSource(),
+  );
+
+  // Analytics repositories
+  getIt.registerLazySingleton<AnalyticsRepository>(
+    () => AnalyticsRepositoryImpl(remoteDataSource: getIt()),
+  );
+
+  // Analytics use cases
+  getIt.registerLazySingleton(() => GetMerchantAnalytics(getIt()));
+
+  // Analytics BLoC
+  getIt.registerFactory(() => AnalyticsBloc(getMerchantAnalytics: getIt()));
+
+  // Gallery data sources
+  getIt.registerLazySingleton<GalleryRemoteDataSource>(
+    () => createGalleryRemoteDataSource(),
+  );
+
+  // Gallery repositories
+  getIt.registerLazySingleton<GalleryRepository>(
+    () => GalleryRepositoryImpl(remoteDataSource: getIt()),
+  );
+
+  // Gallery use cases
+  getIt.registerLazySingleton(() => GetGalleryImages(getIt()));
+  getIt.registerLazySingleton(() => AddGalleryImage(getIt()));
+  getIt.registerLazySingleton(() => RemoveGalleryImage(getIt()));
+
+  // Gallery BLoC
+  getIt.registerFactory(
+    () => GalleryBloc(
+      getGalleryImages: getIt(),
+      addGalleryImage: getIt(),
+      removeGalleryImage: getIt(),
+    ),
+  );
+
+  // Featured Services data sources
+  getIt.registerLazySingleton<FeaturedServicesRemoteDataSource>(
+    () => createFeaturedServicesRemoteDataSource(),
+  );
+
+  // Featured Services repositories
+  getIt.registerLazySingleton<FeaturedServicesRepository>(
+    () => FeaturedServicesRepositoryImpl(remoteDataSource: getIt()),
+  );
+
+  // Featured Services use cases
+  getIt.registerLazySingleton(() => GetFeaturedServicesTracking(getIt()));
+  getIt.registerLazySingleton(() => CreateMonthlyFeaturedService(getIt()));
+
+  // Featured Services BLoC
+  // getIt.registerFactory(
+  //   () => FeaturedServicesBloc(
+  //     getFeaturedServicesTracking: getIt(),
+  //     createMonthlyFeaturedService: getIt(),
+  //   ),
+  // );
 }

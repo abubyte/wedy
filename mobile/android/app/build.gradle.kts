@@ -68,8 +68,8 @@ android {
             dimension = "app"
             applicationId = "uz.wedy.app"
             resValue("string", "app_name", "Wedy")
-            versionCode = 9
-            versionName = "2.0.0"
+            versionCode = 10
+            versionName = "2.0.1"
         }
         
         create("merchant") {
