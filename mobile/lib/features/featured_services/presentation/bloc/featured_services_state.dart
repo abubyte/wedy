@@ -1,9 +1,11 @@
+import '../../../tariff/domain/repositories/tariff_repository.dart';
 import '../../domain/entities/featured_service.dart';
 
 /// Loading type for featured services operations
 enum FeaturedServicesLoadingType {
   initial,
   creating,
+  creatingPayment,
 }
 
 /// Error type for featured services operations
@@ -57,6 +59,14 @@ sealed class FeaturedServicesOperation {
 final class FeaturedServiceCreatedOperation extends FeaturedServicesOperation {
   final FeaturedService featuredService;
   const FeaturedServiceCreatedOperation(this.featuredService);
+}
+
+/// Featured payment created state
+final class FeaturedPaymentCreated extends FeaturedServicesState {
+  final PaymentResponse payment;
+  final MerchantFeaturedServicesInfo? previousData;
+
+  const FeaturedPaymentCreated(this.payment, {this.previousData});
 }
 
 /// Error state

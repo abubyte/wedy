@@ -38,4 +38,5 @@ class ApiConstants {
 
   // Payment endpoints
   static String get createTariffPayment => '$apiVersion/payments/tariff';
+  static String get createFeaturedPayment => '$apiVersion/payments/featured-service';
 }

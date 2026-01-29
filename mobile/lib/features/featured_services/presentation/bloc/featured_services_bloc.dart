@@ -3,6 +3,7 @@ import '../../../../core/errors/failures.dart';
 import '../../domain/entities/featured_service.dart';
 import '../../domain/usecases/get_featured_services_tracking.dart';
 import '../../domain/usecases/create_monthly_featured_service.dart';
+import '../../domain/usecases/create_featured_payment.dart';
 import 'featured_services_event.dart';
 import 'featured_services_state.dart';
 
@@ -10,15 +11,19 @@ import 'featured_services_state.dart';
 class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesState> {
   final GetFeaturedServicesTracking _getFeaturedServicesTracking;
   final CreateMonthlyFeaturedService _createMonthlyFeaturedService;
+  final CreateFeaturedPayment _createFeaturedPayment;
 
   FeaturedServicesBloc({
     required GetFeaturedServicesTracking getFeaturedServicesTracking,
     required CreateMonthlyFeaturedService createMonthlyFeaturedService,
+    required CreateFeaturedPayment createFeaturedPayment,
   })  : _getFeaturedServicesTracking = getFeaturedServicesTracking,
         _createMonthlyFeaturedService = createMonthlyFeaturedService,
+        _createFeaturedPayment = createFeaturedPayment,
         super(const FeaturedServicesInitial()) {
     on<LoadFeaturedServicesEvent>(_onLoadFeaturedServices);
     on<CreateMonthlyFeaturedServiceEvent>(_onCreateMonthlyFeaturedService);
+    on<CreatePaidFeaturedServiceEvent>(_onCreatePaidFeaturedService);
     on<RefreshFeaturedServicesEvent>(_onRefreshFeaturedServices);
   }
 
@@ -32,6 +37,9 @@ class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesS
       return currentState.previousData;
     }
     if (currentState is FeaturedServicesError) {
+      return currentState.previousData;
+    }
+    if (currentState is FeaturedPaymentCreated) {
       return currentState.previousData;
     }
     return null;
@@ -106,6 +114,33 @@ class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesS
           lastOperation: FeaturedServiceCreatedOperation(featuredService),
         ));
       },
+    );
+  }
+
+  Future<void> _onCreatePaidFeaturedService(
+    CreatePaidFeaturedServiceEvent event,
+    Emitter<FeaturedServicesState> emit,
+  ) async {
+    final previousData = _currentData;
+
+    emit(FeaturedServicesLoading(
+      type: FeaturedServicesLoadingType.creatingPayment,
+      previousData: previousData,
+    ));
+
+    final result = await _createFeaturedPayment(
+      serviceId: event.serviceId,
+      durationDays: event.durationDays,
+      paymentMethod: event.paymentMethod,
+    );
+
+    result.fold(
+      (failure) => emit(FeaturedServicesError(
+        failure.toUserMessage(entityName: 'Featured service payment'),
+        type: _mapFailureToErrorType(failure),
+        previousData: previousData,
+      )),
+      (payment) => emit(FeaturedPaymentCreated(payment, previousData: previousData)),
     );
   }
 

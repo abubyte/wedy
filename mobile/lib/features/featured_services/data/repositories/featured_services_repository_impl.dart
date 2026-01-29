@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../tariff/domain/repositories/tariff_repository.dart';
 import '../../domain/entities/featured_service.dart';
 import '../../domain/repositories/featured_services_repository.dart';
 import '../datasources/featured_services_remote_datasource.dart';
@@ -30,6 +31,35 @@ class FeaturedServicesRepositoryImpl implements FeaturedServicesRepository {
         'service_id': serviceId,
       });
       return Right(response.toEntity());
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, PaymentResponse>> createFeaturedServicePayment({
+    required String serviceId,
+    required int durationDays,
+    required String paymentMethod,
+  }) async {
+    try {
+      final body = {
+        'service_id': serviceId,
+        'duration_days': durationDays,
+        'payment_method': paymentMethod,
+      };
+      final response = await remoteDataSource.createFeaturedServicePayment(body);
+      return Right(
+        PaymentResponse(
+          id: response.id,
+          amount: response.amount,
+          paymentUrl: response.paymentUrl,
+          transactionId: response.transactionId,
+          createdAt: DateTime.parse(response.createdAt),
+        ),
+      );
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {

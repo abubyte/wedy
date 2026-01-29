@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:intl/intl.dart';
@@ -12,6 +13,9 @@ import 'package:wedy/features/analytics/domain/entities/analytics.dart';
 import 'package:wedy/features/analytics/presentation/bloc/analytics_bloc.dart';
 import 'package:wedy/features/analytics/presentation/bloc/analytics_event.dart';
 import 'package:wedy/features/analytics/presentation/bloc/analytics_state.dart';
+import 'package:wedy/features/reviews/presentation/bloc/review_bloc.dart';
+import 'package:wedy/features/reviews/presentation/bloc/review_state.dart';
+import 'package:wedy/features/service/presentation/bloc/service_state.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_bloc.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_event.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_state.dart';
@@ -74,19 +78,23 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: AppDimensions.spacingL),
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimensions.spacingL,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Header
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingL),
+                        horizontal: AppDimensions.spacingL,
+                      ),
                       child: Text(
                         'Bosh sahifa',
-                        style: AppTextStyles.headline2
-                            .copyWith(fontWeight: FontWeight.w600, color: Colors.black),
+                        style: AppTextStyles.headline2.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.spacingL),
@@ -96,9 +104,12 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                       width: double.infinity,
                       height: 150,
                       margin: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingL),
+                        horizontal: AppDimensions.spacingL,
+                      ),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusL,
+                        ),
                         image: const DecorationImage(
                           image: NetworkImage('https://picsum.photos/300/150'),
                           fit: BoxFit.cover,
@@ -131,18 +142,23 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
 
                             return Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(AppDimensions.spacingS),
+                              padding: const EdgeInsets.all(
+                                AppDimensions.spacingS,
+                              ),
                               margin: const EdgeInsets.symmetric(
-                                  horizontal: AppDimensions.spacingL),
+                                horizontal: AppDimensions.spacingL,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
-                                borderRadius:
-                                    BorderRadius.circular(AppDimensions.radiusL),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusL,
+                                ),
                                 border: Border.all(
-                                    color: isActive
-                                        ? AppColors.border
-                                        : AppColors.error,
-                                    width: .5),
+                                  color: isActive
+                                      ? AppColors.border
+                                      : AppColors.error,
+                                  width: .5,
+                                ),
                               ),
                               child: Stack(
                                 children: [
@@ -154,60 +170,70 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.eye,
                                             total: _formatNumber(
-                                                analytics?.totalViews ?? 0),
+                                              analytics?.totalViews ?? 0,
+                                            ),
                                             today:
                                                 '+${analytics?.viewsToday ?? 0}',
                                           ),
                                           const SizedBox(
-                                              width: AppDimensions.spacingS),
+                                            width: AppDimensions.spacingS,
+                                          ),
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.save_2,
                                             total: _formatNumber(
-                                                analytics?.totalSaves ?? 0),
+                                              analytics?.totalSaves ?? 0,
+                                            ),
                                             today:
                                                 '+${analytics?.savesToday ?? 0}',
                                           ),
                                         ],
                                       ),
                                       const SizedBox(
-                                          height: AppDimensions.spacingS),
+                                        height: AppDimensions.spacingS,
+                                      ),
                                       Row(
                                         children: [
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.star_1,
-                                            total: (analytics?.overallRating ?? 0)
-                                                .toStringAsFixed(1),
+                                            total:
+                                                (analytics?.overallRating ?? 0)
+                                                    .toStringAsFixed(1),
                                             today:
                                                 '+${analytics?.totalReviews ?? 0}',
                                           ),
                                           const SizedBox(
-                                              width: AppDimensions.spacingS),
+                                            width: AppDimensions.spacingS,
+                                          ),
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.heart,
                                             total: _formatNumber(
-                                                analytics?.totalLikes ?? 0),
+                                              analytics?.totalLikes ?? 0,
+                                            ),
                                             today:
                                                 '+${analytics?.likesToday ?? 0}',
                                           ),
                                           const SizedBox(
-                                              width: AppDimensions.spacingS),
+                                            width: AppDimensions.spacingS,
+                                          ),
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.share,
                                             total: _formatNumber(
-                                                analytics?.totalShares ?? 0),
+                                              analytics?.totalShares ?? 0,
+                                            ),
                                             today:
                                                 '+${analytics?.sharesToday ?? 0}',
                                           ),
                                         ],
                                       ),
                                       const SizedBox(
-                                          height: AppDimensions.spacingS),
+                                        height: AppDimensions.spacingS,
+                                      ),
                                       BlocBuilder<TariffBloc, TariffState>(
                                         builder: (context, state) {
                                           final subscription =
                                               state is SubscriptionLoaded
-                                                  ? state.subscription
-                                                  : null;
+                                              ? state.subscription
+                                              : null;
                                           final isActive =
                                               subscription?.isActive ?? false;
                                           return WedyPrimaryButton(
@@ -229,19 +255,22 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                                       height: _statisticsBoxHeight,
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          color:
-                                              Colors.white.withValues(alpha: 0.95),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.95,
+                                          ),
                                           borderRadius: BorderRadius.circular(
-                                              AppDimensions.radiusL),
+                                            AppDimensions.radiusL,
+                                          ),
                                         ),
                                         child: Center(
                                           child: Text(
                                             'Tarif faol emas',
-                                            style: AppTextStyles.bodySmall.copyWith(
-                                              color: AppColors.textError,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                            style: AppTextStyles.bodySmall
+                                                .copyWith(
+                                                  color: AppColors.textError,
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                           ),
                                         ),
                                       ),
@@ -258,20 +287,29 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                     // Reviews
                     BlocBuilder<TariffBloc, TariffState>(
                       builder: (context, state) {
-                        final subscription =
-                            state is SubscriptionLoaded ? state.subscription : null;
+                        final subscription = state is SubscriptionLoaded
+                            ? state.subscription
+                            : null;
                         final isActive = subscription?.isActive ?? false;
                         if (isActive) {
                           return Column(
                             children: [
-                              SectionHeader(
-                                title: 'Fikrlar',
-                                applyPadding: true,
-                                onTap: () => context.pushNamed(RouteNames.reviews),
-                              ),
-                              const SizedBox(height: AppDimensions.spacingSM),
-                              const ServiceReviews(),
-                              const SizedBox(height: AppDimensions.spacingM),
+                              if (di.getIt<ReviewBloc>().state
+                                      is ReviewsLoaded &&
+                                  (di.getIt<ReviewBloc>().state
+                                          as ReviewsLoaded)
+                                      .allReviews
+                                      .isNotEmpty) ...[
+                                SectionHeader(
+                                  title: 'Fikrlar',
+                                  applyPadding: true,
+                                  onTap: () =>
+                                      context.pushNamed(RouteNames.reviews),
+                                ),
+                                const SizedBox(height: AppDimensions.spacingSM),
+                                const ServiceReviews(),
+                                const SizedBox(height: AppDimensions.spacingM),
+                              ],
                             ],
                           );
                         }
@@ -281,8 +319,9 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
 
                     // Tariff Status
                     const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppDimensions.spacingL,
+                      ),
                       child: WedyTariffStatus(),
                     ),
                   ],

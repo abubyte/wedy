@@ -71,6 +71,8 @@ import '../../features/featured_services/data/repositories/featured_services_rep
 import '../../features/featured_services/domain/repositories/featured_services_repository.dart';
 import '../../features/featured_services/domain/usecases/get_featured_services_tracking.dart';
 import '../../features/featured_services/domain/usecases/create_monthly_featured_service.dart';
+import '../../features/featured_services/domain/usecases/create_featured_payment.dart';
+import '../../features/featured_services/presentation/bloc/featured_services_bloc.dart' as merchant_featured;
 
 /// Service locator instance
 final getIt = GetIt.instance;
@@ -308,12 +310,14 @@ Future<void> init() async {
   // Featured Services use cases
   getIt.registerLazySingleton(() => GetFeaturedServicesTracking(getIt()));
   getIt.registerLazySingleton(() => CreateMonthlyFeaturedService(getIt()));
+  getIt.registerLazySingleton(() => CreateFeaturedPayment(getIt()));
 
-  // Featured Services BLoC
-  // getIt.registerFactory(
-  //   () => FeaturedServicesBloc(
-  //     getFeaturedServicesTracking: getIt(),
-  //     createMonthlyFeaturedService: getIt(),
-  //   ),
-  // );
+  // Merchant Featured Services BLoC
+  getIt.registerFactory(
+    () => merchant_featured.FeaturedServicesBloc(
+      getFeaturedServicesTracking: getIt(),
+      createMonthlyFeaturedService: getIt(),
+      createFeaturedPayment: getIt(),
+    ),
+  );
 }
