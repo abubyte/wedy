@@ -186,7 +186,7 @@ class PaymentService:
                 raise PaymentError("Service not found or not owned by merchant")
             
             # Calculate price (base daily price would be configurable)
-            base_daily_price = 1500.0  # 1500 UZS per day (configurable)
+            base_daily_price = 20000.0  # 20000 UZS per day (configurable)
             final_amount = self._calculate_featured_service_price(
                 base_daily_price, request.duration_days
             )

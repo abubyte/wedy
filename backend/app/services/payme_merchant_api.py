@@ -552,7 +552,7 @@ class PaymeMerchantAPI:
                     if service:
                         # Calculate expected amount based on featured service pricing
                         # Use the same discount logic as PaymentService
-                        base_daily_price = 1500.0  # 1500 UZS per day (should match PaymentService)
+                        base_daily_price = 20000.0  # 20000 UZS per day (should match PaymentService)
                         total_base = base_daily_price * days_count_int
                         
                         # Apply discounts based on duration
