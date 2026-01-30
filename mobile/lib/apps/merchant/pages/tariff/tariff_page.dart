@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:wedy/apps/merchant/pages/tariff/tariff_duration_page.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/di/injection_container.dart' as di;
 import 'package:wedy/core/theme/app_colors.dart';
@@ -30,308 +29,208 @@ class TariffPage extends StatelessWidget {
   }
 }
 
-class _TariffPageContent extends StatefulWidget {
+class _TariffPageContent extends StatelessWidget {
   const _TariffPageContent();
 
-  @override
-  State<_TariffPageContent> createState() => _TariffPageContentState();
-}
-
-class _TariffPageContentState extends State<_TariffPageContent> {
-  TariffPlan? selectedPlan;
-  int selectedDuration = 1; // 1, 3, 6, or 12 months
-  final List<int> durations = [1, 3, 6, 12];
+  String _formatPrice(double price) {
+    return price.toInt().toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-
-      body: BlocConsumer<TariffBloc, TariffState>(
-        listener: (context, state) {
-          if (state is PaymentCreated) {
-            // Open payment URL if available
-            if (state.payment.paymentUrl != null) {
-              _launchPaymentUrl(state.payment.paymentUrl!);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('To\'lov yaratildi. Tekshirilmoqda...'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-              // Refresh subscription
-              context.read<TariffBloc>().add(const RefreshTariffEvent());
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: BlocBuilder<TariffBloc, TariffState>(
+          builder: (context, state) {
+            if (state is TariffLoading && state is! TariffDataLoaded) {
+              return const Center(child: CircularProgressIndicator());
             }
-          } else if (state is TariffError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
-          }
-        },
-        builder: (context, state) {
-          // Handle initial loading state
-          if (state is TariffLoading &&
-              state is! TariffPlansLoaded &&
-              state is! SubscriptionLoaded &&
-              state is! TariffDataLoaded) {
-            return const Center(child: CircularProgressIndicator());
-          }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.spacingL),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // // Current subscription card
-                // BlocBuilder<TariffBloc, TariffState>(
-                //   builder: (context, state) {
-                //     Subscription? sub;
-                //     if (state is TariffDataLoaded) {
-                //       sub = state.subscription;
-                //     } else if (state is SubscriptionLoaded) {
-                //       sub = state.subscription;
-                //     }
-                //     if (sub != null) {
-                //       return Column(
-                //         children: [
-                //           _buildCurrentSubscriptionCard(sub),
-                //           const SizedBox(height: AppDimensions.spacingL),
-                //         ],
-                //       );
-                //     }
-                //     return const SizedBox.shrink();
-                //   },
-                // ),
-                const SizedBox(height: AppDimensions.spacingL),
-                const WedyCircularButton(isPrimary: true),
-                const SizedBox(height: AppDimensions.spacingL),
+            List<TariffPlan> plans = [];
+            if (state is TariffDataLoaded) {
+              plans = state.plans;
+            } else if (state is TariffPlansLoaded) {
+              plans = state.plans;
+            }
 
-                // Tariff plans
-                Text('Tariflar', style: AppTextStyles.title1),
-                const SizedBox(height: AppDimensions.spacingM),
-
-                BlocBuilder<TariffBloc, TariffState>(
-                  builder: (context, state) {
-                    List<TariffPlan> plansList = [];
-                    if (state is TariffDataLoaded) {
-                      plansList = state.plans;
-                    } else if (state is TariffPlansLoaded) {
-                      plansList = state.plans;
-                    }
-                    if (plansList.isNotEmpty) {
-                      return Column(children: plansList.map((plan) => _buildTariffPlanCard(plan)).toList());
-                    }
-                    if (state is TariffLoading) {
-                      return const Padding(
-                        padding: EdgeInsets.all(AppDimensions.spacingL),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-                const SizedBox(height: AppDimensions.spacingL),
-
-                // Duration selector
-                if (selectedPlan != null) ...[
-                  Text('Muddat', style: AppTextStyles.title1),
-                  const SizedBox(height: AppDimensions.spacingM),
-                  Row(
-                    children: durations.map((duration) {
-                      final isSelected = selectedDuration == duration;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => selectedDuration = duration),
-                          child: Container(
-                            margin: EdgeInsets.only(right: duration != durations.last ? AppDimensions.spacingS : 0),
-                            padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingM),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primary : AppColors.surface,
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                              border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '$duration oy',
-                                style: AppTextStyles.bodyRegular.copyWith(
-                                  color: isSelected ? AppColors.surface : AppColors.textPrimary,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimensions.spacingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Back Button
+                  const WedyCircularButton(isPrimary: true),
                   const SizedBox(height: AppDimensions.spacingL),
 
-                  // Total price
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.spacingM),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Jami:', style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold)),
-                        Text(
-                          '${NumberFormat('#,###').format(selectedPlan!.pricePerMonth * selectedDuration)} so\'m',
-                          style: AppTextStyles.title1.copyWith(color: AppColors.primary),
-                        ),
-                      ],
+                  // Title
+                  Text(
+                    'Tariflar',
+                    style: AppTextStyles.headline2.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 24,
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.spacingL),
+                  const SizedBox(height: AppDimensions.spacingXL),
 
-                  // Purchase button
-                  WedyPrimaryButton(
-                    label: 'To\'lash',
-                    onPressed: () {
-                      context.read<TariffBloc>().add(
-                        CreateTariffPaymentEvent(
-                          tariffPlanId: selectedPlan!.id,
-                          durationMonths: selectedDuration,
-                          paymentMethod: 'payme', // Default payment method
-                        ),
-                      );
-                    },
-                  ),
+                  // Tariff plans
+                  if (plans.isNotEmpty) ...[
+                    ...plans.map((plan) => _buildTariffCard(context, plan)),
+                  ],
+
+                  // Pro plan coming soon
+                  _buildComingSoonCard(),
                 ],
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  // ignore: unused_element
-  Widget _buildCurrentSubscriptionCard(Subscription subscription) {
-    final dateFormat = DateFormat('dd-MM-yyyy');
+  Widget _buildTariffCard(BuildContext context, TariffPlan plan) {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacingM),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: AppDimensions.spacingL),
+      padding: const EdgeInsets.all(AppDimensions.spacingL),
       decoration: BoxDecoration(
-        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        border: Border.all(color: subscription.isActive ? AppColors.primary : AppColors.error, width: 2),
+        border: Border.all(color: AppColors.border, width: 1),
+        color: AppColors.surface,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Joriy tarif',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontWeight: FontWeight.bold),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS, vertical: 4),
-                decoration: BoxDecoration(
-                  color: subscription.isActive ? AppColors.success : AppColors.error,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusS),
-                ),
-                child: Text(
-                  subscription.isActive ? 'Faol' : 'Tugagan',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.surface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-            ],
+          // Plan name
+          Text(
+            plan.name,
+            style: AppTextStyles.bodyRegular.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: AppDimensions.spacingS),
-          Text(subscription.tariffPlan.name, style: AppTextStyles.title1),
-          const SizedBox(height: AppDimensions.spacingXS),
+
+          // Price
           Text(
-            '${dateFormat.format(subscription.startDate)} - ${dateFormat.format(subscription.endDate)}',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
-          ),
-          if (subscription.isActive) ...[
-            const SizedBox(height: AppDimensions.spacingXS),
-            Text(
-              'Qolgan: ${subscription.daysRemaining} kun',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary),
+            '${_formatPrice(plan.pricePerMonth)} so\'m/oy',
+            style: AppTextStyles.headline1.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
             ),
-          ],
+          ),
+          const SizedBox(height: AppDimensions.spacingL),
+
+          // Features list
+          _buildFeatureItem('Logo, nom va tafsif', true),
+          _buildFeatureItem('Narx', true),
+          _buildFeatureItem('${plan.maxImagesPerService} tagacha rasm', true),
+          _buildFeatureItem('Manzil', true),
+          _buildFeatureItem('Telefon raqamlar qo\'shish', plan.maxPhoneNumbers > 0),
+          _buildFeatureItem('Ijtimoiy tarmoqlar qo\'shish', plan.maxSocialAccounts > 0),
+          _buildFeatureItem('Ijtimoiy tarmoqlar yoiq', false),
+          _buildFeatureItem('Reklama yoiq', plan.monthlyFeaturedCards == 0),
+
+          const SizedBox(height: AppDimensions.spacingL),
+
+          // Activate button
+          WedyPrimaryButton(
+            label: 'Tarifni faollashtirish',
+            onPressed: () => _navigateToDuration(context, plan),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTariffPlanCard(TariffPlan plan) {
-    // ignore: unused_local_variable
-    final isSelected = selectedPlan?.id == plan.id;
-    return GestureDetector(
-      onTap: () => setState(() => selectedPlan = plan),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppDimensions.spacingM),
-        padding: const EdgeInsets.all(AppDimensions.spacingS),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [Text(plan.name, style: AppTextStyles.title2.copyWith(color: AppColors.primary))],
-            ),
-            const SizedBox(height: AppDimensions.spacingS),
-            Text.rich(
-              TextSpan(
-                text: '${NumberFormat('#,###').format(plan.pricePerMonth)} ',
-                style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 30),
-                children: [
-                  TextSpan(
-                    text: 'so\'m/oy',
-                    style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 25),
-                  ),
-                ],
+  Widget _buildFeatureItem(String text, bool isIncluded) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimensions.spacingS),
+      child: Row(
+        children: [
+          Icon(
+            isIncluded ? Icons.check_circle : Icons.cancel,
+            color: isIncluded ? AppColors.primary : AppColors.error,
+            size: 20,
+          ),
+          const SizedBox(width: AppDimensions.spacingS),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.bodyRegular.copyWith(
+                color: isIncluded ? AppColors.textPrimary : AppColors.textMuted,
               ),
             ),
-            const SizedBox(height: AppDimensions.spacingM),
-            _buildFeatureRow('Xizmatlar', plan.maxServices.toString()),
-            _buildFeatureRow('Rasmlar/xizmat', plan.maxImagesPerService.toString()),
-            _buildFeatureRow('Telefon raqamlari', plan.maxPhoneNumbers.toString()),
-            _buildFeatureRow('Galereya rasmlari', plan.maxGalleryImages.toString()),
-            _buildFeatureRow('Ijtimoiy tarmoqlar', plan.maxSocialAccounts.toString()),
-            if (plan.allowWebsite) _buildFeatureRow('Veb-sayt', 'Mavjud'),
-            if (plan.allowCoverImage) _buildFeatureRow('Cover rasm', 'Mavjud'),
-            if (plan.monthlyFeaturedCards > 0)
-              _buildFeatureRow('Reklama kartalar', plan.monthlyFeaturedCards.toString()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.spacingXS),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
-          Text(value, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _launchPaymentUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  Widget _buildComingSoonCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.spacingL),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        border: Border.all(color: AppColors.border, width: 1),
+        color: AppColors.surfaceMuted,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Plan name
+          Text(
+            'Pro',
+            style: AppTextStyles.bodyRegular.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spacingS),
+
+          // Coming soon
+          Text(
+            'Tez kuna...',
+            style: AppTextStyles.headline2.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spacingL),
+
+          // Pro features preview
+          _buildFeatureItem('Logo, nom va tafsif', true),
+          _buildFeatureItem('10 tagacha xizmat joylash', true),
+          _buildFeatureItem('Har bir xizmarga 3 ta rasm', true),
+          _buildFeatureItem('Manzil + 3 ta telefon raqam', true),
+          _buildFeatureItem('Profilga 3 ta rasm', true),
+          _buildFeatureItem('Ijtimoiy tarmoqlar qo\'shish', true),
+          _buildFeatureItem('Muqova rasmi yuklash', true),
+
+          const SizedBox(height: AppDimensions.spacingL),
+
+          // Disabled button
+          const WedyPrimaryButton(
+            label: 'Bu Tarif tez kunda qo\'shiladi',
+            outlined: true,
+            onPressed: null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToDuration(BuildContext context, TariffPlan plan) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: context.read<TariffBloc>(),
+          child: TariffDurationPage(tariffPlan: plan),
+        ),
+      ),
+    );
   }
 }

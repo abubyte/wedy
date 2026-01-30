@@ -300,9 +300,23 @@ class PaymeMerchantAPI:
         days_count = account.get("days_count")
         
         # Determine which format is being used
-        is_tariff_format = phone_number or tariff_id or month_count
-        is_boost_format = phone_number or service_id or days_count
-        
+        # Tariff format: has tariff_id or month_count (tariff-specific fields)
+        # Boost format: has service_id or days_count (boost-specific fields)
+        # phone_number alone doesn't determine the format
+        is_tariff_format = tariff_id is not None or month_count is not None
+        is_boost_format = service_id is not None or days_count is not None
+
+        # Prevent mixed format (both tariff and boost fields)
+        if is_tariff_format and is_boost_format:
+            raise PaymeMerchantAPIError(
+                self.ERROR_ACCOUNT_ERROR_MIN,
+                "Неверный формат данных в поле account",
+                {
+                    "reason": "mixed_account_format",
+                    "message": "Cannot mix tariff fields (tariff_id, month_count) with boost fields (service_id, days_count)"
+                }
+            )
+
         # Validate account parameters format
         # For tariff format, all three fields are required
         if is_tariff_format:
@@ -358,8 +372,8 @@ class PaymeMerchantAPI:
                     }
                 )
         
-        # Validate boost service format
-        if is_boost_format:
+        # Validate boost service format (only if not already a tariff format)
+        if is_boost_format and not is_tariff_format:
             # If any of the boost format fields are provided, all must be provided
             if not (phone_number and service_id and days_count):
                 raise PaymeMerchantAPIError(
