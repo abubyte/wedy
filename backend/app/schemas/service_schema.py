@@ -55,6 +55,7 @@ class ServiceListItem(BaseModel):
     name: str
     description: str
     price: float
+    price_type: Optional[str] = "fixed"
     location_region: str
     overall_rating: float
     total_reviews: int
@@ -87,6 +88,7 @@ class ServiceDetailResponse(BaseModel):
     name: str
     description: str
     price: float
+    price_type: Optional[str] = "fixed"
     location_region: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None

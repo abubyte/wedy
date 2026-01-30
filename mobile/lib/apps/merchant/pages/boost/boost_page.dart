@@ -10,6 +10,7 @@ import 'package:wedy/core/theme/app_text_styles.dart';
 import 'package:wedy/features/featured_services/presentation/bloc/featured_services_bloc.dart';
 import 'package:wedy/features/featured_services/presentation/bloc/featured_services_event.dart';
 import 'package:wedy/features/featured_services/presentation/bloc/featured_services_state.dart';
+import 'package:wedy/features/featured_services/domain/entities/featured_service.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_bloc.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_event.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_state.dart';
@@ -47,6 +48,22 @@ class _BoostPageState extends State<BoostPage> {
       }
     }
     return discountTiers.last;
+  }
+
+  /// Check if the selected service already has an active boost
+  bool _hasActiveBoost(FeaturedServicesState state) {
+    if (state is! FeaturedServicesLoaded || _selectedServiceId == null) return false;
+    return state.featuredServices.any((f) => f.serviceId == _selectedServiceId && f.isActive);
+  }
+
+  /// Get active boost for selected service
+  FeaturedService? _getActiveBoost(FeaturedServicesState state) {
+    if (state is! FeaturedServicesLoaded || _selectedServiceId == null) return null;
+    try {
+      return state.featuredServices.firstWhere((f) => f.serviceId == _selectedServiceId && f.isActive);
+    } catch (_) {
+      return null;
+    }
   }
 
   int get _pricePerDay => _currentTier.pricePerDay;
@@ -123,8 +140,12 @@ class _BoostPageState extends State<BoostPage> {
                           _buildTotalPrice(),
                           const SizedBox(height: AppDimensions.spacingL),
 
+                          // Active boost warning
+                          if (_hasActiveBoost(featuredState)) _buildActiveBoostWarning(featuredState),
+
                           // Free slots info and button
-                          if (featuredState is FeaturedServicesLoaded) _buildFreeSlotsSection(context, featuredState),
+                          if (featuredState is FeaturedServicesLoaded && !_hasActiveBoost(featuredState))
+                            _buildFreeSlotsSection(context, featuredState),
 
                           const SizedBox(height: AppDimensions.spacingL),
 
@@ -383,6 +404,52 @@ class _BoostPageState extends State<BoostPage> {
     );
   }
 
+  Widget _buildActiveBoostWarning(FeaturedServicesState state) {
+    final activeBoost = _getActiveBoost(state);
+    if (activeBoost == null) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.spacingM),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        border: Border.all(color: AppColors.warning, width: 1),
+        color: AppColors.warning.withValues(alpha: 0.1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_outline, color: AppColors.warning),
+              const SizedBox(width: AppDimensions.spacingS),
+              Expanded(
+                child: Text(
+                  'Bu xizmat allaqachon reklamada',
+                  style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, color: AppColors.warning),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacingS),
+          Text(
+            'Tugash sanasi: ${activeBoost.endDate.day}/${activeBoost.endDate.month}/${activeBoost.endDate.year}',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+          ),
+          Text(
+            'Qolgan kunlar: ${activeBoost.endDate.difference(DateTime.now()).inDays} kun',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: AppDimensions.spacingS),
+          Text(
+            'Reklama tugaganidan keyin qayta reklama qilishingiz mumkin.',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontStyle: FontStyle.italic),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFreeSlotsSection(BuildContext context, FeaturedServicesLoaded state) {
     if (!state.hasFreeSlots) return const SizedBox.shrink();
 
@@ -492,6 +559,8 @@ class _BoostPageState extends State<BoostPage> {
   }
 
   Widget _buildBottomButton(BuildContext context, FeaturedServicesState featuredState) {
+    final hasActiveBoost = _hasActiveBoost(featuredState);
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.spacingL),
       decoration: const BoxDecoration(
@@ -501,9 +570,9 @@ class _BoostPageState extends State<BoostPage> {
       child: SafeArea(
         top: false,
         child: WedyPrimaryButton(
-          label: 'Davom etish',
-          icon: const Icon(Icons.arrow_forward),
-          onPressed: _selectedServiceId == null ? null : () => _navigateToPaymentMethod(context),
+          label: hasActiveBoost ? 'Reklama allaqachon faol' : 'Davom etish',
+          icon: hasActiveBoost ? null : const Icon(Icons.arrow_forward),
+          onPressed: _selectedServiceId == null || hasActiveBoost ? null : () => _navigateToPaymentMethod(context),
         ),
       ),
     );

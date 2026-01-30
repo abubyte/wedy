@@ -37,7 +37,7 @@ class _ContactItem {
 }
 
 class MerchantEditPage extends StatefulWidget {
-  final MerchantService? service;
+  final Service? service;
 
   const MerchantEditPage({super.key, this.service});
 
@@ -85,7 +85,7 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
       _nameController.text = service.name;
       _descriptionController.text = service.description;
       _priceController.text = service.price.toStringAsFixed(0);
-      selectedRegion = service.locationRegion;
+      selectedRegion = UzbekistanData.regionNames[service.locationRegion];
       latitude = service.latitude;
       longitude = service.longitude;
       // Note: Category will be set after categories are loaded
@@ -178,7 +178,12 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                                         height: 77,
                                       ),
                                     )
-                                  : Image(image: FileImage(File(pickedFile!.path)), fit: BoxFit.cover),
+                                  : Image(
+                                      image: widget.service != null && widget.service!.merchant.avatarUrl != null
+                                          ? NetworkImage(widget.service!.merchant.avatarUrl!)
+                                          : FileImage(File(pickedFile!.path)),
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                           ),
                         ),
@@ -415,7 +420,10 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                                       dashSpacing: 2,
                                     ),
                                   ),
-                                  child: const Center(child: Image(image: AssetImage('assets/icons/image_icon.png'))),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                    child: const Center(child: Image(image: AssetImage('assets/icons/image_icon.png'))),
+                                  ),
                                 ),
                               );
                             }

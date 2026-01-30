@@ -292,33 +292,33 @@ class MerchantManager:
     async def get_merchant_services(self, user_id: str) -> MerchantServicesResponse:
         """
         Get all merchant services with analytics.
-        
+
         Args:
             user_id: 9-digit numeric string ID of the user
-            
+
         Returns:
             Merchant services with statistics
         """
         merchant = await self.merchant_repo.get_merchant_by_user_id(user_id)
         if not merchant:
             raise NotFoundError("Merchant profile not found")
-        
+
         services_with_categories = await self.merchant_repo.get_merchant_services(merchant.id)
-        
+
         service_responses = []
         active_count = 0
-        
+
         for service, category in services_with_categories:
             try:
                 # Count images for this service
                 images_count = await self.merchant_repo.count_service_images(str(service.id))
-                
+
                 # Get main image (first image by display_order)
                 main_image_url = None
                 service_images = await self.service_repo.get_service_images(str(service.id))
                 if service_images and len(service_images) > 0:
                     main_image_url = service_images[0].s3_url
-                
+
                 # Check if featured
                 is_featured, featured_until = await self.service_repo.is_service_featured(str(service.id))
             except Exception as e:
@@ -330,12 +330,13 @@ class MerchantManager:
                 main_image_url = None
                 is_featured = False
                 featured_until = None
-            
+
             service_response = MerchantServiceResponse(
                 id=service.id,
                 name=service.name,
                 description=service.description,
                 price=service.price,
+                price_type=service.price_type,
                 location_region=service.location_region,
                 latitude=service.latitude,
                 longitude=service.longitude,
@@ -355,11 +356,11 @@ class MerchantManager:
                 is_featured=is_featured,
                 featured_until=featured_until
             )
-            
+
             service_responses.append(service_response)
             if service.is_active:
                 active_count += 1
-        
+
         return MerchantServicesResponse(
             services=service_responses,
             total=len(service_responses),
@@ -423,20 +424,20 @@ class MerchantManager:
             name=service_data.name,
             description=service_data.description,
             price=service_data.price,
+            price_type=service_data.price_type or "fixed",
             location_region=service_data.location_region,
             latitude=service_data.latitude,
             longitude=service_data.longitude
         )
         
         created_service = await self.service_repo.create(service)
-        
-        # Get category for response (already validated above)
-        
+
         return MerchantServiceResponse(
             id=created_service.id,
             name=created_service.name,
             description=created_service.description,
             price=created_service.price,
+            price_type=created_service.price_type,
             location_region=created_service.location_region,
             latitude=created_service.latitude,
             longitude=created_service.longitude,

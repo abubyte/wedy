@@ -48,8 +48,10 @@ class _TariffPageContent extends StatelessWidget {
             }
 
             List<TariffPlan> plans = [];
+            Subscription? subscription;
             if (state is TariffDataLoaded) {
               plans = state.plans;
+              subscription = state.subscription;
             } else if (state is TariffPlansLoaded) {
               plans = state.plans;
             }
@@ -67,8 +69,11 @@ class _TariffPageContent extends StatelessWidget {
                   Text('Tariflar', style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 24)),
                   const SizedBox(height: AppDimensions.spacingXL),
 
+                  // Current subscription info
+                  if (subscription != null && subscription.isActive) _buildCurrentSubscription(subscription),
+
                   // Tariff plans
-                  if (plans.isNotEmpty) ...[...plans.map((plan) => _buildTariffCard(context, plan))],
+                  if (plans.isNotEmpty) ...[...plans.map((plan) => _buildTariffCard(context, plan, subscription))],
 
                   // Pro plan coming soon
                   _buildComingSoonCard(),
@@ -81,19 +86,89 @@ class _TariffPageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildTariffCard(BuildContext context, TariffPlan plan) {
+  Widget _buildCurrentSubscription(Subscription subscription) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: AppDimensions.spacingL),
       padding: const EdgeInsets.all(AppDimensions.spacingL),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        border: Border.all(color: AppColors.border, width: 1),
-        color: AppColors.surface,
+        border: Border.all(color: AppColors.success, width: 2),
+        color: AppColors.success.withValues(alpha: 0.1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              const Icon(Icons.check_circle, color: AppColors.success),
+              const SizedBox(width: AppDimensions.spacingS),
+              Text(
+                'Joriy tarif',
+                style: AppTextStyles.bodyRegular.copyWith(color: AppColors.success, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacingS),
+          Text(
+            subscription.tariffPlan.name,
+            style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          const SizedBox(height: AppDimensions.spacingS),
+          Text(
+            'Tugash sanasi: ${subscription.endDate.day}/${subscription.endDate.month}/${subscription.endDate.year}',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+          ),
+          Text(
+            'Qolgan kunlar: ${subscription.daysRemaining} kun',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: AppDimensions.spacingS),
+          Text(
+            'Faqat yuqoriroq tarifga o\'tish mumkin.',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontStyle: FontStyle.italic),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTariffCard(BuildContext context, TariffPlan plan, Subscription? subscription) {
+    // Check if this is the current plan
+    final isCurrentPlan = subscription != null && subscription.isActive && subscription.tariffPlan.id == plan.id;
+
+    // Check if upgrade is allowed (only higher priced plans)
+    final canUpgrade =
+        subscription == null || !subscription.isActive || plan.pricePerMonth > subscription.tariffPlan.pricePerMonth;
+
+    // Check if this is a downgrade (not allowed)
+    final isDowngrade =
+        subscription != null && subscription.isActive && plan.pricePerMonth < subscription.tariffPlan.pricePerMonth;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: AppDimensions.spacingL),
+      padding: const EdgeInsets.all(AppDimensions.spacingL),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+        border: Border.all(color: isCurrentPlan ? AppColors.primary : AppColors.border, width: isCurrentPlan ? 2 : 1),
+        color: isCurrentPlan ? AppColors.primaryLight : AppColors.surface,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Current plan badge
+          if (isCurrentPlan)
+            Container(
+              margin: const EdgeInsets.only(bottom: AppDimensions.spacingS),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusS),
+              ),
+              child: Text('Joriy tarif', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontSize: 10)),
+            ),
+
           // Plan name
           Text(
             plan.name,
@@ -121,7 +196,17 @@ class _TariffPageContent extends StatelessWidget {
           const SizedBox(height: AppDimensions.spacingL),
 
           // Activate button
-          WedyPrimaryButton(label: 'Tarifni faollashtirish', onPressed: () => _navigateToDuration(context, plan)),
+          if (isCurrentPlan)
+            const WedyPrimaryButton(label: 'Joriy tarif', outlined: true, onPressed: null)
+          else if (isDowngrade)
+            const WedyPrimaryButton(label: 'Pastroq tarifga o\'tish mumkin emas', outlined: true, onPressed: null)
+          else if (canUpgrade)
+            WedyPrimaryButton(
+              label: subscription != null && subscription.isActive ? 'Tarifni yangilash' : 'Tarifni faollashtirish',
+              onPressed: () => _navigateToDuration(context, plan),
+            )
+          else
+            const WedyPrimaryButton(label: 'Tarifni faollashtirish', onPressed: null),
         ],
       ),
     );

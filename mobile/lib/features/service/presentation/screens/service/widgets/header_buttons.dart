@@ -45,7 +45,11 @@ class ServiceHeaderButtons extends StatelessWidget {
                 ? WedyCircularButton(
                     icon: IconsaxPlusLinear.edit,
                     isPrimary: true,
-                    onTap: () => context.push(RouteNames.edit),
+                    onTap: () {
+                      // final merchantService = service !=null ? MerchantService(id: service!.id, name: service!.name, description: service!.description, categoryId: categoryId, categoryName: categoryName, price: price, locationRegion: locationRegion, isActive: isActive, viewCount: viewCount, likeCount: likeCount, saveCount: saveCount, overallRating: overallRating, totalReviews: totalReviews, createdAt: createdAt, updatedAt: updatedAt)
+                      // context.push(RouteNames.edit, extra: MerchantService(id: service!.id, name: name, description: description, categoryId: categoryId, categoryName: categoryName, price: price, locationRegion: locationRegion, isActive: isActive, viewCount: viewCount, likeCount: likeCount, saveCount: saveCount, overallRating: overallRating, totalReviews: totalReviews, createdAt: createdAt, updatedAt: updatedAt));
+                      context.push(RouteNames.edit, extra: service);
+                    },
                   )
                 : WedyCircularButton(
                     icon: IconsaxPlusLinear.export_2,

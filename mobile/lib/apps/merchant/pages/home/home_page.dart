@@ -14,6 +14,8 @@ import 'package:wedy/features/analytics/presentation/bloc/analytics_event.dart';
 import 'package:wedy/features/analytics/presentation/bloc/analytics_state.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_bloc.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_state.dart';
+import 'package:wedy/features/service/presentation/bloc/merchant_service_bloc.dart';
+import 'package:wedy/features/service/presentation/bloc/merchant_service_event.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_bloc.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_event.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_state.dart';
@@ -45,6 +47,8 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
         });
       }
     });
+
+    context.read<MerchantServiceBloc>().add(const LoadMerchantServicesEvent());
   }
 
   String _formatNumber(int number) {

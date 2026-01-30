@@ -13,6 +13,7 @@ import 'package:wedy/features/category/domain/entities/category.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_bloc.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_state.dart';
+import 'package:wedy/features/service/presentation/bloc/service_bloc.dart';
 import 'package:wedy/shared/navigation/navigation_shell.dart';
 import 'package:wedy/apps/client/pages/favorites/favorites_page.dart';
 import 'package:wedy/apps/client/pages/home/home_page.dart';
@@ -253,7 +254,7 @@ class AppRouter {
           path: RouteNames.edit,
           name: RouteNames.edit,
           builder: (context, state) {
-            final service = state.extra is MerchantService ? state.extra as MerchantService : null;
+            final service = state.extra is Service ? state.extra as Service : null;
             return MerchantEditPage(service: service);
           },
         ),
@@ -304,14 +305,19 @@ class AppRouter {
                     final blocState = bloc.state;
                     MerchantService? service;
 
-                    if (blocState is MerchantServiceLoaded && blocState.service == null) {
+                    if (blocState is MerchantServiceLoaded && blocState.service != null) {
                       service = blocState.service;
                     }
 
                     return buildPageWithDefaultTransition<void>(
                       context: context,
                       state: state,
-                      child: service != null ? WedyServicePage(serviceId: service.id) : const MerchantEditPage(),
+                      child: service != null
+                          ? BlocProvider(
+                              create: (context) => getIt<ServiceBloc>(),
+                              child: WedyServicePage(serviceId: service.id, isMerchant: true),
+                            )
+                          : const MerchantEditPage(),
                     );
                   },
                 ),

@@ -119,6 +119,7 @@ class ServiceCreateRequest(BaseModel):
     description: str = Field(min_length=1, max_length=2000)
     category_id: int
     price: float = Field(ge=0)
+    price_type: Optional[str] = Field("fixed", max_length=20, description="Price type: fixed, negotiable, daily, hourly")
     location_region: str = Field(max_length=100)
     latitude: Optional[float] = Field(None, ge=-90, le=90)
     longitude: Optional[float] = Field(None, ge=-180, le=180)
@@ -130,6 +131,7 @@ class ServiceUpdateRequest(BaseModel):
     description: Optional[str] = Field(None, min_length=1, max_length=2000)
     category_id: Optional[int] = None
     price: Optional[float] = Field(None, ge=0)
+    price_type: Optional[str] = Field(None, max_length=20, description="Price type: fixed, negotiable, daily, hourly")
     location_region: Optional[str] = Field(None, max_length=100)
     latitude: Optional[float] = Field(None, ge=-90, le=90)
     longitude: Optional[float] = Field(None, ge=-180, le=180)
@@ -141,35 +143,36 @@ class MerchantServiceResponse(BaseModel):
     name: str
     description: str
     price: float
+    price_type: Optional[str] = "fixed"
     location_region: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-    
+
     # Interaction stats
     view_count: int
     like_count: int
     save_count: int
     share_count: int
-    
+
     # Rating info
     overall_rating: float
     total_reviews: int
-    
+
     # Status
     is_active: bool
     created_at: datetime
     updated_at: datetime
-    
+
     # Category info
     category_id: int
     category_name: str
-    
+
     # Images count
     images_count: int = 0
-    
+
     # Main image URL (first image by display_order)
     main_image_url: Optional[str] = None
-    
+
     # Featured status
     is_featured: bool = False
     featured_until: Optional[datetime] = None

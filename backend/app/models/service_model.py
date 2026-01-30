@@ -29,6 +29,7 @@ class Service(SQLModel, table=True):
     name: str = Field(max_length=255, description="Service name")
     description: str = Field(description="Service description")
     price: float = Field(ge=0, description="Service price in UZS")
+    price_type: Optional[str] = Field(default="fixed", max_length=20, description="Price type: fixed, negotiable, daily, hourly")
     
     # Location
     location_region: str = Field(

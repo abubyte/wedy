@@ -174,17 +174,20 @@ class MerchantSettingsPage extends StatelessWidget {
                       child: Column(
                         children: [
                           const SizedBox(height: AppDimensions.spacingXS),
-                          Row(
-                            children: [
-                              const Icon(IconsaxPlusLinear.crown_1, size: 24, color: Colors.black),
-                              const SizedBox(width: AppDimensions.spacingM),
-                              Text(
-                                'Tariflar',
-                                style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-                              ),
-                              const Spacer(),
-                              const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
-                            ],
+                          GestureDetector(
+                            onTap: () => context.push(RouteNames.tariff),
+                            child: Row(
+                              children: [
+                                const Icon(IconsaxPlusLinear.crown_1, size: 24, color: Colors.black),
+                                const SizedBox(width: AppDimensions.spacingM),
+                                Text(
+                                  'Tariflar',
+                                  style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
+                                ),
+                                const Spacer(),
+                                const Icon(IconsaxPlusLinear.arrow_right_3, size: 16, color: Colors.black),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: AppDimensions.spacingS),
                           const Padding(
@@ -192,29 +195,32 @@ class MerchantSettingsPage extends StatelessWidget {
                             child: Divider(height: 1, color: AppColors.border),
                           ),
                           const SizedBox(height: AppDimensions.spacingS),
-                          Row(
-                            children: [
-                              Icon(
-                                IconsaxPlusLinear.favorite_chart,
-                                size: 24,
-                                color: tariffActive ? Colors.black : AppColors.textMuted,
-                              ),
-                              const SizedBox(width: AppDimensions.spacingM),
-                              Text(
-                                'Reklama',
-                                style: AppTextStyles.bodyRegular.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                          GestureDetector(
+                            onTap: () => context.push(RouteNames.boost),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  IconsaxPlusLinear.favorite_chart,
+                                  size: 24,
                                   color: tariffActive ? Colors.black : AppColors.textMuted,
                                 ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                IconsaxPlusLinear.arrow_right_3,
-                                size: 16,
-                                color: tariffActive ? Colors.black : AppColors.textMuted,
-                              ),
-                            ],
+                                const SizedBox(width: AppDimensions.spacingM),
+                                Text(
+                                  'Reklama',
+                                  style: AppTextStyles.bodyRegular.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: tariffActive ? Colors.black : AppColors.textMuted,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  IconsaxPlusLinear.arrow_right_3,
+                                  size: 16,
+                                  color: tariffActive ? Colors.black : AppColors.textMuted,
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: AppDimensions.spacingXS),
                         ],
