@@ -15,10 +15,7 @@ final class AddGalleryImageEvent extends GalleryEvent {
   final File file;
   final int displayOrder;
 
-  const AddGalleryImageEvent({
-    required this.file,
-    this.displayOrder = 0,
-  });
+  const AddGalleryImageEvent({required this.file, this.displayOrder = 0});
 }
 
 /// Remove a gallery image

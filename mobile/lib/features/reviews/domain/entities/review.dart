@@ -30,18 +30,18 @@ class Review extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        serviceId,
-        userId,
-        merchantId,
-        rating,
-        comment,
-        isActive,
-        createdAt,
-        updatedAt,
-        user,
-        service,
-      ];
+    id,
+    serviceId,
+    userId,
+    merchantId,
+    rating,
+    comment,
+    isActive,
+    createdAt,
+    updatedAt,
+    user,
+    service,
+  ];
 }
 
 /// User information in review

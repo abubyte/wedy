@@ -12,10 +12,7 @@ import 'package:wedy/shared/widgets/primary_button.dart';
 class TariffDurationPage extends StatefulWidget {
   final TariffPlan tariffPlan;
 
-  const TariffDurationPage({
-    super.key,
-    required this.tariffPlan,
-  });
+  const TariffDurationPage({super.key, required this.tariffPlan});
 
   @override
   State<TariffDurationPage> createState() => _TariffDurationPageState();
@@ -33,10 +30,7 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
   ];
 
   _DurationOption get _selectedOption {
-    return durationOptions.firstWhere(
-      (o) => o.months == selectedDuration,
-      orElse: () => durationOptions.first,
-    );
+    return durationOptions.firstWhere((o) => o.months == selectedDuration, orElse: () => durationOptions.first);
   }
 
   double get _pricePerMonth => widget.tariffPlan.pricePerMonth;
@@ -48,8 +42,7 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
   }
 
   String _formatPrice(int price) {
-    return price.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+    return price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
   }
 
   @override
@@ -72,10 +65,7 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
                     // Title
                     Text(
                       'Mudatni tanlang',
-                      style: AppTextStyles.headline2.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 24,
-                      ),
+                      style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 24),
                     ),
                     const SizedBox(height: AppDimensions.spacingXL),
 
@@ -84,12 +74,7 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
                     const SizedBox(height: AppDimensions.spacingL),
 
                     // Subtitle
-                    Text(
-                      'Muddat tanlang:',
-                      style: AppTextStyles.bodyRegular.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                    ),
+                    Text('Muddat tanlang:', style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted)),
                     const SizedBox(height: AppDimensions.spacingM),
 
                     // Duration options
@@ -120,16 +105,11 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
         children: [
           Text(
             widget.tariffPlan.name,
-            style: AppTextStyles.headline2.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+            style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.bold, color: AppColors.primary),
           ),
           Text(
             '${_formatPrice(_pricePerMonth.toInt())} so\'m/oy',
-            style: AppTextStyles.bodyRegular.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -150,10 +130,7 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
         padding: const EdgeInsets.all(AppDimensions.spacingM),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 2 : 1,
-          ),
+          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
           color: isSelected ? AppColors.primaryLight : AppColors.surface,
         ),
         child: Column(
@@ -165,18 +142,12 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
                 // Duration label
                 Text(
                   option.months == 12 ? '1 yil' : '${option.months} oy',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 12),
                 ),
                 // Discount badge
                 if (option.discount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.spacingS,
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS, vertical: 2),
                     decoration: BoxDecoration(
                       color: AppColors.success,
                       borderRadius: BorderRadius.circular(AppDimensions.radiusS),
@@ -224,13 +195,7 @@ class _TariffDurationPageState extends State<TariffDurationPage> {
       padding: const EdgeInsets.all(AppDimensions.spacingL),
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 10,
-            offset: Offset(0, -2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: Offset(0, -2))],
       ),
       child: SafeArea(
         top: false,
@@ -263,8 +228,5 @@ class _DurationOption {
   final int months;
   final int discount;
 
-  const _DurationOption({
-    required this.months,
-    required this.discount,
-  });
+  const _DurationOption({required this.months, required this.discount});
 }

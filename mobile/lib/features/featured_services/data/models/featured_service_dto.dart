@@ -45,8 +45,7 @@ class FeaturedServiceDto {
     required this.likesGained,
   });
 
-  factory FeaturedServiceDto.fromJson(Map<String, dynamic> json) =>
-      _$FeaturedServiceDtoFromJson(json);
+  factory FeaturedServiceDto.fromJson(Map<String, dynamic> json) => _$FeaturedServiceDtoFromJson(json);
   Map<String, dynamic> toJson() => _$FeaturedServiceDtoToJson(this);
 
   FeaturedService toEntity() {

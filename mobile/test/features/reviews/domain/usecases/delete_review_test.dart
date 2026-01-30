@@ -40,7 +40,9 @@ void main() {
 
   test('should return failure when repository returns failure', () async {
     // Arrange
-    when(() => mockRepository.deleteReview('review1')).thenAnswer((_) async => const Left(ServerFailure('Server error')));
+    when(
+      () => mockRepository.deleteReview('review1'),
+    ).thenAnswer((_) async => const Left(ServerFailure('Server error')));
 
     // Act
     final result = await useCase('review1');
@@ -50,4 +52,3 @@ void main() {
     verify(() => mockRepository.deleteReview('review1')).called(1);
   });
 }
-

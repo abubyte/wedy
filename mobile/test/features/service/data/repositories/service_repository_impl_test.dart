@@ -480,8 +480,7 @@ void main() {
         totalSaved: 1,
       );
 
-      when(() => mockRemoteDataSource.getUserInteractions())
-          .thenAnswer((_) async => tUserInteractionsResponseDto);
+      when(() => mockRemoteDataSource.getUserInteractions()).thenAnswer((_) async => tUserInteractionsResponseDto);
 
       // Act
       final result = await repository.getSavedServices();
@@ -504,8 +503,7 @@ void main() {
         totalSaved: 0,
       );
 
-      when(() => mockRemoteDataSource.getUserInteractions())
-          .thenAnswer((_) async => tUserInteractionsResponseDto);
+      when(() => mockRemoteDataSource.getUserInteractions()).thenAnswer((_) async => tUserInteractionsResponseDto);
 
       // Act
       final result = await repository.getSavedServices();

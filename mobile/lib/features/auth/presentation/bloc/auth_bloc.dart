@@ -165,23 +165,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _fetchUserProfile(Emitter<AuthState> emit) async {
     final result = await authRepository.getProfile();
 
-    result.fold((failure) {
-      // If profile fetch fails, clear auth data and emit unauthenticated
-      localDataSource.clearAuthData();
-      emit(const Unauthenticated());
-    }, (user) {
-      // If this is merchant app, verify user is a merchant
-      if (AppConfig.instance.appType == AppType.merchant) {
-        if (user.type != UserType.merchant) {
-          // User is not a merchant - clear auth data and show error
-          localDataSource.clearAuthData();
-          emit(const AuthError('Bu telefon raqam client akkaunt bilan ro\'yxatdan o\'tgan. Merchant akkaunt kerak.'));
-          return;
+    result.fold(
+      (failure) {
+        // If profile fetch fails, clear auth data and emit unauthenticated
+        localDataSource.clearAuthData();
+        emit(const Unauthenticated());
+      },
+      (user) {
+        // If this is merchant app, verify user is a merchant
+        if (AppConfig.instance.appType == AppType.merchant) {
+          if (user.type != UserType.merchant) {
+            // User is not a merchant - clear auth data and show error
+            localDataSource.clearAuthData();
+            emit(const AuthError('Bu telefon raqam client akkaunt bilan ro\'yxatdan o\'tgan. Merchant akkaunt kerak.'));
+            return;
+          }
         }
-      }
-      // User type is valid - emit authenticated
-      emit(Authenticated(user));
-    });
+        // User type is valid - emit authenticated
+        emit(Authenticated(user));
+      },
+    );
   }
 
   String _getErrorMessage(Failure failure) {

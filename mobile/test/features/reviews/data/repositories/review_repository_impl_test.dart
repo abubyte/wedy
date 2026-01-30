@@ -54,8 +54,9 @@ void main() {
   group('getServiceReviews', () {
     test('should return reviews when API call is successful', () async {
       // Arrange
-      when(() => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20))
-          .thenAnswer((_) async => tPaginatedResponseDto);
+      when(
+        () => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20),
+      ).thenAnswer((_) async => tPaginatedResponseDto);
 
       // Act
       final result = await repository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20);
@@ -67,11 +68,12 @@ void main() {
 
     test('should return NetworkFailure when there is no internet connection', () async {
       // Arrange
-      when(() => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20))
-          .thenThrow(DioException(
-        requestOptions: RequestOptions(path: ''),
-        type: DioExceptionType.connectionTimeout,
-      ));
+      when(() => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20)).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          type: DioExceptionType.connectionTimeout,
+        ),
+      );
 
       // Act
       final result = await repository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20);
@@ -84,12 +86,13 @@ void main() {
 
     test('should return ServerFailure when API returns 500', () async {
       // Arrange
-      when(() => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20))
-          .thenThrow(DioException(
-        requestOptions: RequestOptions(path: ''),
-        response: Response(statusCode: 500, requestOptions: RequestOptions(path: '')),
-        type: DioExceptionType.badResponse,
-      ));
+      when(() => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20)).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          response: Response(statusCode: 500, requestOptions: RequestOptions(path: '')),
+          type: DioExceptionType.badResponse,
+        ),
+      );
 
       // Act
       final result = await repository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20);
@@ -102,12 +105,13 @@ void main() {
 
     test('should return NotFoundFailure when API returns 404', () async {
       // Arrange
-      when(() => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20))
-          .thenThrow(DioException(
-        requestOptions: RequestOptions(path: ''),
-        response: Response(statusCode: 404, requestOptions: RequestOptions(path: '')),
-        type: DioExceptionType.badResponse,
-      ));
+      when(() => mockRemoteDataSource.getServiceReviews('service1', page: 1, limit: 20)).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          response: Response(statusCode: 404, requestOptions: RequestOptions(path: '')),
+          type: DioExceptionType.badResponse,
+        ),
+      );
 
       // Act
       final result = await repository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20);
@@ -134,15 +138,17 @@ void main() {
 
     test('should return ValidationFailure when API returns 409', () async {
       // Arrange
-      when(() => mockRemoteDataSource.createReview(any())).thenThrow(DioException(
-        requestOptions: RequestOptions(path: ''),
-        response: Response(
-          statusCode: 409,
-          data: {'detail': 'You have already reviewed this service.'},
+      when(() => mockRemoteDataSource.createReview(any())).thenThrow(
+        DioException(
           requestOptions: RequestOptions(path: ''),
+          response: Response(
+            statusCode: 409,
+            data: {'detail': 'You have already reviewed this service.'},
+            requestOptions: RequestOptions(path: ''),
+          ),
+          type: DioExceptionType.badResponse,
         ),
-        type: DioExceptionType.badResponse,
-      ));
+      );
 
       // Act
       final result = await repository.createReview(serviceId: 'service1', rating: 5, comment: 'Great service!');
@@ -155,11 +161,13 @@ void main() {
 
     test('should return AuthFailure when API returns 401', () async {
       // Arrange
-      when(() => mockRemoteDataSource.createReview(any())).thenThrow(DioException(
-        requestOptions: RequestOptions(path: ''),
-        response: Response(statusCode: 401, requestOptions: RequestOptions(path: '')),
-        type: DioExceptionType.badResponse,
-      ));
+      when(() => mockRemoteDataSource.createReview(any())).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          response: Response(statusCode: 401, requestOptions: RequestOptions(path: '')),
+          type: DioExceptionType.badResponse,
+        ),
+      );
 
       // Act
       final result = await repository.createReview(serviceId: 'service1', rating: 5, comment: 'Great service!');
@@ -186,11 +194,13 @@ void main() {
 
     test('should return NotFoundFailure when API returns 404', () async {
       // Arrange
-      when(() => mockRemoteDataSource.updateReview(any(), any())).thenThrow(DioException(
-        requestOptions: RequestOptions(path: ''),
-        response: Response(statusCode: 404, requestOptions: RequestOptions(path: '')),
-        type: DioExceptionType.badResponse,
-      ));
+      when(() => mockRemoteDataSource.updateReview(any(), any())).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          response: Response(statusCode: 404, requestOptions: RequestOptions(path: '')),
+          type: DioExceptionType.badResponse,
+        ),
+      );
 
       // Act
       final result = await repository.updateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment');
@@ -217,11 +227,13 @@ void main() {
 
     test('should return NotFoundFailure when API returns 404', () async {
       // Arrange
-      when(() => mockRemoteDataSource.deleteReview('review1')).thenThrow(DioException(
-        requestOptions: RequestOptions(path: ''),
-        response: Response(statusCode: 404, requestOptions: RequestOptions(path: '')),
-        type: DioExceptionType.badResponse,
-      ));
+      when(() => mockRemoteDataSource.deleteReview('review1')).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: ''),
+          response: Response(statusCode: 404, requestOptions: RequestOptions(path: '')),
+          type: DioExceptionType.badResponse,
+        ),
+      );
 
       // Act
       final result = await repository.deleteReview('review1');
@@ -233,4 +245,3 @@ void main() {
     });
   });
 }
-

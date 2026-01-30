@@ -2,21 +2,10 @@ import '../../../tariff/domain/repositories/tariff_repository.dart';
 import '../../domain/entities/featured_service.dart';
 
 /// Loading type for featured services operations
-enum FeaturedServicesLoadingType {
-  initial,
-  creating,
-  creatingPayment,
-}
+enum FeaturedServicesLoadingType { initial, creating, creatingPayment }
 
 /// Error type for featured services operations
-enum FeaturedServicesErrorType {
-  network,
-  server,
-  auth,
-  noFreeSlots,
-  notFound,
-  unknown,
-}
+enum FeaturedServicesErrorType { network, server, auth, noFreeSlots, notFound, unknown }
 
 /// Featured services states using Dart 3 sealed classes
 sealed class FeaturedServicesState {
@@ -33,10 +22,7 @@ final class FeaturedServicesLoading extends FeaturedServicesState {
   final FeaturedServicesLoadingType type;
   final MerchantFeaturedServicesInfo? previousData;
 
-  const FeaturedServicesLoading({
-    this.type = FeaturedServicesLoadingType.initial,
-    this.previousData,
-  });
+  const FeaturedServicesLoading({this.type = FeaturedServicesLoadingType.initial, this.previousData});
 }
 
 /// Featured services loaded successfully
@@ -75,9 +61,5 @@ final class FeaturedServicesError extends FeaturedServicesState {
   final FeaturedServicesErrorType type;
   final MerchantFeaturedServicesInfo? previousData;
 
-  const FeaturedServicesError(
-    this.message, {
-    this.type = FeaturedServicesErrorType.unknown,
-    this.previousData,
-  });
+  const FeaturedServicesError(this.message, {this.type = FeaturedServicesErrorType.unknown, this.previousData});
 }

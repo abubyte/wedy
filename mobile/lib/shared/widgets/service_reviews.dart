@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:wedy/core/di/injection_container.dart';
 import 'package:wedy/core/theme/app_colors.dart';
@@ -10,7 +9,6 @@ import 'package:wedy/features/reviews/presentation/bloc/review_bloc.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_event.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_state.dart';
 import 'package:wedy/features/reviews/domain/entities/review.dart';
-import 'package:wedy/shared/navigation/route_names.dart';
 
 class ServiceReviews extends StatelessWidget {
   const ServiceReviews({super.key, this.serviceId, this.vertical = false, this.showHeader = true});
@@ -79,13 +77,9 @@ class ServiceReviews extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final review = reviews[index];
                     final isFirst = index == 0;
-                    final isLast = index == (vertical ? reviews.length - 1 : (reviews.length > 5 ? 4 : reviews.length - 1));
-                    return _ReviewCard(
-                      review: review,
-                      vertical: vertical,
-                      isFirst: isFirst,
-                      isLast: isLast,
-                    );
+                    final isLast =
+                        index == (vertical ? reviews.length - 1 : (reviews.length > 5 ? 4 : reviews.length - 1));
+                    return _ReviewCard(review: review, vertical: vertical, isFirst: isFirst, isLast: isLast);
                   },
                 ),
               ),
@@ -98,12 +92,7 @@ class ServiceReviews extends StatelessWidget {
 }
 
 class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({
-    required this.review,
-    required this.vertical,
-    required this.isFirst,
-    required this.isLast,
-  });
+  const _ReviewCard({required this.review, required this.vertical, required this.isFirst, required this.isLast});
 
   final Review review;
   final bool vertical;

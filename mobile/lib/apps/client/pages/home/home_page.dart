@@ -32,9 +32,7 @@ class ClientHomePage extends StatefulWidget {
 }
 
 class _ClientHomePageState extends State<ClientHomePage> {
-  final RefreshController _refreshController = RefreshController(
-    initialRefresh: false,
-  );
+  final RefreshController _refreshController = RefreshController(initialRefresh: false);
   CategoryBloc? _categoryBloc;
 
   @override
@@ -56,14 +54,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) =>
-              getIt<FeaturedServicesBloc>()..add(FetchFeaturedServices()),
-        ),
+        BlocProvider(create: (context) => getIt<FeaturedServicesBloc>()..add(FetchFeaturedServices())),
         BlocProvider(
           create: (context) {
-            final bloc = getIt<CategoryBloc>()
-              ..add(const LoadCategoriesEvent());
+            final bloc = getIt<CategoryBloc>()..add(const LoadCategoriesEvent());
             _categoryBloc = bloc;
             return bloc;
           },
@@ -90,9 +84,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 : <ServiceCategory>[];
 
             return ClientMainLayout(
-              height: categories.length < 2
-                  ? MediaQuery.of(context).size.height
-                  : null,
+              height: categories.length < 2 ? MediaQuery.of(context).size.height : null,
               refreshController: _refreshController,
               onRefresh: _onRefresh,
               refreshHeader: const ClassicHeader(
@@ -131,25 +123,16 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 // Use key to force recreation when categories reload
                 if (categories.isEmpty)
                   // Show 2 shimmer placeholders when categories are loading
-                  Column(
-                    children: List.generate(
-                      2,
-                      (index) => _CategoryServicesShimmerPlaceholder(),
-                    ),
-                  )
+                  Column(children: List.generate(2, (index) => _CategoryServicesShimmerPlaceholder()))
                 else if (categories.isNotEmpty)
                   ListView.builder(
-                    key: ValueKey(
-                      'categories_${categories.length}_${categoryState.hashCode}',
-                    ),
+                    key: ValueKey('categories_${categories.length}_${categoryState.hashCode}'),
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
                       final category = categories[index];
                       return CategoryServicesSection(
-                        key: ValueKey(
-                          'category_${category.id}_${categoryState.hashCode}',
-                        ),
+                        key: ValueKey('category_${category.id}_${categoryState.hashCode}'),
                         category: category,
                         isLoading: false,
                       );

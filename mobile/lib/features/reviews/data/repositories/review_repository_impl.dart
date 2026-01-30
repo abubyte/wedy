@@ -62,11 +62,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
-  Future<Either<Failure, Review>> updateReview({
-    required String reviewId,
-    int? rating,
-    String? comment,
-  }) async {
+  Future<Either<Failure, Review>> updateReview({required String reviewId, int? rating, String? comment}) async {
     try {
       final request = ReviewUpdateRequestDto(rating: rating, comment: comment);
       final response = await remoteDataSource.updateReview(reviewId, request);
@@ -121,4 +117,3 @@ class ReviewRepositoryImpl implements ReviewRepository {
     }
   }
 }
-

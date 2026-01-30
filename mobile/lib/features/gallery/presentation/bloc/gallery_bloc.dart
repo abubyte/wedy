@@ -17,10 +17,10 @@ class GalleryBloc extends Bloc<GalleryEvent, GalleryState> {
     required GetGalleryImages getGalleryImages,
     required AddGalleryImage addGalleryImage,
     required RemoveGalleryImage removeGalleryImage,
-  })  : _getGalleryImages = getGalleryImages,
-        _addGalleryImage = addGalleryImage,
-        _removeGalleryImage = removeGalleryImage,
-        super(const GalleryInitial()) {
+  }) : _getGalleryImages = getGalleryImages,
+       _addGalleryImage = addGalleryImage,
+       _removeGalleryImage = removeGalleryImage,
+       super(const GalleryInitial()) {
     on<LoadGalleryEvent>(_onLoadGallery);
     on<AddGalleryImageEvent>(_onAddGalleryImage);
     on<RemoveGalleryImageEvent>(_onRemoveGalleryImage);
@@ -54,49 +54,38 @@ class GalleryBloc extends Bloc<GalleryEvent, GalleryState> {
     };
   }
 
-  Future<void> _onLoadGallery(
-    LoadGalleryEvent event,
-    Emitter<GalleryState> emit,
-  ) async {
-    emit(GalleryLoading(
-      type: GalleryLoadingType.initial,
-      previousImages: _currentImages,
-    ));
+  Future<void> _onLoadGallery(LoadGalleryEvent event, Emitter<GalleryState> emit) async {
+    emit(GalleryLoading(type: GalleryLoadingType.initial, previousImages: _currentImages));
 
     final result = await _getGalleryImages();
 
     result.fold(
-      (failure) => emit(GalleryError(
-        failure.toUserMessage(entityName: 'Gallery'),
-        type: _mapFailureToErrorType(failure),
-        previousImages: _currentImages,
-      )),
+      (failure) => emit(
+        GalleryError(
+          failure.toUserMessage(entityName: 'Gallery'),
+          type: _mapFailureToErrorType(failure),
+          previousImages: _currentImages,
+        ),
+      ),
       (images) => emit(GalleryLoaded(GalleryData(images: images))),
     );
   }
 
-  Future<void> _onAddGalleryImage(
-    AddGalleryImageEvent event,
-    Emitter<GalleryState> emit,
-  ) async {
+  Future<void> _onAddGalleryImage(AddGalleryImageEvent event, Emitter<GalleryState> emit) async {
     final previousImages = _currentImages;
 
-    emit(GalleryLoading(
-      type: GalleryLoadingType.adding,
-      previousImages: previousImages,
-    ));
+    emit(GalleryLoading(type: GalleryLoadingType.adding, previousImages: previousImages));
 
-    final result = await _addGalleryImage(
-      file: event.file,
-      displayOrder: event.displayOrder,
-    );
+    final result = await _addGalleryImage(file: event.file, displayOrder: event.displayOrder);
 
     result.fold(
-      (failure) => emit(GalleryError(
-        failure.toUserMessage(entityName: 'Gallery image'),
-        type: _mapFailureToErrorType(failure),
-        previousImages: previousImages,
-      )),
+      (failure) => emit(
+        GalleryError(
+          failure.toUserMessage(entityName: 'Gallery image'),
+          type: _mapFailureToErrorType(failure),
+          previousImages: previousImages,
+        ),
+      ),
       (uploadResult) {
         if (uploadResult.success && uploadResult.imageId != null && uploadResult.s3Url != null) {
           // Create a new gallery image from the upload result
@@ -110,42 +99,31 @@ class GalleryBloc extends Bloc<GalleryEvent, GalleryState> {
 
           final newData = GalleryData(
             images: [...(previousImages ?? []), newImage],
-            lastOperation: ImageAddedOperation(
-              imageId: uploadResult.imageId!,
-              s3Url: uploadResult.s3Url!,
-            ),
+            lastOperation: ImageAddedOperation(imageId: uploadResult.imageId!, s3Url: uploadResult.s3Url!),
           );
           emit(GalleryLoaded(newData));
         } else {
-          emit(GalleryError(
-            uploadResult.message,
-            type: GalleryErrorType.server,
-            previousImages: previousImages,
-          ));
+          emit(GalleryError(uploadResult.message, type: GalleryErrorType.server, previousImages: previousImages));
         }
       },
     );
   }
 
-  Future<void> _onRemoveGalleryImage(
-    RemoveGalleryImageEvent event,
-    Emitter<GalleryState> emit,
-  ) async {
+  Future<void> _onRemoveGalleryImage(RemoveGalleryImageEvent event, Emitter<GalleryState> emit) async {
     final previousImages = _currentImages;
 
-    emit(GalleryLoading(
-      type: GalleryLoadingType.removing,
-      previousImages: previousImages,
-    ));
+    emit(GalleryLoading(type: GalleryLoadingType.removing, previousImages: previousImages));
 
     final result = await _removeGalleryImage(event.imageId);
 
     result.fold(
-      (failure) => emit(GalleryError(
-        failure.toUserMessage(entityName: 'Gallery image'),
-        type: _mapFailureToErrorType(failure),
-        previousImages: previousImages,
-      )),
+      (failure) => emit(
+        GalleryError(
+          failure.toUserMessage(entityName: 'Gallery image'),
+          type: _mapFailureToErrorType(failure),
+          previousImages: previousImages,
+        ),
+      ),
       (_) {
         final newData = GalleryData(
           images: (previousImages ?? []).where((i) => i.id != event.imageId).toList(),
@@ -156,10 +134,7 @@ class GalleryBloc extends Bloc<GalleryEvent, GalleryState> {
     );
   }
 
-  Future<void> _onRefreshGallery(
-    RefreshGalleryEvent event,
-    Emitter<GalleryState> emit,
-  ) async {
+  Future<void> _onRefreshGallery(RefreshGalleryEvent event, Emitter<GalleryState> emit) async {
     add(const LoadGalleryEvent());
   }
 }

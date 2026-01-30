@@ -61,7 +61,10 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
                 );
               } else if (operation is ServiceDeletedOperation) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Xizmat muvaffaqiyatli o\'chirildi'), backgroundColor: AppColors.success),
+                  const SnackBar(
+                    content: Text('Xizmat muvaffaqiyatli o\'chirildi'),
+                    backgroundColor: AppColors.success,
+                  ),
                 );
               }
             } else if (state is MerchantServiceError) {
@@ -323,9 +326,9 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
             );
           }
         } else if (state is GalleryError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
         }
       },
       builder: (context, state) {
@@ -484,10 +487,7 @@ class _MerchantProfilePageState extends State<MerchantProfilePage> {
         title: const Text('Rasmni o\'chirish'),
         content: const Text('Bu rasmni o\'chirishni xohlaysizmi?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Bekor qilish'),
-          ),
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Bekor qilish')),
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();

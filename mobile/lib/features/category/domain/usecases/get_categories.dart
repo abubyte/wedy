@@ -13,4 +13,3 @@ class GetCategories {
     return await repository.getCategories();
   }
 }
-

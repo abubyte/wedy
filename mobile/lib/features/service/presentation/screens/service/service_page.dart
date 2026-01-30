@@ -69,17 +69,13 @@ class _WedyServicePageState extends State<WedyServicePage> {
     // Load service if serviceId is provided and current state doesn't have it
     if (widget.serviceId != null) {
       final currentState = globalBloc.state;
-      final hasService =
-          currentState is ServicesLoaded &&
-          currentState.currentServiceDetails?.id == widget.serviceId;
+      final hasService = currentState is ServicesLoaded && currentState.currentServiceDetails?.id == widget.serviceId;
 
       if (!hasService && currentState is! ServiceLoading) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             final state = globalBloc.state;
-            final hasCurrentService =
-                state is ServicesLoaded &&
-                state.currentServiceDetails?.id == widget.serviceId;
+            final hasCurrentService = state is ServicesLoaded && state.currentServiceDetails?.id == widget.serviceId;
             if (!hasCurrentService && state is! ServiceLoading) {
               globalBloc.add(LoadServiceByIdEvent(widget.serviceId!));
             }
@@ -93,12 +89,9 @@ class _WedyServicePageState extends State<WedyServicePage> {
       child: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
           if (state is ServiceError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
           }
           // Note: ServiceInteractionSuccess is no longer emitted to avoid state replacement
           // The UI updates optimistically, so no success message needed
@@ -107,9 +100,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
           builder: (context, state) {
             // Show loading if we're loading or if we have a serviceId but haven't loaded yet (initial state)
             if (state is ServiceLoading ||
-                (state is ServicesLoaded &&
-                    state.currentServiceDetails == null &&
-                    widget.serviceId != null) ||
+                (state is ServicesLoaded && state.currentServiceDetails == null && widget.serviceId != null) ||
                 (state is ServiceInitial && widget.serviceId != null)) {
               return Scaffold(
                 appBar: AppBar(title: const Text('Yuklanmoqda...')),
@@ -129,9 +120,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       ElevatedButton(
                         onPressed: () {
                           if (widget.serviceId != null) {
-                            context.read<ServiceBloc>().add(
-                              LoadServiceByIdEvent(widget.serviceId!),
-                            );
+                            context.read<ServiceBloc>().add(LoadServiceByIdEvent(widget.serviceId!));
                           }
                         },
                         child: const Text('Qayta urinish'),
@@ -142,31 +131,23 @@ class _WedyServicePageState extends State<WedyServicePage> {
               );
             }
 
-            final service = state is ServicesLoaded
-                ? state.currentServiceDetails
-                : null;
+            final service = state is ServicesLoaded ? state.currentServiceDetails : null;
 
             // Show "not found" only if we don't have a serviceId (invalid route)
             // or if we've finished loading (not initial) and got no service
             if (service == null) {
               // If we have a serviceId but no service, and we're not in initial state, show not found
-              if (widget.serviceId != null &&
-                  state is! ServiceInitial &&
-                  state is ServicesLoaded) {
+              if (widget.serviceId != null && state is! ServiceInitial && state is ServicesLoaded) {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Xizmat topilmadi')),
-                  body: const Center(
-                    child: Text('Xizmat ma\'lumotlari topilmadi'),
-                  ),
+                  body: const Center(child: Text('Xizmat ma\'lumotlari topilmadi')),
                 );
               }
               // If no serviceId provided, show not found
               if (widget.serviceId == null) {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Xizmat topilmadi')),
-                  body: const Center(
-                    child: Text('Xizmat ma\'lumotlari topilmadi'),
-                  ),
+                  body: const Center(child: Text('Xizmat ma\'lumotlari topilmadi')),
                 );
               }
               // Otherwise, still loading (shouldn't reach here, but just in case)
@@ -177,22 +158,15 @@ class _WedyServicePageState extends State<WedyServicePage> {
             }
 
             return Scaffold(
-              bottomNavigationBar: widget.isMerchant
-                  ? null
-                  : const CallButton(),
+              bottomNavigationBar: widget.isMerchant ? null : const CallButton(),
               body: SafeArea(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
                       // Header
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingL,
-                        ),
-                        child: ServiceHeaderButtons(
-                          isMerchant: widget.isMerchant,
-                          service: service,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                        child: ServiceHeaderButtons(isMerchant: widget.isMerchant, service: service),
                       ),
                       const SizedBox(height: AppDimensions.spacingL),
 
@@ -202,22 +176,14 @@ class _WedyServicePageState extends State<WedyServicePage> {
 
                       // Title
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingL,
-                        ),
-                        child: Text(
-                          service.name,
-                          style: AppTextStyles.headline2,
-                          maxLines: 3,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
+                        child: Text(service.name, style: AppTextStyles.headline2, maxLines: 3),
                       ),
                       const SizedBox(height: AppDimensions.spacingXS),
 
                       // Username
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingL,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                         child: Text(
                           service.merchant.businessName,
                           style: AppTextStyles.bodySmall.copyWith(
@@ -231,9 +197,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
 
                       // Region & Category
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacingL,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                         child: ServiceMetaTile(
                           locationRegion: service.locationRegion,
                           categoryName: service.categoryName,
@@ -242,19 +206,12 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       const SizedBox(height: AppDimensions.spacingL),
 
                       // Price
-                      ServicePriceButton(
-                        price: service.price,
-                        priceType: service.priceType ?? 'fixed',
-                      ),
+                      ServicePriceButton(price: service.price, priceType: service.priceType ?? 'fixed'),
                       const SizedBox(height: AppDimensions.spacingL),
 
                       // Gallery Items
                       if (service.images.isNotEmpty) ...[
-                        const SectionHeader(
-                          title: 'Galareya',
-                          hasAction: false,
-                          applyPadding: true,
-                        ),
+                        const SectionHeader(title: 'Galareya', hasAction: false, applyPadding: true),
                         const SizedBox(height: AppDimensions.spacingS),
                         ServiceGalleryItems(images: service.images),
                         const SizedBox(height: AppDimensions.spacingM),
@@ -265,11 +222,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       const SizedBox(height: AppDimensions.spacingL),
 
                       // Statistics
-                      const SectionHeader(
-                        title: 'Statistika',
-                        hasAction: false,
-                        applyPadding: true,
-                      ),
+                      const SectionHeader(title: 'Statistika', hasAction: false, applyPadding: true),
                       const SizedBox(height: AppDimensions.spacingL),
                       ServiceStatisticsCard(
                         viewCount: service.viewCount,
@@ -296,25 +249,17 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       if (phone) ...[
                         if (service.phoneContacts.isEmpty)
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimensions.spacingL,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                             child: Text(
                               'Telefon raqamlar mavjud emas',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                             ),
                           )
                         else
                           ...service.phoneContacts.map(
                             (contact) => Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: AppDimensions.spacingS,
-                              ),
-                              child: ServicePhoneTile(
-                                phoneNumber: contact.contactValue,
-                              ),
+                              padding: const EdgeInsets.only(bottom: AppDimensions.spacingS),
+                              child: ServicePhoneTile(phoneNumber: contact.contactValue),
                             ),
                           ),
                       ],
@@ -331,26 +276,17 @@ class _WedyServicePageState extends State<WedyServicePage> {
                       if (social) ...[
                         if (service.socialMediaContacts.isEmpty)
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimensions.spacingL,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                             child: Text(
                               'Ijtimoiy tarmoqlar mavjud emas',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                             ),
                           )
                         else
                           ...service.socialMediaContacts.map(
                             (contact) => Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: AppDimensions.spacingS,
-                              ),
-                              child: ServiceSocialTile(
-                                url: contact.contactValue,
-                                platformName: contact.platformName,
-                              ),
+                              padding: const EdgeInsets.only(bottom: AppDimensions.spacingS),
+                              child: ServiceSocialTile(url: contact.contactValue, platformName: contact.platformName),
                             ),
                           ),
                       ],
@@ -361,10 +297,7 @@ class _WedyServicePageState extends State<WedyServicePage> {
                         title: 'Fikrlar',
                         applyPadding: true,
                         hasAction: true,
-                        onTap: () => context.pushNamed(
-                          RouteNames.reviews,
-                          pathParameters: {'serviceId': service.id},
-                        ),
+                        onTap: () => context.pushNamed(RouteNames.reviews, pathParameters: {'serviceId': service.id}),
                       ),
                       const SizedBox(height: AppDimensions.spacingSM),
                       ServiceReviews(serviceId: service.id),

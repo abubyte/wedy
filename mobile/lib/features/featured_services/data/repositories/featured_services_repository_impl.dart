@@ -27,9 +27,7 @@ class FeaturedServicesRepositoryImpl implements FeaturedServicesRepository {
   @override
   Future<Either<Failure, FeaturedService>> createMonthlyFeaturedService(String serviceId) async {
     try {
-      final response = await remoteDataSource.createMonthlyFeaturedService({
-        'service_id': serviceId,
-      });
+      final response = await remoteDataSource.createMonthlyFeaturedService({'service_id': serviceId});
       return Right(response.toEntity());
     } on DioException catch (e) {
       return Left(_handleDioError(e));
@@ -45,11 +43,7 @@ class FeaturedServicesRepositoryImpl implements FeaturedServicesRepository {
     required String paymentMethod,
   }) async {
     try {
-      final body = {
-        'service_id': serviceId,
-        'duration_days': durationDays,
-        'payment_method': paymentMethod,
-      };
+      final body = {'service_id': serviceId, 'duration_days': durationDays, 'payment_method': paymentMethod};
       final response = await remoteDataSource.createFeaturedServicePayment(body);
       return Right(
         PaymentResponse(
@@ -75,8 +69,7 @@ class FeaturedServicesRepositoryImpl implements FeaturedServicesRepository {
         return const NetworkFailure('Connection timeout');
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        final message =
-            error.response?.data?['detail']?.toString() ?? error.message ?? '';
+        final message = error.response?.data?['detail']?.toString() ?? error.message ?? '';
         if (statusCode == 401) {
           return AuthFailure(message.isNotEmpty ? message : 'Unauthorized');
         } else if (statusCode == 402) {

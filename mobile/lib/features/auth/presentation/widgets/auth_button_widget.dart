@@ -3,12 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
 class AuthButtonWidget extends StatelessWidget {
-  const AuthButtonWidget({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.loading = false,
-  });
+  const AuthButtonWidget({super.key, required this.label, required this.onPressed, this.loading = false});
 
   final String label;
   final VoidCallback onPressed;
@@ -16,10 +11,6 @@ class AuthButtonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WedyPrimaryButton(
-      label: label,
-      onPressed: onPressed,
-      loading: loading,
-    );
+    return WedyPrimaryButton(label: label, onPressed: onPressed, loading: loading);
   }
 }

@@ -7,4 +7,3 @@ abstract class CategoryRepository {
   /// Get all active service categories with service counts
   Future<Either<Failure, CategoriesResponse>> getCategories();
 }
-

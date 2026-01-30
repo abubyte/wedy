@@ -9,10 +9,7 @@ abstract class GalleryRepository {
   Future<Either<Failure, List<GalleryImage>>> getGalleryImages();
 
   /// Add gallery image
-  Future<Either<Failure, ImageUploadResult>> addGalleryImage({
-    required File file,
-    required int displayOrder,
-  });
+  Future<Either<Failure, ImageUploadResult>> addGalleryImage({required File file, required int displayOrder});
 
   /// Delete gallery image
   Future<Either<Failure, void>> deleteGalleryImage(String imageId);

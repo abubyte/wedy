@@ -21,4 +21,3 @@ class GetReviews {
     return await repository.getServiceReviews(serviceId: serviceId, page: page, limit: limit);
   }
 }
-

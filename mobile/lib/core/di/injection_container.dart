@@ -80,15 +80,12 @@ final getIt = GetIt.instance;
 /// Initialize dependency injection
 Future<void> init() async {
   // Data sources
-  getIt.registerLazySingleton<AuthRemoteDataSource>(
-    () => createAuthRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<AuthRemoteDataSource>(() => createAuthRemoteDataSource());
   getIt.registerLazySingleton<AuthLocalDataSource>(() => AuthLocalDataSource());
 
   // Repositories
   getIt.registerLazySingleton<AuthRepository>(
-    () =>
-        AuthRepositoryImpl(remoteDataSource: getIt(), localDataSource: getIt()),
+    () => AuthRepositoryImpl(remoteDataSource: getIt(), localDataSource: getIt()),
   );
 
   // Use cases
@@ -98,16 +95,11 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => RefreshToken(getIt()));
 
   // Profile data sources
-  getIt.registerLazySingleton<ProfileRemoteDataSource>(
-    () => createProfileRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<ProfileRemoteDataSource>(() => createProfileRemoteDataSource());
 
   // Profile repositories
   getIt.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepositoryImpl(
-      remoteDataSource: getIt(),
-      localDataSource: getIt(),
-    ),
+    () => ProfileRepositoryImpl(remoteDataSource: getIt(), localDataSource: getIt()),
   );
 
   // Profile use cases
@@ -138,19 +130,13 @@ Future<void> init() async {
   );
 
   // Home BLoCs
-  getIt.registerFactory(
-    () => FeaturedServicesBloc(getFeaturedServicesUseCase: getIt()),
-  );
+  getIt.registerFactory(() => FeaturedServicesBloc(getFeaturedServicesUseCase: getIt()));
 
   // Service data sources
-  getIt.registerLazySingleton<ServiceRemoteDataSource>(
-    () => createServiceRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<ServiceRemoteDataSource>(() => createServiceRemoteDataSource());
 
   // Service repositories
-  getIt.registerLazySingleton<ServiceRepository>(
-    () => ServiceRepositoryImpl(remoteDataSource: getIt()),
-  );
+  getIt.registerLazySingleton<ServiceRepository>(() => ServiceRepositoryImpl(remoteDataSource: getIt()));
 
   // Service use cases
   getIt.registerLazySingleton(() => GetServices(getIt()));
@@ -188,14 +174,10 @@ Future<void> init() async {
   );
 
   // Category data sources
-  getIt.registerLazySingleton<CategoryRemoteDataSource>(
-    () => createCategoryRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<CategoryRemoteDataSource>(() => createCategoryRemoteDataSource());
 
   // Category repositories
-  getIt.registerLazySingleton<CategoryRepository>(
-    () => CategoryRepositoryImpl(remoteDataSource: getIt()),
-  );
+  getIt.registerLazySingleton<CategoryRepository>(() => CategoryRepositoryImpl(remoteDataSource: getIt()));
 
   // Category use cases
   getIt.registerLazySingleton(() => GetCategories(getIt()));
@@ -204,14 +186,10 @@ Future<void> init() async {
   getIt.registerFactory(() => CategoryBloc(getCategoriesUseCase: getIt()));
 
   // Review data sources
-  getIt.registerLazySingleton<ReviewRemoteDataSource>(
-    () => createReviewRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<ReviewRemoteDataSource>(() => createReviewRemoteDataSource());
 
   // Review repositories
-  getIt.registerLazySingleton<ReviewRepository>(
-    () => ReviewRepositoryImpl(remoteDataSource: getIt()),
-  );
+  getIt.registerLazySingleton<ReviewRepository>(() => ReviewRepositoryImpl(remoteDataSource: getIt()));
 
   // Review use cases
   getIt.registerLazySingleton(() => GetReviews(getIt()));
@@ -232,14 +210,10 @@ Future<void> init() async {
   );
 
   // Tariff data sources
-  getIt.registerLazySingleton<TariffRemoteDataSource>(
-    () => createTariffRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<TariffRemoteDataSource>(() => createTariffRemoteDataSource());
 
   // Tariff repositories
-  getIt.registerLazySingleton<TariffRepository>(
-    () => TariffRepositoryImpl(remoteDataSource: getIt()),
-  );
+  getIt.registerLazySingleton<TariffRepository>(() => TariffRepositoryImpl(remoteDataSource: getIt()));
 
   // Tariff use cases
   getIt.registerLazySingleton(() => GetTariffPlans(getIt()));
@@ -258,14 +232,10 @@ Future<void> init() async {
   );
 
   // Analytics data sources
-  getIt.registerLazySingleton<AnalyticsRemoteDataSource>(
-    () => createAnalyticsRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<AnalyticsRemoteDataSource>(() => createAnalyticsRemoteDataSource());
 
   // Analytics repositories
-  getIt.registerLazySingleton<AnalyticsRepository>(
-    () => AnalyticsRepositoryImpl(remoteDataSource: getIt()),
-  );
+  getIt.registerLazySingleton<AnalyticsRepository>(() => AnalyticsRepositoryImpl(remoteDataSource: getIt()));
 
   // Analytics use cases
   getIt.registerLazySingleton(() => GetMerchantAnalytics(getIt()));
@@ -274,14 +244,10 @@ Future<void> init() async {
   getIt.registerFactory(() => AnalyticsBloc(getMerchantAnalytics: getIt()));
 
   // Gallery data sources
-  getIt.registerLazySingleton<GalleryRemoteDataSource>(
-    () => createGalleryRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<GalleryRemoteDataSource>(() => createGalleryRemoteDataSource());
 
   // Gallery repositories
-  getIt.registerLazySingleton<GalleryRepository>(
-    () => GalleryRepositoryImpl(remoteDataSource: getIt()),
-  );
+  getIt.registerLazySingleton<GalleryRepository>(() => GalleryRepositoryImpl(remoteDataSource: getIt()));
 
   // Gallery use cases
   getIt.registerLazySingleton(() => GetGalleryImages(getIt()));
@@ -290,17 +256,11 @@ Future<void> init() async {
 
   // Gallery BLoC
   getIt.registerFactory(
-    () => GalleryBloc(
-      getGalleryImages: getIt(),
-      addGalleryImage: getIt(),
-      removeGalleryImage: getIt(),
-    ),
+    () => GalleryBloc(getGalleryImages: getIt(), addGalleryImage: getIt(), removeGalleryImage: getIt()),
   );
 
   // Featured Services data sources
-  getIt.registerLazySingleton<FeaturedServicesRemoteDataSource>(
-    () => createFeaturedServicesRemoteDataSource(),
-  );
+  getIt.registerLazySingleton<FeaturedServicesRemoteDataSource>(() => createFeaturedServicesRemoteDataSource());
 
   // Featured Services repositories
   getIt.registerLazySingleton<FeaturedServicesRepository>(

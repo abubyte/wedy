@@ -18,11 +18,11 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     required UpdateProfile updateProfileUseCase,
     required UploadAvatar uploadAvatarUseCase,
     required DeleteAvatar deleteAvatarUseCase,
-  })  : _getProfileUseCase = getProfileUseCase,
-        _updateProfileUseCase = updateProfileUseCase,
-        _uploadAvatarUseCase = uploadAvatarUseCase,
-        _deleteAvatarUseCase = deleteAvatarUseCase,
-        super(const ProfileInitial()) {
+  }) : _getProfileUseCase = getProfileUseCase,
+       _updateProfileUseCase = updateProfileUseCase,
+       _uploadAvatarUseCase = uploadAvatarUseCase,
+       _deleteAvatarUseCase = deleteAvatarUseCase,
+       super(const ProfileInitial()) {
     on<LoadProfileEvent>(_onLoadProfile);
     on<UpdateProfileEvent>(_onUpdateProfile);
     on<UploadAvatarEvent>(_onUploadAvatar);
@@ -60,17 +60,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
     final result = await _uploadAvatarUseCase(event.imagePath);
 
-    await result.fold(
-      (failure) async => emit(ProfileError(failure.toUserMessage(entityName: 'Avatar'))),
-      (avatarUrl) async {
-        // Reload profile to get updated user data
-        final profileResult = await _getProfileUseCase();
-        profileResult.fold(
-          (failure) => emit(ProfileError(failure.toUserMessage(entityName: 'Profile'))),
-          (user) => emit(AvatarUploaded(avatarUrl: avatarUrl, user: user)),
-        );
-      },
-    );
+    await result.fold((failure) async => emit(ProfileError(failure.toUserMessage(entityName: 'Avatar'))), (
+      avatarUrl,
+    ) async {
+      // Reload profile to get updated user data
+      final profileResult = await _getProfileUseCase();
+      profileResult.fold(
+        (failure) => emit(ProfileError(failure.toUserMessage(entityName: 'Profile'))),
+        (user) => emit(AvatarUploaded(avatarUrl: avatarUrl, user: user)),
+      );
+    });
   }
 
   Future<void> _onDeleteAvatar(DeleteAvatarEvent event, Emitter<ProfileState> emit) async {
@@ -78,16 +77,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
     final result = await _deleteAvatarUseCase();
 
-    await result.fold(
-      (failure) async => emit(ProfileError(failure.toUserMessage(entityName: 'Avatar'))),
-      (_) async {
-        // Reload profile to get updated user data
-        final profileResult = await _getProfileUseCase();
-        profileResult.fold(
-          (failure) => emit(ProfileError(failure.toUserMessage(entityName: 'Profile'))),
-          (user) => emit(AvatarDeleted(user: user)),
-        );
-      },
-    );
+    await result.fold((failure) async => emit(ProfileError(failure.toUserMessage(entityName: 'Avatar'))), (_) async {
+      // Reload profile to get updated user data
+      final profileResult = await _getProfileUseCase();
+      profileResult.fold(
+        (failure) => emit(ProfileError(failure.toUserMessage(entityName: 'Profile'))),
+        (user) => emit(AvatarDeleted(user: user)),
+      );
+    });
   }
 }

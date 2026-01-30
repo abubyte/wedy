@@ -32,17 +32,17 @@ class SendOtp {
   String _normalizePhoneNumber(String phone) {
     // Remove any spaces, dashes, or non-digit characters
     final cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
-    
+
     // If it starts with country code 998, remove it
     if (cleaned.startsWith('998') && cleaned.length == 12) {
       return cleaned.substring(3);
     }
-    
+
     // Return last 9 digits (in case of any extra digits)
     if (cleaned.length >= 9) {
       return cleaned.substring(cleaned.length - 9);
     }
-    
+
     return cleaned;
   }
 

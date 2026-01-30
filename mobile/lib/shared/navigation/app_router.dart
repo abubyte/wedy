@@ -33,38 +33,18 @@ import '../../core/di/injection_container.dart';
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
 
 // Client router keys
-final _clientRootNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'clientRootNavigatorKey',
-);
-final _clientHomeNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'clientHomeNavigatorKey',
-);
-final _clientChatsNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'clientChatsNavigatorKey',
-);
-final _clientFavoritesNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'clientFavoritesNavigatorKey',
-);
-final _clientProfileNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'clientProfileNavigatorKey',
-);
+final _clientRootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'clientRootNavigatorKey');
+final _clientHomeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'clientHomeNavigatorKey');
+final _clientChatsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'clientChatsNavigatorKey');
+final _clientFavoritesNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'clientFavoritesNavigatorKey');
+final _clientProfileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'clientProfileNavigatorKey');
 
 // Merchant router keys
-final _merchantRootNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'merchantRootNavigatorKey',
-);
-final _merchantHomeNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'merchantHomeNavigatorKey',
-);
-final _merchantProfileNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'merchantProfileNavigatorKey',
-);
-final _merchantChatsNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'merchantChatsNavigatorKey',
-);
-final _merchantSettingsNavigatorKey = GlobalKey<NavigatorState>(
-  debugLabel: 'merchantSettingsNavigatorKey',
-);
+final _merchantRootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'merchantRootNavigatorKey');
+final _merchantHomeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'merchantHomeNavigatorKey');
+final _merchantProfileNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'merchantProfileNavigatorKey');
+final _merchantChatsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'merchantChatsNavigatorKey');
+final _merchantSettingsNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'merchantSettingsNavigatorKey');
 
 class AppRouter {
   static GoRouter? _clientRouterInstance;
@@ -101,11 +81,7 @@ class AppRouter {
         return null; // No redirect needed
       },
       routes: [
-        GoRoute(
-          path: RouteNames.auth,
-          name: RouteNames.auth,
-          builder: (context, state) => const AuthScreen(),
-        ),
+        GoRoute(path: RouteNames.auth, name: RouteNames.auth, builder: (context, state) => const AuthScreen()),
         GoRoute(
           path: RouteNames.account,
           name: RouteNames.account,
@@ -117,10 +93,8 @@ class AppRouter {
           builder: (context, state) {
             final serviceId = state.pathParameters['serviceId'];
             return BlocProvider(
-              create: (context) => getIt<ReviewBloc>()
-                ..add(
-                  LoadReviewsEvent(serviceId: serviceId!, page: 1, limit: 20),
-                ),
+              create: (context) =>
+                  getIt<ReviewBloc>()..add(LoadReviewsEvent(serviceId: serviceId!, page: 1, limit: 20)),
               child: ReviewsPage(serviceId: serviceId),
             );
           },
@@ -136,22 +110,14 @@ class AppRouter {
               if (authState is Authenticated && state.extra == 'user') {
                 bloc.add(LoadUserReviewsEvent(userId: authState.user.id));
               } else if (state.extra == 'service') {
-                bloc.add(
-                  LoadReviewsEvent(
-                    serviceId: state.pathParameters['serviceId'] as String,
-                  ),
-                );
+                bloc.add(LoadReviewsEvent(serviceId: state.pathParameters['serviceId'] as String));
               }
               return bloc;
             },
             child: const MyReviewsPage(),
           ),
         ),
-        GoRoute(
-          path: RouteNames.help,
-          name: RouteNames.help,
-          builder: (context, state) => const HelpPage(),
-        ),
+        GoRoute(path: RouteNames.help, name: RouteNames.help, builder: (context, state) => const HelpPage()),
         GoRoute(
           path: RouteNames.policy,
           name: RouteNames.policy,
@@ -165,12 +131,8 @@ class AppRouter {
           },
         ),
         StatefulShellRoute.indexedStack(
-          builder:
-              (
-                BuildContext context,
-                GoRouterState state,
-                StatefulNavigationShell navigationShell,
-              ) => NavigationShell(child: navigationShell),
+          builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) =>
+              NavigationShell(child: navigationShell),
           branches: [
             StatefulShellBranch(
               navigatorKey: _clientHomeNavigatorKey,
@@ -178,29 +140,25 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.home,
                   name: RouteNames.home,
-                  pageBuilder: (context, state) =>
-                      buildPageWithDefaultTransition<void>(
-                        context: context,
-                        state: state,
-                        child: const ClientHomePage(),
-                      ),
+                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+                    context: context,
+                    state: state,
+                    child: const ClientHomePage(),
+                  ),
                   routes: [
                     GoRoute(
                       path: RouteNames.items,
                       name: RouteNames.items,
                       builder: (context, state) {
                         final extra = state.extra;
-                        final category = extra is ServiceCategory
-                            ? extra
-                            : null;
+                        final category = extra is ServiceCategory ? extra : null;
                         return ClientSearchPage(category: category);
                       },
                     ),
                     GoRoute(
                       path: RouteNames.hotOffers,
                       name: RouteNames.hotOffers,
-                      builder: (context, state) =>
-                          const ClientSearchPage(hotOffers: true),
+                      builder: (context, state) => const ClientSearchPage(hotOffers: true),
                     ),
                     GoRoute(
                       path: RouteNames.search,
@@ -221,12 +179,11 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.chats,
                   name: RouteNames.chats,
-                  pageBuilder: (context, state) =>
-                      buildPageWithDefaultTransition<void>(
-                        context: context,
-                        state: state,
-                        child: const ClientChatsPage(),
-                      ),
+                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+                    context: context,
+                    state: state,
+                    child: const ClientChatsPage(),
+                  ),
                 ),
               ],
             ),
@@ -237,12 +194,11 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.favorites,
                   name: RouteNames.favorites,
-                  pageBuilder: (context, state) =>
-                      buildPageWithDefaultTransition<void>(
-                        context: context,
-                        state: state,
-                        child: const ClientFavoritesPage(),
-                      ),
+                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+                    context: context,
+                    state: state,
+                    child: const ClientFavoritesPage(),
+                  ),
                 ),
               ],
             ),
@@ -253,12 +209,11 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.profile,
                   name: RouteNames.profile,
-                  pageBuilder: (context, state) =>
-                      buildPageWithDefaultTransition<void>(
-                        context: context,
-                        state: state,
-                        child: const ClientProfilePage(),
-                      ),
+                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+                    context: context,
+                    state: state,
+                    child: const ClientProfilePage(),
+                  ),
                 ),
               ],
             ),
@@ -293,41 +248,25 @@ class AppRouter {
         return null; // No redirect needed
       },
       routes: [
-        GoRoute(
-          path: RouteNames.auth,
-          builder: (context, state) => const AuthScreen(),
-        ),
+        GoRoute(path: RouteNames.auth, builder: (context, state) => const AuthScreen()),
         GoRoute(
           path: RouteNames.edit,
           name: RouteNames.edit,
           builder: (context, state) {
-            final service = state.extra is MerchantService
-                ? state.extra as MerchantService
-                : null;
+            final service = state.extra is MerchantService ? state.extra as MerchantService : null;
             return MerchantEditPage(service: service);
           },
         ),
-        GoRoute(
-          path: RouteNames.boost,
-          builder: (context, state) => const BoostPage(),
-        ),
+        GoRoute(path: RouteNames.boost, builder: (context, state) => const BoostPage()),
         GoRoute(
           path: RouteNames.account,
           name: RouteNames.account,
           builder: (context, state) => const MerchantAccountPage(),
         ),
-        GoRoute(
-          path: RouteNames.tariff,
-          name: RouteNames.tariff,
-          builder: (context, state) => const TariffPage(),
-        ),
+        GoRoute(path: RouteNames.tariff, name: RouteNames.tariff, builder: (context, state) => const TariffPage()),
         StatefulShellRoute.indexedStack(
-          builder:
-              (
-                BuildContext context,
-                GoRouterState state,
-                StatefulNavigationShell navigationShell,
-              ) => NavigationShell(client: false, child: navigationShell),
+          builder: (BuildContext context, GoRouterState state, StatefulNavigationShell navigationShell) =>
+              NavigationShell(client: false, child: navigationShell),
           branches: [
             StatefulShellBranch(
               navigatorKey: _merchantHomeNavigatorKey,
@@ -335,12 +274,11 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.home,
                   name: RouteNames.home,
-                  pageBuilder: (context, state) =>
-                      buildPageWithDefaultTransition<void>(
-                        context: context,
-                        state: state,
-                        child: const MerchantHomePage(),
-                      ),
+                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+                    context: context,
+                    state: state,
+                    child: const MerchantHomePage(),
+                  ),
                   // routes: [
                   //   GoRoute(
                   //     path: RouteNames.reviews,
@@ -366,17 +304,14 @@ class AppRouter {
                     final blocState = bloc.state;
                     MerchantService? service;
 
-                    if (blocState is MerchantServiceLoaded &&
-                        blocState.service == null) {
+                    if (blocState is MerchantServiceLoaded && blocState.service == null) {
                       service = blocState.service;
                     }
 
                     return buildPageWithDefaultTransition<void>(
                       context: context,
                       state: state,
-                      child: service != null
-                          ? WedyServicePage(serviceId: service.id)
-                          : const MerchantEditPage(),
+                      child: service != null ? WedyServicePage(serviceId: service.id) : const MerchantEditPage(),
                     );
                   },
                 ),
@@ -389,12 +324,11 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.chats,
                   name: RouteNames.chats,
-                  pageBuilder: (context, state) =>
-                      buildPageWithDefaultTransition<void>(
-                        context: context,
-                        state: state,
-                        child: const MerchantChatsPage(),
-                      ),
+                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+                    context: context,
+                    state: state,
+                    child: const MerchantChatsPage(),
+                  ),
                 ),
               ],
             ),
@@ -405,12 +339,11 @@ class AppRouter {
                 GoRoute(
                   path: RouteNames.settings,
                   name: RouteNames.settings,
-                  pageBuilder: (context, state) =>
-                      buildPageWithDefaultTransition<void>(
-                        context: context,
-                        state: state,
-                        child: const MerchantSettingsPage(),
-                      ),
+                  pageBuilder: (context, state) => buildPageWithDefaultTransition<void>(
+                    context: context,
+                    state: state,
+                    child: const MerchantSettingsPage(),
+                  ),
                 ),
               ],
             ),

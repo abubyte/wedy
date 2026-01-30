@@ -27,8 +27,7 @@ class GalleryImageDto {
     required this.createdAt,
   });
 
-  factory GalleryImageDto.fromJson(Map<String, dynamic> json) =>
-      _$GalleryImageDtoFromJson(json);
+  factory GalleryImageDto.fromJson(Map<String, dynamic> json) => _$GalleryImageDtoFromJson(json);
   Map<String, dynamic> toJson() => _$GalleryImageDtoToJson(this);
 
   GalleryImage toEntity() {
@@ -55,16 +54,9 @@ class ImageUploadResponseDto {
   @JsonKey(name: 'presigned_url')
   final String? presignedUrl;
 
-  ImageUploadResponseDto({
-    required this.success,
-    required this.message,
-    this.imageId,
-    this.s3Url,
-    this.presignedUrl,
-  });
+  ImageUploadResponseDto({required this.success, required this.message, this.imageId, this.s3Url, this.presignedUrl});
 
-  factory ImageUploadResponseDto.fromJson(Map<String, dynamic> json) =>
-      _$ImageUploadResponseDtoFromJson(json);
+  factory ImageUploadResponseDto.fromJson(Map<String, dynamic> json) => _$ImageUploadResponseDtoFromJson(json);
   Map<String, dynamic> toJson() => _$ImageUploadResponseDtoToJson(this);
 
   ImageUploadResult toEntity() {

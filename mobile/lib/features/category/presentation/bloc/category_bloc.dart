@@ -5,8 +5,8 @@ import 'category_state.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
   CategoryBloc({required GetCategories getCategoriesUseCase})
-      : _getCategoriesUseCase = getCategoriesUseCase,
-        super(const CategoryInitial()) {
+    : _getCategoriesUseCase = getCategoriesUseCase,
+      super(const CategoryInitial()) {
     on<LoadCategoriesEvent>(_onLoadCategories);
   }
 

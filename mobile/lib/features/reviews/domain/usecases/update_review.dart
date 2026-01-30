@@ -9,11 +9,7 @@ class UpdateReview {
 
   UpdateReview(this.repository);
 
-  Future<Either<Failure, Review>> call({
-    required String reviewId,
-    int? rating,
-    String? comment,
-  }) async {
+  Future<Either<Failure, Review>> call({required String reviewId, int? rating, String? comment}) async {
     if (reviewId.isEmpty) {
       return const Left(ValidationFailure('Review ID cannot be empty'));
     }
@@ -25,4 +21,3 @@ class UpdateReview {
     return await repository.updateReview(reviewId: reviewId, rating: rating, comment: comment);
   }
 }
-

@@ -10,8 +10,7 @@ part 'featured_services_remote_datasource.g.dart';
 /// Remote data source for featured services API calls
 @RestApi()
 abstract class FeaturedServicesRemoteDataSource {
-  factory FeaturedServicesRemoteDataSource(Dio dio, {String baseUrl}) =
-      _FeaturedServicesRemoteDataSource;
+  factory FeaturedServicesRemoteDataSource(Dio dio, {String baseUrl}) = _FeaturedServicesRemoteDataSource;
 
   /// Get merchant featured services tracking
   @GET('/api/v1/merchants/featured-services')
@@ -19,19 +18,14 @@ abstract class FeaturedServicesRemoteDataSource {
 
   /// Create monthly featured service (uses free allocation)
   @POST('/api/v1/merchants/featured-services/monthly')
-  Future<FeaturedServiceDto> createMonthlyFeaturedService(
-    @Body() Map<String, dynamic> body,
-  );
+  Future<FeaturedServiceDto> createMonthlyFeaturedService(@Body() Map<String, dynamic> body);
 
   /// Create paid featured service payment
   @POST('/api/v1/payments/featured-service')
-  Future<PaymentResponseDto> createFeaturedServicePayment(
-    @Body() Map<String, dynamic> body,
-  );
+  Future<PaymentResponseDto> createFeaturedServicePayment(@Body() Map<String, dynamic> body);
 }
 
 /// Factory function to create FeaturedServicesRemoteDataSource instance
 FeaturedServicesRemoteDataSource createFeaturedServicesRemoteDataSource() {
-  return FeaturedServicesRemoteDataSource(ApiClient.instance,
-      baseUrl: ApiConstants.baseUrl);
+  return FeaturedServicesRemoteDataSource(ApiClient.instance, baseUrl: ApiConstants.baseUrl);
 }

@@ -52,18 +52,14 @@ class _ClientFavoritesPageState extends State<ClientFavoritesPage> {
 
     // Reload if state doesn't match what we need (only check once per build cycle)
     final currentState = globalBloc.state;
-    final hasLikedServices = currentState is ServicesLoaded
-        ? currentState.likedServices != null
-        : false;
+    final hasLikedServices = currentState is ServicesLoaded ? currentState.likedServices != null : false;
 
     if (!_hasCheckedInitialLoad || (!hasLikedServices && currentState is! ServiceLoading)) {
       _hasCheckedInitialLoad = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           final state = globalBloc.state;
-          final hasServices = state is ServicesLoaded
-              ? state.likedServices != null
-              : false;
+          final hasServices = state is ServicesLoaded ? state.likedServices != null : false;
           if (!hasServices && state is! ServiceLoading) {
             globalBloc.add(const LoadLikedServicesEvent());
           }

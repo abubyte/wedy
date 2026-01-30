@@ -1,21 +1,10 @@
 import '../../domain/entities/gallery_image.dart';
 
 /// Loading type for gallery operations
-enum GalleryLoadingType {
-  initial,
-  adding,
-  removing,
-}
+enum GalleryLoadingType { initial, adding, removing }
 
 /// Error type for gallery operations
-enum GalleryErrorType {
-  network,
-  server,
-  auth,
-  tariffLimit,
-  notFound,
-  unknown,
-}
+enum GalleryErrorType { network, server, auth, tariffLimit, notFound, unknown }
 
 /// Gallery states using Dart 3 sealed classes for exhaustiveness checking
 sealed class GalleryState {
@@ -32,10 +21,7 @@ final class GalleryLoading extends GalleryState {
   final GalleryLoadingType type;
   final List<GalleryImage>? previousImages;
 
-  const GalleryLoading({
-    this.type = GalleryLoadingType.initial,
-    this.previousImages,
-  });
+  const GalleryLoading({this.type = GalleryLoadingType.initial, this.previousImages});
 }
 
 /// Gallery data holder
@@ -43,15 +29,9 @@ class GalleryData {
   final List<GalleryImage> images;
   final GalleryOperation? lastOperation;
 
-  const GalleryData({
-    this.images = const [],
-    this.lastOperation,
-  });
+  const GalleryData({this.images = const [], this.lastOperation});
 
-  GalleryData copyWith({
-    List<GalleryImage>? images,
-    GalleryOperation? Function()? lastOperation,
-  }) {
+  GalleryData copyWith({List<GalleryImage>? images, GalleryOperation? Function()? lastOperation}) {
     return GalleryData(
       images: images ?? this.images,
       lastOperation: lastOperation != null ? lastOperation() : this.lastOperation,
@@ -98,9 +78,5 @@ final class GalleryError extends GalleryState {
   final GalleryErrorType type;
   final List<GalleryImage>? previousImages;
 
-  const GalleryError(
-    this.message, {
-    this.type = GalleryErrorType.unknown,
-    this.previousImages,
-  });
+  const GalleryError(this.message, {this.type = GalleryErrorType.unknown, this.previousImages});
 }

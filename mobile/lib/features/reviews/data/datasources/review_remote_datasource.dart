@@ -9,8 +9,7 @@ part 'review_remote_datasource.g.dart';
 /// Remote data source for review API calls
 @RestApi()
 abstract class ReviewRemoteDataSource {
-  factory ReviewRemoteDataSource(Dio dio, {String baseUrl}) =
-      _ReviewRemoteDataSource;
+  factory ReviewRemoteDataSource(Dio dio, {String baseUrl}) = _ReviewRemoteDataSource;
 
   /// Get reviews for a specific service
   @GET('/api/v1/services/{serviceId}/reviews/')
@@ -34,10 +33,7 @@ abstract class ReviewRemoteDataSource {
 
   /// Update an existing review
   @PUT('/api/v1/reviews/{reviewId}')
-  Future<ReviewDto> updateReview(
-    @Path('reviewId') String reviewId,
-    @Body() ReviewUpdateRequestDto request,
-  );
+  Future<ReviewDto> updateReview(@Path('reviewId') String reviewId, @Body() ReviewUpdateRequestDto request);
 
   /// Delete a review
   @DELETE('/api/v1/reviews/{reviewId}')
@@ -46,8 +42,5 @@ abstract class ReviewRemoteDataSource {
 
 /// Factory function to create ReviewRemoteDataSource instance
 ReviewRemoteDataSource createReviewRemoteDataSource() {
-  return ReviewRemoteDataSource(
-    ApiClient.instance,
-    baseUrl: ApiConstants.baseUrl,
-  );
+  return ReviewRemoteDataSource(ApiClient.instance, baseUrl: ApiConstants.baseUrl);
 }

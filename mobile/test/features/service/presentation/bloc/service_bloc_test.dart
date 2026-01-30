@@ -240,7 +240,10 @@ void main() {
         expect: () => [
           const ServiceLoading(),
           ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem]),
-          ServicesLoaded(currentPaginatedResponse: tPaginatedResponse, paginatedServices: [tServiceListItem, tServiceListItem]),
+          ServicesLoaded(
+            currentPaginatedResponse: tPaginatedResponse,
+            paginatedServices: [tServiceListItem, tServiceListItem],
+          ),
         ],
       );
 

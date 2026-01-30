@@ -44,8 +44,9 @@ void main() {
 
   test('should get reviews for a service from the repository', () async {
     // Arrange
-    when(() => mockRepository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20))
-        .thenAnswer((_) async => Right(tPaginatedResponse));
+    when(
+      () => mockRepository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20),
+    ).thenAnswer((_) async => Right(tPaginatedResponse));
 
     // Act
     final result = await useCase(serviceId: 'service1', page: 1, limit: 20);
@@ -62,13 +63,20 @@ void main() {
 
     // Assert
     expect(result, const Left(ValidationFailure('Service ID cannot be empty')));
-    verifyNever(() => mockRepository.getServiceReviews(serviceId: any(named: 'serviceId'), page: any(named: 'page'), limit: any(named: 'limit')));
+    verifyNever(
+      () => mockRepository.getServiceReviews(
+        serviceId: any(named: 'serviceId'),
+        page: any(named: 'page'),
+        limit: any(named: 'limit'),
+      ),
+    );
   });
 
   test('should return failure when repository returns failure', () async {
     // Arrange
-    when(() => mockRepository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20))
-        .thenAnswer((_) async => const Left(ServerFailure('Server error')));
+    when(
+      () => mockRepository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20),
+    ).thenAnswer((_) async => const Left(ServerFailure('Server error')));
 
     // Act
     final result = await useCase(serviceId: 'service1', page: 1, limit: 20);
@@ -78,4 +86,3 @@ void main() {
     verify(() => mockRepository.getServiceReviews(serviceId: 'service1', page: 1, limit: 20)).called(1);
   });
 }
-

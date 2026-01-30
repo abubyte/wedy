@@ -52,4 +52,3 @@ class CategoryRepositoryImpl implements CategoryRepository {
     }
   }
 }
-

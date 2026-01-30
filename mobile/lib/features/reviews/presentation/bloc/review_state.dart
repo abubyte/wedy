@@ -21,17 +21,9 @@ final class ReviewsLoaded extends ReviewState {
   final List<Review> allReviews;
   final bool hasMore;
 
-  const ReviewsLoaded({
-    required this.response,
-    required this.allReviews,
-    this.hasMore = true,
-  });
+  const ReviewsLoaded({required this.response, required this.allReviews, this.hasMore = true});
 
-  ReviewsLoaded copyWith({
-    PaginatedReviewResponse? response,
-    List<Review>? allReviews,
-    bool? hasMore,
-  }) {
+  ReviewsLoaded copyWith({PaginatedReviewResponse? response, List<Review>? allReviews, bool? hasMore}) {
     return ReviewsLoaded(
       response: response ?? this.response,
       allReviews: allReviews ?? this.allReviews,

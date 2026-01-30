@@ -16,14 +16,7 @@ enum MerchantServiceLoadingType {
 }
 
 /// Error type for merchant service operations
-enum MerchantServiceErrorType {
-  network,
-  server,
-  validation,
-  auth,
-  notFound,
-  unknown,
-}
+enum MerchantServiceErrorType { network, server, validation, auth, notFound, unknown }
 
 /// Merchant service states using Dart 3 sealed classes for exhaustiveness checking
 sealed class MerchantServiceState {
@@ -40,10 +33,7 @@ final class MerchantServiceLoading extends MerchantServiceState {
   final MerchantServiceLoadingType type;
   final MerchantServiceData? previousData;
 
-  const MerchantServiceLoading({
-    this.type = MerchantServiceLoadingType.initial,
-    this.previousData,
-  });
+  const MerchantServiceLoading({this.type = MerchantServiceLoadingType.initial, this.previousData});
 }
 
 /// Unified data holder for merchant service state
@@ -94,17 +84,12 @@ class MerchantServiceData {
 
   /// Add a service to the list
   MerchantServiceData addService(MerchantService service) {
-    return copyWith(
-      services: [...services, service],
-      activeCount: activeCount + 1,
-    );
+    return copyWith(services: [...services, service], activeCount: activeCount + 1);
   }
 
   /// Update a service in the list
   MerchantServiceData updateService(MerchantService updatedService) {
-    return copyWith(
-      services: services.map((s) => s.id == updatedService.id ? updatedService : s).toList(),
-    );
+    return copyWith(services: services.map((s) => s.id == updatedService.id ? updatedService : s).toList());
   }
 
   /// Remove a service from the list
@@ -152,9 +137,5 @@ final class MerchantServiceError extends MerchantServiceState {
   final MerchantServiceErrorType type;
   final MerchantServiceData? previousData;
 
-  const MerchantServiceError(
-    this.message, {
-    this.type = MerchantServiceErrorType.unknown,
-    this.previousData,
-  });
+  const MerchantServiceError(this.message, {this.type = MerchantServiceErrorType.unknown, this.previousData});
 }

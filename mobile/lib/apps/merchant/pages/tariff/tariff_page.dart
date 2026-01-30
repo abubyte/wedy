@@ -33,8 +33,7 @@ class _TariffPageContent extends StatelessWidget {
   const _TariffPageContent();
 
   String _formatPrice(double price) {
-    return price.toInt().toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+    return price.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
   }
 
   @override
@@ -65,19 +64,11 @@ class _TariffPageContent extends StatelessWidget {
                   const SizedBox(height: AppDimensions.spacingL),
 
                   // Title
-                  Text(
-                    'Tariflar',
-                    style: AppTextStyles.headline2.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 24,
-                    ),
-                  ),
+                  Text('Tariflar', style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 24)),
                   const SizedBox(height: AppDimensions.spacingXL),
 
                   // Tariff plans
-                  if (plans.isNotEmpty) ...[
-                    ...plans.map((plan) => _buildTariffCard(context, plan)),
-                  ],
+                  if (plans.isNotEmpty) ...[...plans.map((plan) => _buildTariffCard(context, plan))],
 
                   // Pro plan coming soon
                   _buildComingSoonCard(),
@@ -106,20 +97,14 @@ class _TariffPageContent extends StatelessWidget {
           // Plan name
           Text(
             plan.name,
-            style: AppTextStyles.bodyRegular.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.bodyRegular.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppDimensions.spacingS),
 
           // Price
           Text(
             '${_formatPrice(plan.pricePerMonth)} so\'m/oy',
-            style: AppTextStyles.headline1.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 28,
-            ),
+            style: AppTextStyles.headline1.copyWith(fontWeight: FontWeight.bold, fontSize: 28),
           ),
           const SizedBox(height: AppDimensions.spacingL),
 
@@ -136,10 +121,7 @@ class _TariffPageContent extends StatelessWidget {
           const SizedBox(height: AppDimensions.spacingL),
 
           // Activate button
-          WedyPrimaryButton(
-            label: 'Tarifni faollashtirish',
-            onPressed: () => _navigateToDuration(context, plan),
-          ),
+          WedyPrimaryButton(label: 'Tarifni faollashtirish', onPressed: () => _navigateToDuration(context, plan)),
         ],
       ),
     );
@@ -184,21 +166,12 @@ class _TariffPageContent extends StatelessWidget {
           // Plan name
           Text(
             'Pro',
-            style: AppTextStyles.bodyRegular.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.bodyRegular.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppDimensions.spacingS),
 
           // Coming soon
-          Text(
-            'Tez kuna...',
-            style: AppTextStyles.headline2.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
-          ),
+          Text('Tez kuna...', style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.bold, fontSize: 24)),
           const SizedBox(height: AppDimensions.spacingL),
 
           // Pro features preview
@@ -213,11 +186,7 @@ class _TariffPageContent extends StatelessWidget {
           const SizedBox(height: AppDimensions.spacingL),
 
           // Disabled button
-          const WedyPrimaryButton(
-            label: 'Bu Tarif tez kunda qo\'shiladi',
-            outlined: true,
-            onPressed: null,
-          ),
+          const WedyPrimaryButton(label: 'Bu Tarif tez kunda qo\'shiladi', outlined: true, onPressed: null),
         ],
       ),
     );

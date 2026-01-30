@@ -142,7 +142,12 @@ void main() {
       when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
+      await tester.pumpWidget(
+        createTestWidget(
+          serviceState: ServicesLoaded(currentServiceDetails: tService),
+          serviceId: 'service1',
+        ),
+      );
 
       // Assert
       expect(find.text('Test Service'), findsOneWidget);
@@ -158,7 +163,12 @@ void main() {
       when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
+      await tester.pumpWidget(
+        createTestWidget(
+          serviceState: ServicesLoaded(currentServiceDetails: tService),
+          serviceId: 'service1',
+        ),
+      );
 
       // Assert
       expect(find.text('Statistika'), findsOneWidget);
@@ -172,7 +182,12 @@ void main() {
       when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
+      await tester.pumpWidget(
+        createTestWidget(
+          serviceState: ServicesLoaded(currentServiceDetails: tService),
+          serviceId: 'service1',
+        ),
+      );
 
       // Assert
       expect(find.text('Galareya'), findsOneWidget);
@@ -183,7 +198,12 @@ void main() {
       when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
+      await tester.pumpWidget(
+        createTestWidget(
+          serviceState: ServicesLoaded(currentServiceDetails: tService),
+          serviceId: 'service1',
+        ),
+      );
 
       // Assert
       // Contact tabs should be visible (phone, location, social)
@@ -195,7 +215,12 @@ void main() {
       when(() => mockServiceBloc.state).thenReturn(ServicesLoaded(currentServiceDetails: tService));
 
       // Act
-      await tester.pumpWidget(createTestWidget(serviceState: ServicesLoaded(currentServiceDetails: tService), serviceId: 'service1'));
+      await tester.pumpWidget(
+        createTestWidget(
+          serviceState: ServicesLoaded(currentServiceDetails: tService),
+          serviceId: 'service1',
+        ),
+      );
 
       // Assert
       // Location card should be visible when latitude and longitude are available

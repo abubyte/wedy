@@ -28,15 +28,7 @@ void main() {
   late MockDeleteAvatar mockDeleteAvatar;
 
   setUpAll(() {
-    registerFallbackValue(
-      User(
-        id: '',
-        phoneNumber: '',
-        name: '',
-        type: UserType.client,
-        createdAt: DateTime.now(),
-      ),
-    );
+    registerFallbackValue(User(id: '', phoneNumber: '', name: '', type: UserType.client, createdAt: DateTime.now()));
   });
 
   setUp(() {
@@ -83,16 +75,11 @@ void main() {
       blocTest<ProfileBloc, ProfileState>(
         'emits [ProfileLoading, ProfileError] when profile load fails',
         build: () {
-          when(() => mockGetProfile()).thenAnswer(
-            (_) async => const Left(NetworkFailure('Network error')),
-          );
+          when(() => mockGetProfile()).thenAnswer((_) async => const Left(NetworkFailure('Network error')));
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadProfileEvent()),
-        expect: () => [
-          const ProfileLoading(),
-          const ProfileError('Network error'),
-        ],
+        expect: () => [const ProfileLoading(), const ProfileError('Network error')],
         verify: (_) {
           verify(() => mockGetProfile()).called(1);
         },
@@ -101,16 +88,11 @@ void main() {
       blocTest<ProfileBloc, ProfileState>(
         'emits [ProfileLoading, ProfileError] when profile load returns AuthFailure',
         build: () {
-          when(
-            () => mockGetProfile(),
-          ).thenAnswer((_) async => const Left(AuthFailure('Unauthorized')));
+          when(() => mockGetProfile()).thenAnswer((_) async => const Left(AuthFailure('Unauthorized')));
           return bloc;
         },
         act: (bloc) => bloc.add(const LoadProfileEvent()),
-        expect: () => [
-          const ProfileLoading(),
-          const ProfileError('Unauthorized'),
-        ],
+        expect: () => [const ProfileLoading(), const ProfileError('Unauthorized')],
       );
     });
 
@@ -127,19 +109,13 @@ void main() {
             type: tUser.type,
             createdAt: tUser.createdAt,
           );
-          when(
-            () => mockUpdateProfile(name: tNewName, phoneNumber: null),
-          ).thenAnswer((_) async => Right(tUpdatedUser));
+          when(() => mockUpdateProfile(name: tNewName, phoneNumber: null)).thenAnswer((_) async => Right(tUpdatedUser));
           return bloc;
         },
-        act: (bloc) => bloc.add(
-          const UpdateProfileEvent(name: 'Jane Doe', phoneNumber: null),
-        ),
+        act: (bloc) => bloc.add(const UpdateProfileEvent(name: 'Jane Doe', phoneNumber: null)),
         expect: () => [const ProfileLoading(), isA<ProfileUpdated>()],
         verify: (_) {
-          verify(
-            () => mockUpdateProfile(name: 'Jane Doe', phoneNumber: null),
-          ).called(1);
+          verify(() => mockUpdateProfile(name: 'Jane Doe', phoneNumber: null)).called(1);
         },
       );
 
@@ -151,17 +127,11 @@ void main() {
               name: any(named: 'name'),
               phoneNumber: any(named: 'phoneNumber'),
             ),
-          ).thenAnswer(
-            (_) async => const Left(ValidationFailure('Name is too short')),
-          );
+          ).thenAnswer((_) async => const Left(ValidationFailure('Name is too short')));
           return bloc;
         },
-        act: (bloc) =>
-            bloc.add(const UpdateProfileEvent(name: 'A', phoneNumber: null)),
-        expect: () => [
-          const ProfileLoading(),
-          const ProfileError('Name is too short'),
-        ],
+        act: (bloc) => bloc.add(const UpdateProfileEvent(name: 'A', phoneNumber: null)),
+        expect: () => [const ProfileLoading(), const ProfileError('Name is too short')],
       );
 
       blocTest<ProfileBloc, ProfileState>(
@@ -181,9 +151,7 @@ void main() {
           ).thenAnswer((_) async => Right(tUpdatedUser));
           return bloc;
         },
-        act: (bloc) => bloc.add(
-          const UpdateProfileEvent(name: null, phoneNumber: '998765432'),
-        ),
+        act: (bloc) => bloc.add(const UpdateProfileEvent(name: null, phoneNumber: '998765432')),
         expect: () => [const ProfileLoading(), isA<ProfileUpdated>()],
       );
     });
@@ -195,17 +163,12 @@ void main() {
       blocTest<ProfileBloc, ProfileState>(
         'emits [ProfileLoading, AvatarUploaded] when avatar is uploaded successfully',
         build: () {
-          when(
-            () => mockUploadAvatar(tImagePath),
-          ).thenAnswer((_) async => const Right(tAvatarUrl));
+          when(() => mockUploadAvatar(tImagePath)).thenAnswer((_) async => const Right(tAvatarUrl));
           when(() => mockGetProfile()).thenAnswer((_) async => Right(tUser));
           return bloc;
         },
         act: (bloc) => bloc.add(const UploadAvatarEvent(tImagePath)),
-        expect: () => [
-          const ProfileLoading(),
-          AvatarUploaded(avatarUrl: tAvatarUrl, user: tUser),
-        ],
+        expect: () => [const ProfileLoading(), AvatarUploaded(avatarUrl: tAvatarUrl, user: tUser)],
         verify: (_) {
           verify(() => mockUploadAvatar(tImagePath)).called(1);
           verify(() => mockGetProfile()).called(1);
@@ -215,16 +178,11 @@ void main() {
       blocTest<ProfileBloc, ProfileState>(
         'emits [ProfileLoading, ProfileError] when avatar upload fails',
         build: () {
-          when(() => mockUploadAvatar(tImagePath)).thenAnswer(
-            (_) async => const Left(NetworkFailure('Upload failed')),
-          );
+          when(() => mockUploadAvatar(tImagePath)).thenAnswer((_) async => const Left(NetworkFailure('Upload failed')));
           return bloc;
         },
         act: (bloc) => bloc.add(const UploadAvatarEvent(tImagePath)),
-        expect: () => [
-          const ProfileLoading(),
-          const ProfileError('Upload failed'),
-        ],
+        expect: () => [const ProfileLoading(), const ProfileError('Upload failed')],
         verify: (_) {
           verify(() => mockUploadAvatar(tImagePath)).called(1);
           verifyNever(() => mockGetProfile());
@@ -234,19 +192,12 @@ void main() {
       blocTest<ProfileBloc, ProfileState>(
         'emits [ProfileLoading, ProfileError] when profile reload fails after upload',
         build: () {
-          when(
-            () => mockUploadAvatar(tImagePath),
-          ).thenAnswer((_) async => const Right(tAvatarUrl));
-          when(() => mockGetProfile()).thenAnswer(
-            (_) async => const Left(NetworkFailure('Failed to reload profile')),
-          );
+          when(() => mockUploadAvatar(tImagePath)).thenAnswer((_) async => const Right(tAvatarUrl));
+          when(() => mockGetProfile()).thenAnswer((_) async => const Left(NetworkFailure('Failed to reload profile')));
           return bloc;
         },
         act: (bloc) => bloc.add(const UploadAvatarEvent(tImagePath)),
-        expect: () => [
-          const ProfileLoading(),
-          const ProfileError('Failed to reload profile'),
-        ],
+        expect: () => [const ProfileLoading(), const ProfileError('Failed to reload profile')],
         verify: (_) {
           verify(() => mockUploadAvatar(tImagePath)).called(1);
           verify(() => mockGetProfile()).called(1);

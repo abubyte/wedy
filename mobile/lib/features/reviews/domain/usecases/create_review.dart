@@ -9,11 +9,7 @@ class CreateReview {
 
   CreateReview(this.repository);
 
-  Future<Either<Failure, Review>> call({
-    required String serviceId,
-    required int rating,
-    String? comment,
-  }) async {
+  Future<Either<Failure, Review>> call({required String serviceId, required int rating, String? comment}) async {
     if (serviceId.isEmpty) {
       return const Left(ValidationFailure('Service ID cannot be empty'));
     }
@@ -25,4 +21,3 @@ class CreateReview {
     return await repository.createReview(serviceId: serviceId, rating: rating, comment: comment);
   }
 }
-

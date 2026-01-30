@@ -97,8 +97,7 @@ void main() {
 
   test('should return NetworkFailure when repository fails', () async {
     // Arrange
-    when(() => mockRepository.getSavedServices())
-        .thenAnswer((_) async => const Left(NetworkFailure('Network error')));
+    when(() => mockRepository.getSavedServices()).thenAnswer((_) async => const Left(NetworkFailure('Network error')));
 
     // Act
     final result = await useCase();
@@ -110,8 +109,7 @@ void main() {
 
   test('should return ServerFailure when server error occurs', () async {
     // Arrange
-    when(() => mockRepository.getSavedServices())
-        .thenAnswer((_) async => const Left(ServerFailure('Server error')));
+    when(() => mockRepository.getSavedServices()).thenAnswer((_) async => const Left(ServerFailure('Server error')));
 
     // Act
     final result = await useCase();
@@ -123,8 +121,7 @@ void main() {
 
   test('should return AuthFailure when unauthorized', () async {
     // Arrange
-    when(() => mockRepository.getSavedServices())
-        .thenAnswer((_) async => const Left(AuthFailure('Unauthorized')));
+    when(() => mockRepository.getSavedServices()).thenAnswer((_) async => const Left(AuthFailure('Unauthorized')));
 
     // Act
     final result = await useCase();
@@ -134,4 +131,3 @@ void main() {
     verify(() => mockRepository.getSavedServices()).called(1);
   });
 }
-

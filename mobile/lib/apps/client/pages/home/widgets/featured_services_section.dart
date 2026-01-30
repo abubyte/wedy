@@ -26,18 +26,14 @@ class FeaturedServicesSection extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        final featuredServices = state.status == StateStatus.loaded
-            ? state.data
-            : <ServiceListItem>[];
+        final featuredServices = state.status == StateStatus.loaded ? state.data : <ServiceListItem>[];
 
         if (featuredServices.isEmpty) {
           return const SizedBox.shrink();
         }
 
         return Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingL,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
           child: HotOffersBannerWidget(services: featuredServices),
         );
       },
@@ -62,17 +58,10 @@ class _HotOffersBannerShimmer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingS,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
             child: Row(
               children: [
-                Expanded(
-                  child: ShimmerHelper.shimmerContainer(
-                    height: 24,
-                    borderRadius: 4.0,
-                  ),
-                ),
+                Expanded(child: ShimmerHelper.shimmerContainer(height: 24, borderRadius: 4.0)),
                 const SizedBox(width: AppDimensions.spacingM),
                 ShimmerHelper.shimmerCircle(width: 24, height: 24),
               ],
@@ -80,14 +69,8 @@ class _HotOffersBannerShimmer extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacingS),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingS,
-            ),
-            child: ShimmerHelper.shimmerContainer(
-              height: 14,
-              width: 200,
-              borderRadius: 4.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS),
+            child: ShimmerHelper.shimmerContainer(height: 14, width: 200, borderRadius: 4.0),
           ),
           const SizedBox(height: AppDimensions.spacingS),
           Padding(
@@ -108,10 +91,7 @@ class _HotOffersBannerShimmer extends StatelessWidget {
                         left: index == 0 ? AppDimensions.spacingS : 0,
                         right: index == 2 ? AppDimensions.spacingS : 0,
                       ),
-                      child: AspectRatio(
-                        aspectRatio: .7,
-                        child: ShimmerHelper.shimmerRounded(height: 211),
-                      ),
+                      child: AspectRatio(aspectRatio: .7, child: ShimmerHelper.shimmerRounded(height: 211)),
                     ),
                   );
                 },

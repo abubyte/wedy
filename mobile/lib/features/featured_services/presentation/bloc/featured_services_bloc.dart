@@ -17,10 +17,10 @@ class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesS
     required GetFeaturedServicesTracking getFeaturedServicesTracking,
     required CreateMonthlyFeaturedService createMonthlyFeaturedService,
     required CreateFeaturedPayment createFeaturedPayment,
-  })  : _getFeaturedServicesTracking = getFeaturedServicesTracking,
-        _createMonthlyFeaturedService = createMonthlyFeaturedService,
-        _createFeaturedPayment = createFeaturedPayment,
-        super(const FeaturedServicesInitial()) {
+  }) : _getFeaturedServicesTracking = getFeaturedServicesTracking,
+       _createMonthlyFeaturedService = createMonthlyFeaturedService,
+       _createFeaturedPayment = createFeaturedPayment,
+       super(const FeaturedServicesInitial()) {
     on<LoadFeaturedServicesEvent>(_onLoadFeaturedServices);
     on<CreateMonthlyFeaturedServiceEvent>(_onCreateMonthlyFeaturedService);
     on<CreatePaidFeaturedServiceEvent>(_onCreatePaidFeaturedService);
@@ -57,23 +57,19 @@ class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesS
     };
   }
 
-  Future<void> _onLoadFeaturedServices(
-    LoadFeaturedServicesEvent event,
-    Emitter<FeaturedServicesState> emit,
-  ) async {
-    emit(FeaturedServicesLoading(
-      type: FeaturedServicesLoadingType.initial,
-      previousData: _currentData,
-    ));
+  Future<void> _onLoadFeaturedServices(LoadFeaturedServicesEvent event, Emitter<FeaturedServicesState> emit) async {
+    emit(FeaturedServicesLoading(type: FeaturedServicesLoadingType.initial, previousData: _currentData));
 
     final result = await _getFeaturedServicesTracking();
 
     result.fold(
-      (failure) => emit(FeaturedServicesError(
-        failure.toUserMessage(entityName: 'Featured services'),
-        type: _mapFailureToErrorType(failure),
-        previousData: _currentData,
-      )),
+      (failure) => emit(
+        FeaturedServicesError(
+          failure.toUserMessage(entityName: 'Featured services'),
+          type: _mapFailureToErrorType(failure),
+          previousData: _currentData,
+        ),
+      ),
       (data) => emit(FeaturedServicesLoaded(data)),
     );
   }
@@ -84,35 +80,28 @@ class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesS
   ) async {
     final previousData = _currentData;
 
-    emit(FeaturedServicesLoading(
-      type: FeaturedServicesLoadingType.creating,
-      previousData: previousData,
-    ));
+    emit(FeaturedServicesLoading(type: FeaturedServicesLoadingType.creating, previousData: previousData));
 
     final result = await _createMonthlyFeaturedService(event.serviceId);
 
     result.fold(
-      (failure) => emit(FeaturedServicesError(
-        failure.toUserMessage(entityName: 'Featured service'),
-        type: _mapFailureToErrorType(failure),
-        previousData: previousData,
-      )),
+      (failure) => emit(
+        FeaturedServicesError(
+          failure.toUserMessage(entityName: 'Featured service'),
+          type: _mapFailureToErrorType(failure),
+          previousData: previousData,
+        ),
+      ),
       (featuredService) {
         // Update state with new featured service
-        final updatedFeaturedServices = [
-          ...?previousData?.featuredServices,
-          featuredService,
-        ];
+        final updatedFeaturedServices = [...?previousData?.featuredServices, featuredService];
         final updatedData = MerchantFeaturedServicesInfo(
           featuredServices: updatedFeaturedServices,
           total: (previousData?.total ?? 0) + 1,
           activeCount: (previousData?.activeCount ?? 0) + 1,
           remainingFreeSlots: (previousData?.remainingFreeSlots ?? 1) - 1,
         );
-        emit(FeaturedServicesLoaded(
-          updatedData,
-          lastOperation: FeaturedServiceCreatedOperation(featuredService),
-        ));
+        emit(FeaturedServicesLoaded(updatedData, lastOperation: FeaturedServiceCreatedOperation(featuredService)));
       },
     );
   }
@@ -123,10 +112,7 @@ class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesS
   ) async {
     final previousData = _currentData;
 
-    emit(FeaturedServicesLoading(
-      type: FeaturedServicesLoadingType.creatingPayment,
-      previousData: previousData,
-    ));
+    emit(FeaturedServicesLoading(type: FeaturedServicesLoadingType.creatingPayment, previousData: previousData));
 
     final result = await _createFeaturedPayment(
       serviceId: event.serviceId,
@@ -135,11 +121,13 @@ class FeaturedServicesBloc extends Bloc<FeaturedServicesEvent, FeaturedServicesS
     );
 
     result.fold(
-      (failure) => emit(FeaturedServicesError(
-        failure.toUserMessage(entityName: 'Featured service payment'),
-        type: _mapFailureToErrorType(failure),
-        previousData: previousData,
-      )),
+      (failure) => emit(
+        FeaturedServicesError(
+          failure.toUserMessage(entityName: 'Featured service payment'),
+          type: _mapFailureToErrorType(failure),
+          previousData: previousData,
+        ),
+      ),
       (payment) => emit(FeaturedPaymentCreated(payment, previousData: previousData)),
     );
   }

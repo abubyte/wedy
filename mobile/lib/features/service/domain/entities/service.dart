@@ -124,18 +124,12 @@ class Service {
 
   /// Create a copy with toggled like status and updated count
   Service toggleLike() {
-    return copyWith(
-      isLiked: !isLiked,
-      likeCount: isLiked ? likeCount - 1 : likeCount + 1,
-    );
+    return copyWith(isLiked: !isLiked, likeCount: isLiked ? likeCount - 1 : likeCount + 1);
   }
 
   /// Create a copy with toggled save status and updated count
   Service toggleSave() {
-    return copyWith(
-      isSaved: !isSaved,
-      saveCount: isSaved ? saveCount - 1 : saveCount + 1,
-    );
+    return copyWith(isSaved: !isSaved, saveCount: isSaved ? saveCount - 1 : saveCount + 1);
   }
 }
 
@@ -229,18 +223,12 @@ class ServiceListItem {
 
   /// Create a copy with toggled like status and updated count
   ServiceListItem toggleLike() {
-    return copyWith(
-      isLiked: !isLiked,
-      likeCount: isLiked ? likeCount - 1 : likeCount + 1,
-    );
+    return copyWith(isLiked: !isLiked, likeCount: isLiked ? likeCount - 1 : likeCount + 1);
   }
 
   /// Create a copy with toggled save status and updated count
   ServiceListItem toggleSave() {
-    return copyWith(
-      isSaved: !isSaved,
-      saveCount: isSaved ? saveCount - 1 : saveCount + 1,
-    );
+    return copyWith(isSaved: !isSaved, saveCount: isSaved ? saveCount - 1 : saveCount + 1);
   }
 
   /// Update with actual API response counts

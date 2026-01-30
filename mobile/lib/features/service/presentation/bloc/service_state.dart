@@ -19,14 +19,7 @@ enum ServiceLoadingType {
 }
 
 /// Error type enum for specific error handling
-enum ServiceErrorType {
-  network,
-  server,
-  validation,
-  auth,
-  notFound,
-  unknown,
-}
+enum ServiceErrorType { network, server, validation, auth, notFound, unknown }
 
 /// Service states using Dart 3 sealed classes for exhaustiveness checking
 sealed class ServiceState {
@@ -43,10 +36,7 @@ final class ServiceLoading extends ServiceState {
   final ServiceLoadingType type;
   final ServicesLoaded? previousState;
 
-  const ServiceLoading({
-    this.type = ServiceLoadingType.list,
-    this.previousState,
-  });
+  const ServiceLoading({this.type = ServiceLoadingType.list, this.previousState});
 }
 
 /// Unified services state that holds all service data in a single immutable structure.
@@ -118,8 +108,9 @@ final class ServicesLoaded extends ServiceState {
       likedServices: likedServices != null ? likedServices() : this.likedServices,
       savedServices: savedServices != null ? savedServices() : this.savedServices,
       currentServiceDetails: currentServiceDetails != null ? currentServiceDetails() : this.currentServiceDetails,
-      currentPaginatedResponse:
-          currentPaginatedResponse != null ? currentPaginatedResponse() : this.currentPaginatedResponse,
+      currentPaginatedResponse: currentPaginatedResponse != null
+          ? currentPaginatedResponse()
+          : this.currentPaginatedResponse,
       paginatedServices: paginatedServices != null ? paginatedServices() : this.paginatedServices,
       currentPage: currentPage ?? this.currentPage,
       hasMore: hasMore ?? this.hasMore,
@@ -145,11 +136,7 @@ final class ServicesLoaded extends ServiceState {
 
   /// Clear interaction state
   ServicesLoaded clearInteraction() {
-    return copyWith(
-      isInteracting: false,
-      interactingServiceId: () => null,
-      interactionType: () => null,
-    );
+    return copyWith(isInteracting: false, interactingServiceId: () => null, interactionType: () => null);
   }
 }
 
@@ -159,9 +146,5 @@ final class ServiceError extends ServiceState {
   final ServiceErrorType type;
   final ServicesLoaded? previousState;
 
-  const ServiceError(
-    this.message, {
-    this.type = ServiceErrorType.unknown,
-    this.previousState,
-  });
+  const ServiceError(this.message, {this.type = ServiceErrorType.unknown, this.previousState});
 }

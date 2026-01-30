@@ -14,16 +14,8 @@ class _CategoryServicesShimmerPlaceholder extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ShimmerHelper.shimmerContainer(
-                height: 20,
-                width: 120,
-                borderRadius: 4.0,
-              ),
-              ShimmerHelper.shimmerContainer(
-                height: 16,
-                width: 60,
-                borderRadius: 4.0,
-              ),
+              ShimmerHelper.shimmerContainer(height: 20, width: 120, borderRadius: 4.0),
+              ShimmerHelper.shimmerContainer(height: 16, width: 60, borderRadius: 4.0),
             ],
           ),
         ),
@@ -46,4 +38,3 @@ class _CategoryServicesShimmerPlaceholder extends StatelessWidget {
     );
   }
 }
-

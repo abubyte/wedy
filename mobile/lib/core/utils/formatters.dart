@@ -2,10 +2,7 @@ import 'package:flutter/services.dart';
 
 class PhoneInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     final newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
     var formattedText = '';
 

@@ -31,12 +31,12 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
     required InteractWithService interactWithServiceUseCase,
     required GetSavedServices getSavedServicesUseCase,
     required GetLikedServices getLikedServicesUseCase,
-  })  : _getServicesUseCase = getServicesUseCase,
-        _getServiceByIdUseCase = getServiceByIdUseCase,
-        _interactWithServiceUseCase = interactWithServiceUseCase,
-        _getSavedServicesUseCase = getSavedServicesUseCase,
-        _getLikedServicesUseCase = getLikedServicesUseCase,
-        super(const ServiceInitial()) {
+  }) : _getServicesUseCase = getServicesUseCase,
+       _getServiceByIdUseCase = getServiceByIdUseCase,
+       _interactWithServiceUseCase = interactWithServiceUseCase,
+       _getSavedServicesUseCase = getSavedServicesUseCase,
+       _getLikedServicesUseCase = getLikedServicesUseCase,
+       super(const ServiceInitial()) {
     on<LoadServicesEvent>(_onLoadServices);
     on<LoadMoreServicesEvent>(_onLoadMoreServices);
     on<LoadServiceByIdEvent>(_onLoadServiceById);
@@ -70,10 +70,12 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
     // Only emit loading for general paginated loads (not category or featured)
     // This prevents flickering on home page where featured/category sections load
     if (!isCategoryLoad && !isFeaturedLoad) {
-      emit(ServiceLoading(
-        type: ServiceLoadingType.list,
-        previousState: state is ServicesLoaded ? state as ServicesLoaded : null,
-      ));
+      emit(
+        ServiceLoading(
+          type: ServiceLoadingType.list,
+          previousState: state is ServicesLoaded ? state as ServicesLoaded : null,
+        ),
+      );
     }
 
     // Track current filter settings
@@ -88,19 +90,19 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
     );
 
     result.fold(
-      (failure) => emit(ServiceError(
-        failure.toUserMessage(entityName: 'Services'),
-        type: _mapFailureToErrorType(failure),
-        previousState: _currentState,
-      )),
+      (failure) => emit(
+        ServiceError(
+          failure.toUserMessage(entityName: 'Services'),
+          type: _mapFailureToErrorType(failure),
+          previousState: _currentState,
+        ),
+      ),
       (response) {
         final currentState = _currentState;
 
         if (isFeaturedLoad) {
           // Featured services load
-          emit(currentState.copyWith(
-            featuredServices: () => response.services,
-          ));
+          emit(currentState.copyWith(featuredServices: () => response.services));
         } else if (isCategoryLoad) {
           // Category-specific load
           final categoryId = event.filters!.categoryId!;
@@ -109,12 +111,14 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
           emit(currentState.copyWith(categoryServices: updatedCategoryServices));
         } else {
           // General paginated services
-          emit(currentState.copyWith(
-            currentPaginatedResponse: () => response,
-            paginatedServices: () => response.services,
-            currentPage: response.page,
-            hasMore: response.hasMore,
-          ));
+          emit(
+            currentState.copyWith(
+              currentPaginatedResponse: () => response,
+              paginatedServices: () => response.services,
+              currentPage: response.page,
+              hasMore: response.hasMore,
+            ),
+          );
         }
       },
     );
@@ -130,10 +134,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
     final nextPage = currentState.currentPage + 1;
 
     // Emit loading state while preserving data
-    emit(ServiceLoading(
-      type: ServiceLoadingType.loadMore,
-      previousState: currentState,
-    ));
+    emit(ServiceLoading(type: ServiceLoadingType.loadMore, previousState: currentState));
 
     final result = await _getServicesUseCase(
       featured: _currentFeatured,
@@ -143,41 +144,49 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
     );
 
     result.fold(
-      (failure) => emit(ServiceError(
-        failure.toUserMessage(entityName: 'Services'),
-        type: _mapFailureToErrorType(failure),
-        previousState: currentState,
-      )),
+      (failure) => emit(
+        ServiceError(
+          failure.toUserMessage(entityName: 'Services'),
+          type: _mapFailureToErrorType(failure),
+          previousState: currentState,
+        ),
+      ),
       (response) {
         final isFeaturedLoad = _currentFeatured == true;
-        final isCategoryLoad = _currentFilters?.categoryId != null &&
-            (_currentFilters?.query == null || _currentFilters!.query!.isEmpty);
+        final isCategoryLoad =
+            _currentFilters?.categoryId != null && (_currentFilters?.query == null || _currentFilters!.query!.isEmpty);
 
         if (isFeaturedLoad) {
           final existing = currentState.featuredServices ?? [];
-          emit(currentState.copyWith(
-            featuredServices: () => [...existing, ...response.services],
-            currentPage: nextPage,
-            hasMore: response.hasMore,
-          ));
+          emit(
+            currentState.copyWith(
+              featuredServices: () => [...existing, ...response.services],
+              currentPage: nextPage,
+              hasMore: response.hasMore,
+            ),
+          );
         } else if (isCategoryLoad) {
           final categoryId = _currentFilters!.categoryId!;
           final updatedCategoryServices = Map<int, List<ServiceListItem>>.from(currentState.categoryServices);
           final existing = updatedCategoryServices[categoryId] ?? [];
           updatedCategoryServices[categoryId] = [...existing, ...response.services];
-          emit(currentState.copyWith(
-            categoryServices: updatedCategoryServices,
-            currentPage: nextPage,
-            hasMore: response.hasMore,
-          ));
+          emit(
+            currentState.copyWith(
+              categoryServices: updatedCategoryServices,
+              currentPage: nextPage,
+              hasMore: response.hasMore,
+            ),
+          );
         } else {
           final existing = currentState.paginatedServices ?? [];
-          emit(currentState.copyWith(
-            currentPaginatedResponse: () => response,
-            paginatedServices: () => [...existing, ...response.services],
-            currentPage: response.page,
-            hasMore: response.hasMore,
-          ));
+          emit(
+            currentState.copyWith(
+              currentPaginatedResponse: () => response,
+              paginatedServices: () => [...existing, ...response.services],
+              currentPage: response.page,
+              hasMore: response.hasMore,
+            ),
+          );
         }
       },
     );
@@ -186,19 +195,18 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   Future<void> _onLoadServiceById(LoadServiceByIdEvent event, Emitter<ServiceState> emit) async {
     final currentState = _currentState;
 
-    emit(ServiceLoading(
-      type: ServiceLoadingType.details,
-      previousState: currentState,
-    ));
+    emit(ServiceLoading(type: ServiceLoadingType.details, previousState: currentState));
 
     final result = await _getServiceByIdUseCase(event.serviceId);
 
     result.fold(
-      (failure) => emit(ServiceError(
-        failure.toUserMessage(entityName: 'Service'),
-        type: _mapFailureToErrorType(failure),
-        previousState: currentState,
-      )),
+      (failure) => emit(
+        ServiceError(
+          failure.toUserMessage(entityName: 'Service'),
+          type: _mapFailureToErrorType(failure),
+          previousState: currentState,
+        ),
+      ),
       (service) {
         emit(currentState.copyWith(currentServiceDetails: () => service));
       },
@@ -208,11 +216,13 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   Future<void> _onInteractWithService(InteractWithServiceEvent event, Emitter<ServiceState> emit) async {
     // Validate interaction type
     if (event.interactionType != 'like' && event.interactionType != 'save') {
-      emit(ServiceError(
-        'Invalid interaction type: ${event.interactionType}',
-        type: ServiceErrorType.validation,
-        previousState: _currentState,
-      ));
+      emit(
+        ServiceError(
+          'Invalid interaction type: ${event.interactionType}',
+          type: ServiceErrorType.validation,
+          previousState: _currentState,
+        ),
+      );
       return;
     }
 
@@ -236,11 +246,13 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       (failure) {
         // Revert on error - restore previous state and clear interaction
         emit(currentState.clearInteraction());
-        emit(ServiceError(
-          failure.toUserMessage(entityName: 'Service'),
-          type: _mapFailureToErrorType(failure),
-          previousState: currentState,
-        ));
+        emit(
+          ServiceError(
+            failure.toUserMessage(entityName: 'Service'),
+            type: _mapFailureToErrorType(failure),
+            previousState: currentState,
+          ),
+        );
       },
       (response) {
         // Apply actual API response and clear interaction state
@@ -277,9 +289,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       final index = liked.indexWhere((s) => s.id == serviceId);
       if (index != -1 && liked[index].isLiked) {
         // Currently liked, will be unliked - remove from list
-        updated = updated.copyWith(
-          likedServices: () => List.from(liked)..removeAt(index),
-        );
+        updated = updated.copyWith(likedServices: () => List.from(liked)..removeAt(index));
       }
     }
 
@@ -288,9 +298,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       final index = saved.indexWhere((s) => s.id == serviceId);
       if (index != -1 && saved[index].isSaved) {
         // Currently saved, will be unsaved - remove from list
-        updated = updated.copyWith(
-          savedServices: () => List.from(saved)..removeAt(index),
-        );
+        updated = updated.copyWith(savedServices: () => List.from(saved)..removeAt(index));
       }
     }
 
@@ -327,9 +335,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       final liked = currentState.likedServices!;
       final index = liked.indexWhere((s) => s.id == serviceId);
       if (index != -1 && !isActive) {
-        updated = updated.copyWith(
-          likedServices: () => List.from(liked)..removeAt(index),
-        );
+        updated = updated.copyWith(likedServices: () => List.from(liked)..removeAt(index));
       } else if (index != -1) {
         updated = updated.copyWith(
           likedServices: () =>
@@ -342,9 +348,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       final saved = currentState.savedServices!;
       final index = saved.indexWhere((s) => s.id == serviceId);
       if (index != -1 && !isActive) {
-        updated = updated.copyWith(
-          savedServices: () => List.from(saved)..removeAt(index),
-        );
+        updated = updated.copyWith(savedServices: () => List.from(saved)..removeAt(index));
       } else if (index != -1) {
         updated = updated.copyWith(
           savedServices: () =>
@@ -357,30 +361,31 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   }
 
   Future<void> _onRefreshServices(RefreshServicesEvent event, Emitter<ServiceState> emit) async {
-    add(LoadServicesEvent(
-      featured: event.featured ?? _currentFeatured,
-      filters: event.filters ?? _currentFilters,
-      page: 1,
-      limit: 20,
-    ));
+    add(
+      LoadServicesEvent(
+        featured: event.featured ?? _currentFeatured,
+        filters: event.filters ?? _currentFilters,
+        page: 1,
+        limit: 20,
+      ),
+    );
   }
 
   Future<void> _onLoadSavedServices(LoadSavedServicesEvent event, Emitter<ServiceState> emit) async {
     final currentState = _currentState;
 
-    emit(ServiceLoading(
-      type: ServiceLoadingType.userServices,
-      previousState: currentState,
-    ));
+    emit(ServiceLoading(type: ServiceLoadingType.userServices, previousState: currentState));
 
     final result = await _getSavedServicesUseCase();
 
     result.fold(
-      (failure) => emit(ServiceError(
-        failure.toUserMessage(entityName: 'Saved services'),
-        type: _mapFailureToErrorType(failure),
-        previousState: currentState,
-      )),
+      (failure) => emit(
+        ServiceError(
+          failure.toUserMessage(entityName: 'Saved services'),
+          type: _mapFailureToErrorType(failure),
+          previousState: currentState,
+        ),
+      ),
       (savedServices) {
         emit(currentState.copyWith(savedServices: () => savedServices));
       },
@@ -390,19 +395,18 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   Future<void> _onLoadLikedServices(LoadLikedServicesEvent event, Emitter<ServiceState> emit) async {
     final currentState = _currentState;
 
-    emit(ServiceLoading(
-      type: ServiceLoadingType.userServices,
-      previousState: currentState,
-    ));
+    emit(ServiceLoading(type: ServiceLoadingType.userServices, previousState: currentState));
 
     final result = await _getLikedServicesUseCase();
 
     result.fold(
-      (failure) => emit(ServiceError(
-        failure.toUserMessage(entityName: 'Liked services'),
-        type: _mapFailureToErrorType(failure),
-        previousState: currentState,
-      )),
+      (failure) => emit(
+        ServiceError(
+          failure.toUserMessage(entityName: 'Liked services'),
+          type: _mapFailureToErrorType(failure),
+          previousState: currentState,
+        ),
+      ),
       (likedServices) {
         emit(currentState.copyWith(likedServices: () => likedServices));
       },

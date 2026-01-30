@@ -16,4 +16,3 @@ class DeleteReview {
     return await repository.deleteReview(reviewId);
   }
 }
-

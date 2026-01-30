@@ -17,16 +17,12 @@ class HelpPage extends StatelessWidget {
         await launchUrl(uri);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Qo\'ng\'iroq qilish imkoni yo\'q')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Qo\'ng\'iroq qilish imkoni yo\'q')));
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xatolik: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xatolik: ${e.toString()}')));
       }
     }
   }
@@ -38,16 +34,12 @@ class HelpPage extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Telegram ochish imkoni yo\'q')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Telegram ochish imkoni yo\'q')));
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xatolik: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xatolik: ${e.toString()}')));
       }
     }
   }
@@ -59,16 +51,12 @@ class HelpPage extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('WhatsApp ochish imkoni yo\'q')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp ochish imkoni yo\'q')));
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xatolik: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xatolik: ${e.toString()}')));
       }
     }
   }
@@ -80,16 +68,12 @@ class HelpPage extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Veb-sayt ochish imkoni yo\'q')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veb-sayt ochish imkoni yo\'q')));
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xatolik: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xatolik: ${e.toString()}')));
       }
     }
   }

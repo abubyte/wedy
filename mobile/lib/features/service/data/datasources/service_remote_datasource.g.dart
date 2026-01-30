@@ -9,11 +9,7 @@ part of 'service_remote_datasource.dart';
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element
 
 class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
-  _ServiceRemoteDataSource(
-    this._dio, {
-    this.baseUrl,
-    this.errorLogger,
-  });
+  _ServiceRemoteDataSource(this._dio, {this.baseUrl, this.errorLogger});
 
   final Dio _dio;
 
@@ -54,22 +50,11 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<PaginatedServiceResponseDto>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<PaginatedServiceResponseDto>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(_dio.options, '/api/v1/services/', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late PaginatedServiceResponseDto _value;
     try {
@@ -87,22 +72,11 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<ServiceDetailDto>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/${serviceId}',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<ServiceDetailDto>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(_dio.options, '/api/v1/services/${serviceId}', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late ServiceDetailDto _value;
     try {
@@ -115,31 +89,22 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
   }
 
   @override
-  Future<ServiceInteractionResponseDto> interactWithService(
-    String serviceId,
-    Map<String, dynamic> body,
-  ) async {
+  Future<ServiceInteractionResponseDto> interactWithService(String serviceId, Map<String, dynamic> body) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body);
-    final _options = _setStreamType<ServiceInteractionResponseDto>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/${serviceId}/interact',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<ServiceInteractionResponseDto>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/api/v1/services/${serviceId}/interact',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late ServiceInteractionResponseDto _value;
     try {
@@ -157,22 +122,11 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<UserInteractionsResponseDto>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/users/interactions',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<UserInteractionsResponseDto>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(_dio.options, '/api/v1/users/interactions', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late UserInteractionsResponseDto _value;
     try {
@@ -190,22 +144,11 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<MerchantServicesResponseDto>(Options(
-      method: 'GET',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/my',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<MerchantServicesResponseDto>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(_dio.options, '/api/v1/services/my', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late MerchantServicesResponseDto _value;
     try {
@@ -224,22 +167,11 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body);
-    final _options = _setStreamType<MerchantServiceDto>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<MerchantServiceDto>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(_dio.options, '/api/v1/services/', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late MerchantServiceDto _value;
     try {
@@ -252,31 +184,17 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
   }
 
   @override
-  Future<MerchantServiceDto> updateService(
-    String serviceId,
-    Map<String, dynamic> body,
-  ) async {
+  Future<MerchantServiceDto> updateService(String serviceId, Map<String, dynamic> body) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body);
-    final _options = _setStreamType<MerchantServiceDto>(Options(
-      method: 'PUT',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/${serviceId}',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<MerchantServiceDto>(
+      Options(method: 'PUT', headers: _headers, extra: _extra)
+          .compose(_dio.options, '/api/v1/services/${serviceId}', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late MerchantServiceDto _value;
     try {
@@ -294,22 +212,11 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<void>(Options(
-      method: 'DELETE',
-      headers: _headers,
-      extra: _extra,
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/${serviceId}',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    final _options = _setStreamType<void>(
+      Options(method: 'DELETE', headers: _headers, extra: _extra)
+          .compose(_dio.options, '/api/v1/services/${serviceId}', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     await _dio.fetch<void>(_options);
   }
 
@@ -324,35 +231,14 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = FormData();
-    _data.fields.add(MapEntry(
-      'file_name',
-      fileName,
-    ));
-    _data.fields.add(MapEntry(
-      'content_type',
-      contentType,
-    ));
-    _data.fields.add(MapEntry(
-      'display_order',
-      displayOrder.toString(),
-    ));
-    final _options = _setStreamType<ImageUploadResponseDto>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-      contentType: 'multipart/form-data',
-    )
-        .compose(
-          _dio.options,
-          '/api/v1/services/${serviceId}/images',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(
-            baseUrl: _combineBaseUrls(
-          _dio.options.baseUrl,
-          baseUrl,
-        )));
+    _data.fields.add(MapEntry('file_name', fileName));
+    _data.fields.add(MapEntry('content_type', contentType));
+    _data.fields.add(MapEntry('display_order', displayOrder.toString()));
+    final _options = _setStreamType<ImageUploadResponseDto>(
+      Options(method: 'POST', headers: _headers, extra: _extra, contentType: 'multipart/form-data')
+          .compose(_dio.options, '/api/v1/services/${serviceId}/images', queryParameters: queryParameters, data: _data)
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late ImageUploadResponseDto _value;
     try {
@@ -366,8 +252,7 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
 
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
-        !(requestOptions.responseType == ResponseType.bytes ||
-            requestOptions.responseType == ResponseType.stream)) {
+        !(requestOptions.responseType == ResponseType.bytes || requestOptions.responseType == ResponseType.stream)) {
       if (T == String) {
         requestOptions.responseType = ResponseType.plain;
       } else {
@@ -377,10 +262,7 @@ class _ServiceRemoteDataSource implements ServiceRemoteDataSource {
     return requestOptions;
   }
 
-  String _combineBaseUrls(
-    String dioBaseUrl,
-    String? baseUrl,
-  ) {
+  String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
     if (baseUrl == null || baseUrl.trim().isEmpty) {
       return dioBaseUrl;
     }

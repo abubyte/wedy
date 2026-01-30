@@ -28,15 +28,8 @@ class WedyEmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (asset != null) ...[
-            SizedBox(height: 120, child: asset),
-            const SizedBox(height: AppDimensions.spacingL),
-          ],
-          Text(
-            title,
-            style: AppTextStyles.title1,
-            textAlign: TextAlign.center,
-          ),
+          if (asset != null) ...[SizedBox(height: 120, child: asset), const SizedBox(height: AppDimensions.spacingL)],
+          Text(title, style: AppTextStyles.title1, textAlign: TextAlign.center),
           const SizedBox(height: AppDimensions.spacingS),
           Text(
             subtitle,
@@ -45,11 +38,7 @@ class WedyEmptyState extends StatelessWidget {
           ),
           if (actionLabel != null && onAction != null) ...[
             const SizedBox(height: AppDimensions.spacingL),
-            WedyPrimaryButton(
-              label: actionLabel!,
-              onPressed: onAction,
-              expanded: false,
-            ),
+            WedyPrimaryButton(label: actionLabel!, onPressed: onAction, expanded: false),
           ],
         ],
       ),

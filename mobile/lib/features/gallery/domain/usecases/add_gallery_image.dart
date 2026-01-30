@@ -10,10 +10,7 @@ class AddGalleryImage {
 
   AddGalleryImage(this.repository);
 
-  Future<Either<Failure, ImageUploadResult>> call({
-    required File file,
-    int displayOrder = 0,
-  }) {
+  Future<Either<Failure, ImageUploadResult>> call({required File file, int displayOrder = 0}) {
     // Validate file exists
     if (!file.existsSync()) {
       return Future.value(const Left(ValidationFailure('File does not exist')));

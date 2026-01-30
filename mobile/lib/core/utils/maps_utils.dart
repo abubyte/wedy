@@ -21,9 +21,7 @@ class MapsUtils {
     String markerColor = 'red',
   }) {
     final apiKey = AppConfig.instance.googleMapsApiKey;
-    final buffer = StringBuffer(
-      'https://maps.googleapis.com/maps/api/staticmap?',
-    );
+    final buffer = StringBuffer('https://maps.googleapis.com/maps/api/staticmap?');
 
     // Center
     buffer.write('center=${Uri.encodeComponent(center)}');

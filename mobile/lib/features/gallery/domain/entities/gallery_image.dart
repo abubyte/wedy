@@ -25,11 +25,5 @@ class ImageUploadResult {
   final String? s3Url;
   final String? presignedUrl;
 
-  const ImageUploadResult({
-    required this.success,
-    required this.message,
-    this.imageId,
-    this.s3Url,
-    this.presignedUrl,
-  });
+  const ImageUploadResult({required this.success, required this.message, this.imageId, this.s3Url, this.presignedUrl});
 }

@@ -16,8 +16,7 @@ import 'merchant_service_state.dart';
 /// 2. Better error handling with types
 /// 3. Operation tracking for UI feedback
 /// 4. Proper pattern matching for failures
-class MerchantServiceBloc
-    extends Bloc<MerchantServiceEvent, MerchantServiceState> {
+class MerchantServiceBloc extends Bloc<MerchantServiceEvent, MerchantServiceState> {
   final GetMerchantServices _getMerchantServices;
   final CreateMerchantService _createMerchantService;
   final UpdateMerchantService _updateMerchantService;
@@ -67,16 +66,8 @@ class MerchantServiceBloc
     };
   }
 
-  Future<void> _onLoadMerchantServices(
-    LoadMerchantServicesEvent event,
-    Emitter<MerchantServiceState> emit,
-  ) async {
-    emit(
-      MerchantServiceLoading(
-        type: MerchantServiceLoadingType.initial,
-        previousData: _currentData,
-      ),
-    );
+  Future<void> _onLoadMerchantServices(LoadMerchantServicesEvent event, Emitter<MerchantServiceState> emit) async {
+    emit(MerchantServiceLoading(type: MerchantServiceLoadingType.initial, previousData: _currentData));
 
     final result = await _getMerchantServices();
 
@@ -102,27 +93,17 @@ class MerchantServiceBloc
     );
   }
 
-  Future<void> _onCreateService(
-    CreateServiceEvent event,
-    Emitter<MerchantServiceState> emit,
-  ) async {
+  Future<void> _onCreateService(CreateServiceEvent event, Emitter<MerchantServiceState> emit) async {
     final previousData = _currentData;
 
-    emit(
-      MerchantServiceLoading(
-        type: MerchantServiceLoadingType.creating,
-        previousData: previousData,
-      ),
-    );
+    emit(MerchantServiceLoading(type: MerchantServiceLoadingType.creating, previousData: previousData));
 
     final result = await _createMerchantService(
       name: event.name,
       description: event.description,
       categoryId: event.categoryId,
       price: event.price,
-      locationRegion:
-          UzbekistanData.regionValues[event.locationRegion] ??
-          event.locationRegion,
+      locationRegion: UzbekistanData.regionValues[event.locationRegion] ?? event.locationRegion,
       latitude: event.latitude,
       longitude: event.longitude,
     );
@@ -142,26 +123,16 @@ class MerchantServiceBloc
         // Directly update state by adding new service to list (no reload needed)
         final newData = (previousData ?? const MerchantServiceData())
             .addService(merchantService)
-            .copyWith(
-              lastOperation: () => ServiceCreatedOperation(createdService),
-            );
+            .copyWith(lastOperation: () => ServiceCreatedOperation(createdService));
         emit(MerchantServiceLoaded(newData));
       },
     );
   }
 
-  Future<void> _onUpdateService(
-    UpdateServiceEvent event,
-    Emitter<MerchantServiceState> emit,
-  ) async {
+  Future<void> _onUpdateService(UpdateServiceEvent event, Emitter<MerchantServiceState> emit) async {
     final previousData = _currentData;
 
-    emit(
-      MerchantServiceLoading(
-        type: MerchantServiceLoadingType.updating,
-        previousData: previousData,
-      ),
-    );
+    emit(MerchantServiceLoading(type: MerchantServiceLoadingType.updating, previousData: previousData));
 
     final result = await _updateMerchantService(
       serviceId: event.serviceId,
@@ -189,26 +160,16 @@ class MerchantServiceBloc
         // Directly update state by updating service in list (no reload needed)
         final newData = (previousData ?? const MerchantServiceData())
             .updateService(merchantService)
-            .copyWith(
-              lastOperation: () => ServiceUpdatedOperation(updatedService),
-            );
+            .copyWith(lastOperation: () => ServiceUpdatedOperation(updatedService));
         emit(MerchantServiceLoaded(newData));
       },
     );
   }
 
-  Future<void> _onDeleteService(
-    DeleteServiceEvent event,
-    Emitter<MerchantServiceState> emit,
-  ) async {
+  Future<void> _onDeleteService(DeleteServiceEvent event, Emitter<MerchantServiceState> emit) async {
     final previousData = _currentData;
 
-    emit(
-      MerchantServiceLoading(
-        type: MerchantServiceLoadingType.deleting,
-        previousData: previousData,
-      ),
-    );
+    emit(MerchantServiceLoading(type: MerchantServiceLoadingType.deleting, previousData: previousData));
 
     final result = await _deleteMerchantService(event.serviceId);
 
@@ -224,9 +185,7 @@ class MerchantServiceBloc
         // Directly update state - remove the service from list (no reload needed)
         final newData = (previousData ?? const MerchantServiceData())
             .removeService(event.serviceId)
-            .copyWith(
-              lastOperation: () => ServiceDeletedOperation(event.serviceId),
-            );
+            .copyWith(lastOperation: () => ServiceDeletedOperation(event.serviceId));
         emit(MerchantServiceLoaded(newData));
       },
     );
@@ -259,9 +218,7 @@ class MerchantServiceBloc
       saveCount: service.saveCount,
       overallRating: service.overallRating,
       totalReviews: service.totalReviews,
-      mainImageUrl: service.images.isNotEmpty
-          ? service.images.first.s3Url
-          : null,
+      mainImageUrl: service.images.isNotEmpty ? service.images.first.s3Url : null,
       createdAt: service.createdAt,
       updatedAt: service.updatedAt,
     );

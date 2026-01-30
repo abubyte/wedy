@@ -5,8 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
-import 'package:wedy/features/tariff/domain/entities/tariff.dart'
-    show TariffPlan, Subscription;
+import 'package:wedy/features/tariff/domain/entities/tariff.dart' show TariffPlan, Subscription;
 import 'package:wedy/features/tariff/presentation/bloc/tariff_bloc.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_event.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_state.dart';
@@ -26,20 +25,17 @@ class TariffPaymentMethodPage extends StatefulWidget {
   });
 
   @override
-  State<TariffPaymentMethodPage> createState() =>
-      _TariffPaymentMethodPageState();
+  State<TariffPaymentMethodPage> createState() => _TariffPaymentMethodPageState();
 }
 
-class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
-    with WidgetsBindingObserver {
+class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage> with WidgetsBindingObserver {
   bool _isWaitingForPayment = false;
   bool _processingDialogShown = false;
   DateTime? _previousSubscriptionEndDate;
   String? _previousSubscriptionId;
 
   String _formatPrice(int price) {
-    return price.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+    return price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
   }
 
   @override
@@ -96,8 +92,7 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
     }
 
     // Check if end date was extended
-    if (_previousSubscriptionEndDate != null &&
-        subscription.endDate.isAfter(_previousSubscriptionEndDate!)) {
+    if (_previousSubscriptionEndDate != null && subscription.endDate.isAfter(_previousSubscriptionEndDate!)) {
       return true;
     }
 
@@ -126,10 +121,7 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
               if (context.mounted) {
                 _closeProcessingDialog(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('To\'lov sahifasini ochib bo\'lmadi'),
-                    backgroundColor: AppColors.error,
-                  ),
+                  const SnackBar(content: Text('To\'lov sahifasini ochib bo\'lmadi'), backgroundColor: AppColors.error),
                 );
                 setState(() {
                   _isWaitingForPayment = false;
@@ -146,10 +138,7 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
             _closeProcessingDialog(context);
             // Show success dialog
             if (context.mounted) {
-              TariffPaymentSuccessDialog.show(
-                context,
-                durationMonths: widget.durationMonths,
-              );
+              TariffPaymentSuccessDialog.show(context, durationMonths: widget.durationMonths);
             }
           }
         } else if (state is TariffDataLoaded && _isWaitingForPayment) {
@@ -161,10 +150,7 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
             _closeProcessingDialog(context);
             // Show success dialog
             if (context.mounted) {
-              TariffPaymentSuccessDialog.show(
-                context,
-                durationMonths: widget.durationMonths,
-              );
+              TariffPaymentSuccessDialog.show(context, durationMonths: widget.durationMonths);
             }
           }
         } else if (state is TariffError) {
@@ -174,12 +160,9 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
               _isWaitingForPayment = false;
             });
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
         }
       },
       builder: (context, state) {
@@ -200,8 +183,7 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
                   // Title
                   Text(
                     'To\'lov usulini tanlang',
-                    style: AppTextStyles.headline2
-                        .copyWith(fontWeight: FontWeight.w600, fontSize: 24),
+                    style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 24),
                   ),
                   const SizedBox(height: AppDimensions.spacingXL),
 
@@ -211,26 +193,18 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
                     children: [
                       Text(
                         'Tarif:',
-                        style: AppTextStyles.bodyRegular.copyWith(
-                          color: AppColors.textMuted,
-                          fontSize: 16,
-                        ),
+                        style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted, fontSize: 16),
                       ),
                       Text(
                         '${_formatPrice(widget.totalPrice)} so\'m',
-                        style: AppTextStyles.headline2.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
+                        style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.bold, fontSize: 20),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppDimensions.spacingS),
                   Text(
                     'To\'lov usullaringizni tanlang',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textMuted,
-                    ),
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
                   ),
                   const SizedBox(height: AppDimensions.spacingXL),
 
@@ -284,54 +258,35 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
               Container(
                 width: 80,
                 height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusS),
-                ),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppDimensions.radiusS)),
                 child: Center(
                   child: Text(
                     title.toLowerCase() == 'payme' ? 'pay me' : 'Click',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: title.toLowerCase() == 'payme'
-                          ? const Color(0xFF00CDAC)
-                          : const Color(0xFF0066FF),
+                      color: title.toLowerCase() == 'payme' ? const Color(0xFF00CDAC) : const Color(0xFF0066FF),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: AppDimensions.spacingM),
               Expanded(
-                child: Text(
-                  title,
-                  style: AppTextStyles.bodyRegular.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                child: Text(title, style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.w500)),
               ),
               if (!enabled)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacingS,
-                    vertical: 2,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.textMuted.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(AppDimensions.radiusS),
                   ),
                   child: Text(
                     'Tez orada',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: 10,
-                      color: AppColors.textMuted,
-                    ),
+                    style: AppTextStyles.bodySmall.copyWith(fontSize: 10, color: AppColors.textMuted),
                   ),
                 ),
-              if (enabled)
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.textMuted,
-                ),
+              if (enabled) const Icon(Icons.chevron_right, color: AppColors.textMuted),
             ],
           ),
         ),
@@ -341,12 +296,12 @@ class _TariffPaymentMethodPageState extends State<TariffPaymentMethodPage>
 
   void _initiatePayment(BuildContext context, String paymentMethod) {
     context.read<TariffBloc>().add(
-          CreateTariffPaymentEvent(
-            tariffPlanId: widget.tariffPlan.id,
-            durationMonths: widget.durationMonths,
-            paymentMethod: paymentMethod,
-          ),
-        );
+      CreateTariffPaymentEvent(
+        tariffPlanId: widget.tariffPlan.id,
+        durationMonths: widget.durationMonths,
+        paymentMethod: paymentMethod,
+      ),
+    );
   }
 
   void _showProcessingDialog(BuildContext context) {
@@ -382,10 +337,7 @@ class _TariffPaymentProcessingDialog extends StatelessWidget {
   final VoidCallback onCheckStatus;
   final VoidCallback onCancel;
 
-  const _TariffPaymentProcessingDialog({
-    required this.onCheckStatus,
-    required this.onCancel,
-  });
+  const _TariffPaymentProcessingDialog({required this.onCheckStatus, required this.onCancel});
 
   @override
   Widget build(BuildContext context) {
@@ -402,47 +354,30 @@ class _TariffPaymentProcessingDialog extends StatelessWidget {
             children: [
               Text(
                 'To\'lovingiz tasdiqlanmoqda...',
-                style: AppTextStyles.headline2.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 24,
-                ),
+                style: AppTextStyles.headline2.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 24),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppDimensions.spacingM),
               Text(
                 'To\'lovni amalga oshirgandan so\'ng\n"Tekshirish" tugmasini bosing.',
-                style: AppTextStyles.bodyRegular.copyWith(
-                  color: Colors.white70,
-                ),
+                style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppDimensions.spacingXL),
               const SizedBox(
                 width: 60,
                 height: 60,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 3,
-                ),
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
               ),
               const SizedBox(height: AppDimensions.spacingXL * 2),
               SizedBox(
                 width: double.infinity,
-                child: WedyPrimaryButton(
-                  label: 'Tekshirish',
-                  onPressed: onCheckStatus,
-                ),
+                child: WedyPrimaryButton(label: 'Tekshirish', onPressed: onCheckStatus),
               ),
               const SizedBox(height: AppDimensions.spacingM),
               TextButton(
                 onPressed: onCancel,
-                child: Text(
-                  'Bekor qilish',
-                  style: AppTextStyles.bodyRegular.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
+                child: Text('Bekor qilish', style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70)),
               ),
             ],
           ),
@@ -455,10 +390,7 @@ class _TariffPaymentProcessingDialog extends StatelessWidget {
 class TariffPaymentSuccessDialog extends StatelessWidget {
   final int durationMonths;
 
-  const TariffPaymentSuccessDialog({
-    super.key,
-    required this.durationMonths,
-  });
+  const TariffPaymentSuccessDialog({super.key, required this.durationMonths});
 
   @override
   Widget build(BuildContext context) {
@@ -477,15 +409,8 @@ class TariffPaymentSuccessDialog extends StatelessWidget {
               Container(
                 width: 120,
                 height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.success.withValues(alpha: 0.2),
-                ),
-                child: const Icon(
-                  Icons.check_circle,
-                  color: AppColors.success,
-                  size: 80,
-                ),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.success.withValues(alpha: 0.2)),
+                child: const Icon(Icons.check_circle, color: AppColors.success, size: 80),
               ),
               const SizedBox(height: AppDimensions.spacingXL),
 
@@ -504,10 +429,7 @@ class TariffPaymentSuccessDialog extends StatelessWidget {
               // Success message
               Text(
                 'To\'lov qabul qilindi. Tarif faollashtirildi va $durationMonths oy davomida faol bo\'ladi.',
-                style: AppTextStyles.bodyRegular.copyWith(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
+                style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppDimensions.spacingXL * 2),
@@ -530,13 +452,11 @@ class TariffPaymentSuccessDialog extends StatelessWidget {
     );
   }
 
-  static Future<void> show(BuildContext context,
-      {required int durationMonths}) {
+  static Future<void> show(BuildContext context, {required int durationMonths}) {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          TariffPaymentSuccessDialog(durationMonths: durationMonths),
+      builder: (context) => TariffPaymentSuccessDialog(durationMonths: durationMonths),
     );
   }
 }

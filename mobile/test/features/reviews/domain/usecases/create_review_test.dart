@@ -33,8 +33,9 @@ void main() {
 
   test('should create a review successfully', () async {
     // Arrange
-    when(() => mockRepository.createReview(serviceId: 'service1', rating: 5, comment: 'Great service!'))
-        .thenAnswer((_) async => Right(tReview));
+    when(
+      () => mockRepository.createReview(serviceId: 'service1', rating: 5, comment: 'Great service!'),
+    ).thenAnswer((_) async => Right(tReview));
 
     // Act
     final result = await useCase(serviceId: 'service1', rating: 5, comment: 'Great service!');
@@ -51,7 +52,13 @@ void main() {
 
     // Assert
     expect(result, const Left(ValidationFailure('Service ID cannot be empty')));
-    verifyNever(() => mockRepository.createReview(serviceId: any(named: 'serviceId'), rating: any(named: 'rating'), comment: any(named: 'comment')));
+    verifyNever(
+      () => mockRepository.createReview(
+        serviceId: any(named: 'serviceId'),
+        rating: any(named: 'rating'),
+        comment: any(named: 'comment'),
+      ),
+    );
   });
 
   test('should return ValidationFailure when rating is less than 1', () async {
@@ -60,7 +67,13 @@ void main() {
 
     // Assert
     expect(result, const Left(ValidationFailure('Rating must be between 1 and 5')));
-    verifyNever(() => mockRepository.createReview(serviceId: any(named: 'serviceId'), rating: any(named: 'rating'), comment: any(named: 'comment')));
+    verifyNever(
+      () => mockRepository.createReview(
+        serviceId: any(named: 'serviceId'),
+        rating: any(named: 'rating'),
+        comment: any(named: 'comment'),
+      ),
+    );
   });
 
   test('should return ValidationFailure when rating is greater than 5', () async {
@@ -69,13 +82,20 @@ void main() {
 
     // Assert
     expect(result, const Left(ValidationFailure('Rating must be between 1 and 5')));
-    verifyNever(() => mockRepository.createReview(serviceId: any(named: 'serviceId'), rating: any(named: 'rating'), comment: any(named: 'comment')));
+    verifyNever(
+      () => mockRepository.createReview(
+        serviceId: any(named: 'serviceId'),
+        rating: any(named: 'rating'),
+        comment: any(named: 'comment'),
+      ),
+    );
   });
 
   test('should create review without comment', () async {
     // Arrange
-    when(() => mockRepository.createReview(serviceId: 'service1', rating: 5, comment: null))
-        .thenAnswer((_) async => Right(tReview));
+    when(
+      () => mockRepository.createReview(serviceId: 'service1', rating: 5, comment: null),
+    ).thenAnswer((_) async => Right(tReview));
 
     // Act
     final result = await useCase(serviceId: 'service1', rating: 5);
@@ -87,8 +107,9 @@ void main() {
 
   test('should return failure when repository returns failure', () async {
     // Arrange
-    when(() => mockRepository.createReview(serviceId: 'service1', rating: 5, comment: 'Great service!'))
-        .thenAnswer((_) async => const Left(ServerFailure('Server error')));
+    when(
+      () => mockRepository.createReview(serviceId: 'service1', rating: 5, comment: 'Great service!'),
+    ).thenAnswer((_) async => const Left(ServerFailure('Server error')));
 
     // Act
     final result = await useCase(serviceId: 'service1', rating: 5, comment: 'Great service!');
@@ -98,4 +119,3 @@ void main() {
     verify(() => mockRepository.createReview(serviceId: 'service1', rating: 5, comment: 'Great service!')).called(1);
   });
 }
-

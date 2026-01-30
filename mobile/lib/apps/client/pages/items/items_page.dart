@@ -156,9 +156,7 @@ class _ClientItemsPageState extends State<ClientItemsPage> {
             // If searching, use paginatedServices (search results)
             // Otherwise use featured/category services
             final services = _isSearching
-                ? (state is ServicesLoaded
-                      ? (state.paginatedServices ?? <ServiceListItem>[])
-                      : <ServiceListItem>[])
+                ? (state is ServicesLoaded ? (state.paginatedServices ?? <ServiceListItem>[]) : <ServiceListItem>[])
                 : (state is ServicesLoaded
                       ? (widget.hotOffers
                             ? (state.featuredServices ?? <ServiceListItem>[])

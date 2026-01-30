@@ -8,10 +8,7 @@ import 'package:wedy/shared/widgets/primary_button.dart';
 class PaymentSuccessDialog extends StatelessWidget {
   final int durationDays;
 
-  const PaymentSuccessDialog({
-    super.key,
-    required this.durationDays,
-  });
+  const PaymentSuccessDialog({super.key, required this.durationDays});
 
   @override
   Widget build(BuildContext context) {
@@ -30,15 +27,8 @@ class PaymentSuccessDialog extends StatelessWidget {
               Container(
                 width: 120,
                 height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.success.withValues(alpha: 0.2),
-                ),
-                child: const Icon(
-                  Icons.check_circle,
-                  color: AppColors.success,
-                  size: 80,
-                ),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.success.withValues(alpha: 0.2)),
+                child: const Icon(Icons.check_circle, color: AppColors.success, size: 80),
               ),
               const SizedBox(height: AppDimensions.spacingXL),
 
@@ -57,10 +47,7 @@ class PaymentSuccessDialog extends StatelessWidget {
               // Success message
               Text(
                 'To\'lov qabul qilindi. Reklama siz tanlagan va $durationDays kun davomida xizmatlarda aktiv bo\'ladi.',
-                style: AppTextStyles.bodyRegular.copyWith(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
+                style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppDimensions.spacingXL * 2),

@@ -9,11 +9,7 @@ class GetUserReviews {
 
   GetUserReviews(this.repository);
 
-  Future<Either<Failure, PaginatedReviewResponse>> call({
-    required String userId,
-    int page = 1,
-    int limit = 20,
-  }) async {
+  Future<Either<Failure, PaginatedReviewResponse>> call({required String userId, int page = 1, int limit = 20}) async {
     if (userId.isEmpty) {
       return const Left(ValidationFailure('User ID cannot be empty'));
     }
@@ -21,4 +17,3 @@ class GetUserReviews {
     return await repository.getUserReviews(userId: userId, page: page, limit: limit);
   }
 }
-

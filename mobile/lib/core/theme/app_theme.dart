@@ -56,9 +56,7 @@ sealed class AppTheme {
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           borderSide: const BorderSide(color: AppColors.error),
         ),
-        hintStyle: AppTextStyles.bodyRegular.copyWith(
-          color: AppColors.textMuted,
-        ),
+        hintStyle: AppTextStyles.bodyRegular.copyWith(color: AppColors.textMuted),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -66,37 +64,23 @@ sealed class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textInverse,
           textStyle: AppTextStyles.buttonLarge,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingL,
-            vertical: AppDimensions.spacingSM,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL, vertical: AppDimensions.spacingSM),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusPill)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.primary),
-          textStyle: AppTextStyles.buttonLarge.copyWith(
-            color: AppColors.primary,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingL,
-            vertical: AppDimensions.spacingSM,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-          ),
+          textStyle: AppTextStyles.buttonLarge.copyWith(color: AppColors.primary),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL, vertical: AppDimensions.spacingSM),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusPill)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: AppTextStyles.buttonMedium.copyWith(
-            color: AppColors.primary,
-          ),
+          textStyle: AppTextStyles.buttonMedium.copyWith(color: AppColors.primary),
         ),
       ),
       chipTheme: base.chipTheme.copyWith(
@@ -122,9 +106,7 @@ sealed class AppTheme {
         margin: EdgeInsets.zero,
         elevation: AppDimensions.elevationCard,
         shadowColor: AppColors.shadow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusL)),
       ),
     );
   }
@@ -133,10 +115,7 @@ sealed class AppTheme {
     final base = ThemeData(useMaterial3: true, brightness: Brightness.dark);
 
     return base.copyWith(
-      colorScheme: base.colorScheme.copyWith(
-        primary: AppColors.primaryLight,
-        secondary: AppColors.primary,
-      ),
+      colorScheme: base.colorScheme.copyWith(primary: AppColors.primaryLight, secondary: AppColors.primary),
     );
   }
 
@@ -153,9 +132,6 @@ sealed class AppTheme {
           labelLarge: AppTextStyles.buttonLarge,
           labelMedium: AppTextStyles.buttonMedium,
         )
-        .apply(
-          bodyColor: AppColors.textPrimary,
-          displayColor: AppColors.textPrimary,
-        );
+        .apply(bodyColor: AppColors.textPrimary, displayColor: AppColors.textPrimary);
   }
 }

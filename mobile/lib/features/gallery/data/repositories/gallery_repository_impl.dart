@@ -25,10 +25,7 @@ class GalleryRepositoryImpl implements GalleryRepository {
   }
 
   @override
-  Future<Either<Failure, ImageUploadResult>> addGalleryImage({
-    required File file,
-    required int displayOrder,
-  }) async {
+  Future<Either<Failure, ImageUploadResult>> addGalleryImage({required File file, required int displayOrder}) async {
     try {
       final response = await remoteDataSource.addGalleryImage(file, displayOrder);
       return Right(response.toEntity());
@@ -59,8 +56,7 @@ class GalleryRepositoryImpl implements GalleryRepository {
         return const NetworkFailure('Connection timeout');
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        final message =
-            error.response?.data?['detail']?.toString() ?? error.message ?? '';
+        final message = error.response?.data?['detail']?.toString() ?? error.message ?? '';
         if (statusCode == 401) {
           return AuthFailure(message.isNotEmpty ? message : 'Unauthorized');
         } else if (statusCode == 402) {

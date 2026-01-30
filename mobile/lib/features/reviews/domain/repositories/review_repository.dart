@@ -19,20 +19,11 @@ abstract class ReviewRepository {
   });
 
   /// Create a new review
-  Future<Either<Failure, Review>> createReview({
-    required String serviceId,
-    required int rating,
-    String? comment,
-  });
+  Future<Either<Failure, Review>> createReview({required String serviceId, required int rating, String? comment});
 
   /// Update an existing review
-  Future<Either<Failure, Review>> updateReview({
-    required String reviewId,
-    int? rating,
-    String? comment,
-  });
+  Future<Either<Failure, Review>> updateReview({required String reviewId, int? rating, String? comment});
 
   /// Delete a review
   Future<Either<Failure, void>> deleteReview(String reviewId);
 }
-

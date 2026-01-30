@@ -37,29 +37,20 @@ class _MerchantServicesPageState extends State<MerchantServicesPage> {
         backgroundColor: AppColors.background,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(IconsaxPlusLinear.add),
-            onPressed: () => context.pushNamed(RouteNames.edit),
-          ),
+          IconButton(icon: const Icon(IconsaxPlusLinear.add), onPressed: () => context.pushNamed(RouteNames.edit)),
         ],
       ),
       body: BlocConsumer<MerchantServiceBloc, MerchantServiceState>(
         listener: (context, state) {
           if (state is MerchantServiceError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
           } else if (state is MerchantServiceLoaded) {
             final operation = state.data.lastOperation;
             if (operation is ServiceDeletedOperation) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Xizmat muvaffaqiyatli o\'chirildi'),
-                  backgroundColor: AppColors.success,
-                ),
+                const SnackBar(content: Text('Xizmat muvaffaqiyatli o\'chirildi'), backgroundColor: AppColors.success),
               );
             }
           }
@@ -97,9 +88,7 @@ class _MerchantServicesPageState extends State<MerchantServicesPage> {
             }
             return RefreshIndicator(
               onRefresh: () async {
-                context
-                    .read<MerchantServiceBloc>()
-                    .add(const RefreshMerchantServicesEvent());
+                context.read<MerchantServiceBloc>().add(const RefreshMerchantServicesEvent());
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(AppDimensions.spacingL),
@@ -119,9 +108,7 @@ class _MerchantServicesPageState extends State<MerchantServicesPage> {
             if (state.previousData != null && state.previousData!.hasServices) {
               return RefreshIndicator(
                 onRefresh: () async {
-                  context
-                      .read<MerchantServiceBloc>()
-                      .add(const RefreshMerchantServicesEvent());
+                  context.read<MerchantServiceBloc>().add(const RefreshMerchantServicesEvent());
                 },
                 child: ListView.builder(
                   padding: const EdgeInsets.all(AppDimensions.spacingL),
@@ -146,9 +133,7 @@ class _MerchantServicesPageState extends State<MerchantServicesPage> {
                   WedyPrimaryButton(
                     label: 'Qayta urinish',
                     onPressed: () {
-                      context
-                          .read<MerchantServiceBloc>()
-                          .add(const LoadMerchantServicesEvent());
+                      context.read<MerchantServiceBloc>().add(const LoadMerchantServicesEvent());
                     },
                   ),
                 ],
@@ -160,9 +145,7 @@ class _MerchantServicesPageState extends State<MerchantServicesPage> {
               children: [
                 RefreshIndicator(
                   onRefresh: () async {
-                    context
-                        .read<MerchantServiceBloc>()
-                        .add(const RefreshMerchantServicesEvent());
+                    context.read<MerchantServiceBloc>().add(const RefreshMerchantServicesEvent());
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.all(AppDimensions.spacingL),
@@ -203,16 +186,11 @@ class _MerchantServicesPageState extends State<MerchantServicesPage> {
         title: const Text('Xizmatni o\'chirish'),
         content: Text('${service.name} xizmatini o\'chirishni xohlaysizmi?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Bekor qilish'),
-          ),
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Bekor qilish')),
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
-              context
-                  .read<MerchantServiceBloc>()
-                  .add(DeleteServiceEvent(service.id));
+              context.read<MerchantServiceBloc>().add(DeleteServiceEvent(service.id));
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('O\'chirish'),
@@ -228,11 +206,7 @@ class _ServiceCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
-  const _ServiceCard({
-    required this.service,
-    required this.onTap,
-    required this.onDelete,
-  });
+  const _ServiceCard({required this.service, required this.onTap, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -281,17 +255,12 @@ class _ServiceCard extends StatelessWidget {
                   children: [
                     Text(
                       service.name,
-                      style: AppTextStyles.bodyLarge
-                          .copyWith(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: AppDimensions.spacingXS),
-                    Text(
-                      service.categoryName,
-                      style: AppTextStyles.bodySmall
-                          .copyWith(color: AppColors.textMuted),
-                    ),
+                    Text(service.categoryName, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
                     const SizedBox(height: AppDimensions.spacingXS),
                     Row(
                       children: [
@@ -304,20 +273,14 @@ class _ServiceCard extends StatelessWidget {
                         ),
                         const SizedBox(width: AppDimensions.spacingM),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.spacingS,
-                            vertical: 2,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS, vertical: 2),
                           decoration: BoxDecoration(
-                            color:
-                                service.isActive ? AppColors.success : AppColors.error,
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.radiusS),
+                            color: service.isActive ? AppColors.success : AppColors.error,
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusS),
                           ),
                           child: Text(
                             service.isActive ? 'Faol' : 'Nofaol',
-                            style: AppTextStyles.bodySmall
-                                .copyWith(color: Colors.white, fontSize: 10),
+                            style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontSize: 10),
                           ),
                         ),
                       ],

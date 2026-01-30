@@ -54,30 +54,22 @@ class _BoostPageState extends State<BoostPage> {
   int get _totalPrice => _pricePerDay * days;
 
   String _formatPrice(int price) {
-    return price.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+    return price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
   }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) => di.getIt<FeaturedServicesBloc>()
-            ..add(const LoadFeaturedServicesEvent()),
-        ),
-        BlocProvider(
-          create: (context) => di.getIt<MerchantServiceBloc>()
-            ..add(const LoadMerchantServicesEvent()),
-        ),
+        BlocProvider(create: (context) => di.getIt<FeaturedServicesBloc>()..add(const LoadFeaturedServicesEvent())),
+        BlocProvider(create: (context) => di.getIt<MerchantServiceBloc>()..add(const LoadMerchantServicesEvent())),
       ],
       child: Scaffold(
         backgroundColor: AppColors.surface,
         body: SafeArea(
           child: BlocConsumer<FeaturedServicesBloc, FeaturedServicesState>(
             listener: (context, state) {
-              if (state is FeaturedServicesLoaded &&
-                  state.lastOperation is FeaturedServiceCreatedOperation) {
+              if (state is FeaturedServicesLoaded && state.lastOperation is FeaturedServiceCreatedOperation) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Xizmat muvaffaqiyatli reklama qilindi!'),
@@ -86,12 +78,9 @@ class _BoostPageState extends State<BoostPage> {
                 );
                 context.pop();
               } else if (state is FeaturedServicesError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
               }
             },
             builder: (context, featuredState) {
@@ -110,10 +99,7 @@ class _BoostPageState extends State<BoostPage> {
                           // Title
                           Text(
                             'Necha kunga reklama qilmoqchisiz?, Tanlang:',
-                            style: AppTextStyles.headline2.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 20,
-                            ),
+                            style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 20),
                           ),
                           const SizedBox(height: AppDimensions.spacingXL),
 
@@ -138,14 +124,12 @@ class _BoostPageState extends State<BoostPage> {
                           const SizedBox(height: AppDimensions.spacingL),
 
                           // Free slots info and button
-                          if (featuredState is FeaturedServicesLoaded)
-                            _buildFreeSlotsSection(context, featuredState),
+                          if (featuredState is FeaturedServicesLoaded) _buildFreeSlotsSection(context, featuredState),
 
                           const SizedBox(height: AppDimensions.spacingL),
 
                           // Active featured services
-                          if (featuredState is FeaturedServicesLoaded &&
-                              featuredState.featuredServices.isNotEmpty)
+                          if (featuredState is FeaturedServicesLoaded && featuredState.featuredServices.isNotEmpty)
                             _buildActiveFeaturedServices(featuredState),
                         ],
                       ),
@@ -181,10 +165,7 @@ class _BoostPageState extends State<BoostPage> {
 
           return Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacingM,
-              vertical: AppDimensions.spacingS,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingM, vertical: AppDimensions.spacingS),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppDimensions.radiusL),
               border: Border.all(color: AppColors.border, width: 1),
@@ -195,10 +176,7 @@ class _BoostPageState extends State<BoostPage> {
                 isExpanded: true,
                 hint: const Text('Xizmatni tanlang'),
                 items: services.map((service) {
-                  return DropdownMenuItem<String>(
-                    value: service.id,
-                    child: Text(service.name),
-                  );
+                  return DropdownMenuItem<String>(value: service.id, child: Text(service.name));
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -221,10 +199,7 @@ class _BoostPageState extends State<BoostPage> {
             borderRadius: BorderRadius.circular(AppDimensions.radiusL),
             border: Border.all(color: AppColors.error, width: 1),
           ),
-          child: Text(
-            'Avval xizmat yarating',
-            style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textError),
-          ),
+          child: Text('Avval xizmat yarating', style: AppTextStyles.bodyRegular.copyWith(color: AppColors.textError)),
         );
       },
     );
@@ -244,12 +219,7 @@ class _BoostPageState extends State<BoostPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Kunlar soni',
-                style: AppTextStyles.bodyRegular.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text('Kunlar soni', style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.w500)),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimensions.spacingM,
@@ -259,21 +229,14 @@ class _BoostPageState extends State<BoostPage> {
                   borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                   color: AppColors.primaryLight,
                 ),
-                child: Text(
-                  days.toString(),
-                  style: AppTextStyles.bodyRegular.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: Text(days.toString(), style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           const SizedBox(height: AppDimensions.spacingS),
           Text(
             '${_formatPrice(basePricePerDay)} UZS/kun',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textMuted,
-            ),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
           ),
           const SizedBox(height: AppDimensions.spacingM),
 
@@ -302,20 +265,8 @@ class _BoostPageState extends State<BoostPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '$minDays kun',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textMuted,
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                '$maxDays kun',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textMuted,
-                  fontSize: 12,
-                ),
-              ),
+              Text('$minDays kun', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 12)),
+              Text('$maxDays kun', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 12)),
             ],
           ),
         ],
@@ -352,10 +303,7 @@ class _BoostPageState extends State<BoostPage> {
       padding: const EdgeInsets.all(AppDimensions.spacingM),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        border: Border.all(
-          color: isActive ? AppColors.primary : AppColors.border,
-          width: isActive ? 2 : 1,
-        ),
+        border: Border.all(color: isActive ? AppColors.primary : AppColors.border, width: isActive ? 2 : 1),
         color: isActive ? AppColors.primaryLight : null,
       ),
       child: Column(
@@ -363,10 +311,7 @@ class _BoostPageState extends State<BoostPage> {
         children: [
           Text(
             '${tier.minDays}-${tier.maxDays} kun',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textMuted,
-              fontSize: 12,
-            ),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted, fontSize: 12),
           ),
           const SizedBox(height: AppDimensions.spacingXS),
           Row(
@@ -379,12 +324,7 @@ class _BoostPageState extends State<BoostPage> {
                   color: isActive ? AppColors.primary : AppColors.textPrimary,
                 ),
               ),
-              Text(
-                _formatPrice(tier.pricePerDay),
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textMuted,
-                ),
-              ),
+              Text(_formatPrice(tier.pricePerDay), style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
             ],
           ),
         ],
@@ -416,18 +356,8 @@ class _BoostPageState extends State<BoostPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textMuted,
-          ),
-        ),
-        Text(
-          value,
-          style: AppTextStyles.bodyRegular.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted)),
+        Text(value, style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -443,18 +373,10 @@ class _BoostPageState extends State<BoostPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Jami narx:',
-            style: AppTextStyles.bodyRegular.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text('Jami narx:', style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.w500)),
           Text(
             '${_formatPrice(_totalPrice)} so\'m',
-            style: AppTextStyles.headline2.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyles.headline2.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -464,8 +386,7 @@ class _BoostPageState extends State<BoostPage> {
   Widget _buildFreeSlotsSection(BuildContext context, FeaturedServicesLoaded state) {
     if (!state.hasFreeSlots) return const SizedBox.shrink();
 
-    final isLoading = context.watch<FeaturedServicesBloc>().state
-        is FeaturedServicesLoading;
+    final isLoading = context.watch<FeaturedServicesBloc>().state is FeaturedServicesLoading;
 
     return Container(
       width: double.infinity,
@@ -484,19 +405,14 @@ class _BoostPageState extends State<BoostPage> {
               const SizedBox(width: AppDimensions.spacingS),
               Text(
                 'Bepul reklama mavjud!',
-                style: AppTextStyles.bodyRegular.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.success,
-                ),
+                style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold, color: AppColors.success),
               ),
             ],
           ),
           const SizedBox(height: AppDimensions.spacingS),
           Text(
             'Oylik bepul reklama: ${state.remainingFreeSlots} ta qoldi',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textMuted,
-            ),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
           ),
           const SizedBox(height: AppDimensions.spacingM),
           SizedBox(
@@ -506,9 +422,7 @@ class _BoostPageState extends State<BoostPage> {
               onPressed: isLoading || _selectedServiceId == null
                   ? null
                   : () {
-                      context.read<FeaturedServicesBloc>().add(
-                            CreateMonthlyFeaturedServiceEvent(_selectedServiceId!),
-                          );
+                      context.read<FeaturedServicesBloc>().add(CreateMonthlyFeaturedServiceEvent(_selectedServiceId!));
                     },
             ),
           ),
@@ -524,74 +438,55 @@ class _BoostPageState extends State<BoostPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Faol reklamalar',
-          style: AppTextStyles.headline2.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
+        Text('Faol reklamalar', style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, fontSize: 18)),
+        const SizedBox(height: AppDimensions.spacingM),
+        ...activeServices.map(
+          (featured) => GestureDetector(
+            onTap: () => PromotionDetailsSheet.show(context, featured),
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: AppDimensions.spacingM),
+              padding: const EdgeInsets.all(AppDimensions.spacingM),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                border: Border.all(color: AppColors.border, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          featured.serviceName,
+                          style: AppTextStyles.bodyRegular.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: AppDimensions.spacingXS),
+                        Text(
+                          '${featured.daysDuration} kun • Tugaydi: ${featured.endDate.day}/${featured.endDate.month}/${featured.endDate.year}',
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingS, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: featured.isFreeAllocation ? AppColors.success : AppColors.primary,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusS),
+                    ),
+                    child: Text(
+                      featured.isFreeAllocation ? 'Bepul' : 'Pullik',
+                      style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontSize: 10),
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.spacingS),
+                  const Icon(Icons.chevron_right, color: AppColors.textMuted),
+                ],
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: AppDimensions.spacingM),
-        ...activeServices.map((featured) => GestureDetector(
-              onTap: () => PromotionDetailsSheet.show(context, featured),
-              child: Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: AppDimensions.spacingM),
-                padding: const EdgeInsets.all(AppDimensions.spacingM),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                  border: Border.all(color: AppColors.border, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            featured.serviceName,
-                            style: AppTextStyles.bodyRegular.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.spacingXS),
-                          Text(
-                            '${featured.daysDuration} kun • Tugaydi: ${featured.endDate.day}/${featured.endDate.month}/${featured.endDate.year}',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacingS,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: featured.isFreeAllocation
-                            ? AppColors.success
-                            : AppColors.primary,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusS),
-                      ),
-                      child: Text(
-                        featured.isFreeAllocation ? 'Bepul' : 'Pullik',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: Colors.white,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.spacingS),
-                    const Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textMuted,
-                    ),
-                  ],
-                ),
-              ),
-            )),
       ],
     );
   }
@@ -601,22 +496,14 @@ class _BoostPageState extends State<BoostPage> {
       padding: const EdgeInsets.all(AppDimensions.spacingL),
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 10,
-            offset: Offset(0, -2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 10, offset: Offset(0, -2))],
       ),
       child: SafeArea(
         top: false,
         child: WedyPrimaryButton(
           label: 'Davom etish',
           icon: const Icon(Icons.arrow_forward),
-          onPressed: _selectedServiceId == null
-              ? null
-              : () => _navigateToPaymentMethod(context),
+          onPressed: _selectedServiceId == null ? null : () => _navigateToPaymentMethod(context),
         ),
       ),
     );
@@ -627,11 +514,7 @@ class _BoostPageState extends State<BoostPage> {
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
           value: context.read<FeaturedServicesBloc>(),
-          child: PaymentMethodPage(
-            serviceId: _selectedServiceId!,
-            durationDays: days,
-            totalPrice: _totalPrice,
-          ),
+          child: PaymentMethodPage(serviceId: _selectedServiceId!, durationDays: days, totalPrice: _totalPrice),
         ),
       ),
     );

@@ -149,4 +149,3 @@ class ReviewUpdateRequestDto {
   factory ReviewUpdateRequestDto.fromJson(Map<String, dynamic> json) => _$ReviewUpdateRequestDtoFromJson(json);
   Map<String, dynamic> toJson() => _$ReviewUpdateRequestDtoToJson(this);
 }
-

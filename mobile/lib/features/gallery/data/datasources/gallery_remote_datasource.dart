@@ -10,8 +10,7 @@ part 'gallery_remote_datasource.g.dart';
 /// Remote data source for gallery API calls
 @RestApi()
 abstract class GalleryRemoteDataSource {
-  factory GalleryRemoteDataSource(Dio dio, {String baseUrl}) =
-      _GalleryRemoteDataSource;
+  factory GalleryRemoteDataSource(Dio dio, {String baseUrl}) = _GalleryRemoteDataSource;
 
   /// Get all gallery images
   @GET('/api/v1/merchants/gallery')
@@ -32,6 +31,5 @@ abstract class GalleryRemoteDataSource {
 
 /// Factory function to create GalleryRemoteDataSource instance
 GalleryRemoteDataSource createGalleryRemoteDataSource() {
-  return GalleryRemoteDataSource(ApiClient.instance,
-      baseUrl: ApiConstants.baseUrl);
+  return GalleryRemoteDataSource(ApiClient.instance, baseUrl: ApiConstants.baseUrl);
 }

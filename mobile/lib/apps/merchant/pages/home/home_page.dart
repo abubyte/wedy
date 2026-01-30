@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:intl/intl.dart';
@@ -15,7 +14,6 @@ import 'package:wedy/features/analytics/presentation/bloc/analytics_event.dart';
 import 'package:wedy/features/analytics/presentation/bloc/analytics_state.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_bloc.dart';
 import 'package:wedy/features/reviews/presentation/bloc/review_state.dart';
-import 'package:wedy/features/service/presentation/bloc/service_state.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_bloc.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_event.dart';
 import 'package:wedy/features/tariff/presentation/bloc/tariff_state.dart';
@@ -40,8 +38,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final RenderBox? renderBox =
-          _statisticsBoxKey.currentContext?.findRenderObject() as RenderBox?;
+      final RenderBox? renderBox = _statisticsBoxKey.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox != null) {
         setState(() {
           _statisticsBoxHeight = renderBox.size.height;
@@ -58,14 +55,8 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) =>
-              di.getIt<TariffBloc>()..add(const LoadSubscriptionEvent()),
-        ),
-        BlocProvider(
-          create: (context) =>
-              di.getIt<AnalyticsBloc>()..add(const LoadAnalyticsEvent()),
-        ),
+        BlocProvider(create: (context) => di.getIt<TariffBloc>()..add(const LoadSubscriptionEvent())),
+        BlocProvider(create: (context) => di.getIt<AnalyticsBloc>()..add(const LoadAnalyticsEvent())),
       ],
       child: Scaffold(
         backgroundColor: AppColors.surface,
@@ -78,23 +69,16 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppDimensions.spacingL,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacingL),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Header
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacingL,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                       child: Text(
                         'Bosh sahifa',
-                        style: AppTextStyles.headline2.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
+                        style: AppTextStyles.headline2.copyWith(fontWeight: FontWeight.w600, color: Colors.black),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.spacingL),
@@ -103,13 +87,9 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                     Container(
                       width: double.infinity,
                       height: 150,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacingL,
-                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusL,
-                        ),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                         image: const DecorationImage(
                           image: NetworkImage('https://picsum.photos/300/150'),
                           fit: BoxFit.cover,
@@ -121,9 +101,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                     // Statistics
                     BlocBuilder<TariffBloc, TariffState>(
                       builder: (context, tariffState) {
-                        final subscription = tariffState is SubscriptionLoaded
-                            ? tariffState.subscription
-                            : null;
+                        final subscription = tariffState is SubscriptionLoaded ? tariffState.subscription : null;
                         final isActive = subscription?.isActive ?? false;
 
                         return BlocBuilder<AnalyticsBloc, AnalyticsState>(
@@ -132,33 +110,20 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                             MerchantAnalytics? analytics;
                             if (analyticsState is AnalyticsLoaded) {
                               analytics = analyticsState.analytics;
-                            } else if (analyticsState is AnalyticsLoading &&
-                                analyticsState.previousData != null) {
+                            } else if (analyticsState is AnalyticsLoading && analyticsState.previousData != null) {
                               analytics = analyticsState.previousData;
-                            } else if (analyticsState is AnalyticsError &&
-                                analyticsState.previousData != null) {
+                            } else if (analyticsState is AnalyticsError && analyticsState.previousData != null) {
                               analytics = analyticsState.previousData;
                             }
 
                             return Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(
-                                AppDimensions.spacingS,
-                              ),
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: AppDimensions.spacingL,
-                              ),
+                              padding: const EdgeInsets.all(AppDimensions.spacingS),
+                              margin: const EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.radiusL,
-                                ),
-                                border: Border.all(
-                                  color: isActive
-                                      ? AppColors.border
-                                      : AppColors.error,
-                                  width: .5,
-                                ),
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusL),
+                                border: Border.all(color: isActive ? AppColors.border : AppColors.error, width: .5),
                               ),
                               child: Stack(
                                 children: [
@@ -169,77 +134,47 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                                         children: [
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.eye,
-                                            total: _formatNumber(
-                                              analytics?.totalViews ?? 0,
-                                            ),
-                                            today:
-                                                '+${analytics?.viewsToday ?? 0}',
+                                            total: _formatNumber(analytics?.totalViews ?? 0),
+                                            today: '+${analytics?.viewsToday ?? 0}',
                                           ),
-                                          const SizedBox(
-                                            width: AppDimensions.spacingS,
-                                          ),
+                                          const SizedBox(width: AppDimensions.spacingS),
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.save_2,
-                                            total: _formatNumber(
-                                              analytics?.totalSaves ?? 0,
-                                            ),
-                                            today:
-                                                '+${analytics?.savesToday ?? 0}',
+                                            total: _formatNumber(analytics?.totalSaves ?? 0),
+                                            today: '+${analytics?.savesToday ?? 0}',
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
-                                        height: AppDimensions.spacingS,
-                                      ),
+                                      const SizedBox(height: AppDimensions.spacingS),
                                       Row(
                                         children: [
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.star_1,
-                                            total:
-                                                (analytics?.overallRating ?? 0)
-                                                    .toStringAsFixed(1),
-                                            today:
-                                                '+${analytics?.totalReviews ?? 0}',
+                                            total: (analytics?.overallRating ?? 0).toStringAsFixed(1),
+                                            today: '+${analytics?.totalReviews ?? 0}',
                                           ),
-                                          const SizedBox(
-                                            width: AppDimensions.spacingS,
-                                          ),
+                                          const SizedBox(width: AppDimensions.spacingS),
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.heart,
-                                            total: _formatNumber(
-                                              analytics?.totalLikes ?? 0,
-                                            ),
-                                            today:
-                                                '+${analytics?.likesToday ?? 0}',
+                                            total: _formatNumber(analytics?.totalLikes ?? 0),
+                                            today: '+${analytics?.likesToday ?? 0}',
                                           ),
-                                          const SizedBox(
-                                            width: AppDimensions.spacingS,
-                                          ),
+                                          const SizedBox(width: AppDimensions.spacingS),
                                           _buildStatCard(
                                             icon: IconsaxPlusLinear.share,
-                                            total: _formatNumber(
-                                              analytics?.totalShares ?? 0,
-                                            ),
-                                            today:
-                                                '+${analytics?.sharesToday ?? 0}',
+                                            total: _formatNumber(analytics?.totalShares ?? 0),
+                                            today: '+${analytics?.sharesToday ?? 0}',
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
-                                        height: AppDimensions.spacingS,
-                                      ),
+                                      const SizedBox(height: AppDimensions.spacingS),
                                       BlocBuilder<TariffBloc, TariffState>(
                                         builder: (context, state) {
-                                          final subscription =
-                                              state is SubscriptionLoaded
-                                              ? state.subscription
-                                              : null;
-                                          final isActive =
-                                              subscription?.isActive ?? false;
+                                          final subscription = state is SubscriptionLoaded ? state.subscription : null;
+                                          final isActive = subscription?.isActive ?? false;
                                           return WedyPrimaryButton(
                                             label: 'Reklama berish',
-                                            onPressed: () =>
-                                                context.push(RouteNames.boost),
+                                            onPressed: () => context.push(RouteNames.boost),
                                             outlined: !isActive,
                                           );
                                         },
@@ -255,22 +190,17 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                                       height: _statisticsBoxHeight,
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.95,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            AppDimensions.radiusL,
-                                          ),
+                                          color: Colors.white.withValues(alpha: 0.95),
+                                          borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                                         ),
                                         child: Center(
                                           child: Text(
                                             'Tarif faol emas',
-                                            style: AppTextStyles.bodySmall
-                                                .copyWith(
-                                                  color: AppColors.textError,
-                                                  fontSize: 22,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
+                                            style: AppTextStyles.bodySmall.copyWith(
+                                              color: AppColors.textError,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -287,24 +217,17 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                     // Reviews
                     BlocBuilder<TariffBloc, TariffState>(
                       builder: (context, state) {
-                        final subscription = state is SubscriptionLoaded
-                            ? state.subscription
-                            : null;
+                        final subscription = state is SubscriptionLoaded ? state.subscription : null;
                         final isActive = subscription?.isActive ?? false;
                         if (isActive) {
                           return Column(
                             children: [
-                              if (di.getIt<ReviewBloc>().state
-                                      is ReviewsLoaded &&
-                                  (di.getIt<ReviewBloc>().state
-                                          as ReviewsLoaded)
-                                      .allReviews
-                                      .isNotEmpty) ...[
+                              if (di.getIt<ReviewBloc>().state is ReviewsLoaded &&
+                                  (di.getIt<ReviewBloc>().state as ReviewsLoaded).allReviews.isNotEmpty) ...[
                                 SectionHeader(
                                   title: 'Fikrlar',
                                   applyPadding: true,
-                                  onTap: () =>
-                                      context.pushNamed(RouteNames.reviews),
+                                  onTap: () => context.pushNamed(RouteNames.reviews),
                                 ),
                                 const SizedBox(height: AppDimensions.spacingSM),
                                 const ServiceReviews(),
@@ -319,9 +242,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
 
                     // Tariff Status
                     const Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacingL,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: AppDimensions.spacingL),
                       child: WedyTariffStatus(),
                     ),
                   ],
@@ -334,11 +255,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
     );
   }
 
-  Widget _buildStatCard({
-    required IconData icon,
-    required String total,
-    required String today,
-  }) {
+  Widget _buildStatCard({required IconData icon, required String total, required String today}) {
     return Expanded(
       child: Container(
         width: double.infinity,

@@ -571,10 +571,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         title: const Text('Rasmni o\'chirish'),
         content: const Text('Haqiqatan ham profil rasmingizni o\'chirmoqchimisiz?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Bekor qilish'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Bekor qilish')),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
@@ -636,10 +633,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         } else {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ilova hali App Store\'da mavjud emas'),
-                backgroundColor: AppColors.warning,
-              ),
+              const SnackBar(content: Text('Ilova hali App Store\'da mavjud emas'), backgroundColor: AppColors.warning),
             );
           }
         }

@@ -279,29 +279,21 @@ class _ReviewCard extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: imageUrl,
         fit: BoxFit.cover,
-        errorWidget: (context, url, error) =>
-            const Icon(IconsaxPlusLinear.image, size: 40, color: Colors.grey),
+        errorWidget: (context, url, error) => const Icon(IconsaxPlusLinear.image, size: 40, color: Colors.grey),
       );
     }
     return const Icon(IconsaxPlusLinear.image, size: 40, color: Colors.grey);
   }
 
   String _formatPrice(double price) {
-    return price.toStringAsFixed(0).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]} ',
-    );
+    return price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
   }
 
   Widget _buildPriceWidget(ServiceListItem? service) {
     if (service == null) {
       return Text(
         'Yuklanmoqda...',
-        style: AppTextStyles.bodyLarge.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
+        style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 14),
       );
     }
     return Text.rich(

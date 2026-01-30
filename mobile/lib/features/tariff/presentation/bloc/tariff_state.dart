@@ -37,10 +37,7 @@ final class TariffDataLoaded extends TariffState {
 
   const TariffDataLoaded({required this.plans, this.subscription});
 
-  TariffDataLoaded copyWith({
-    List<TariffPlan>? plans,
-    Subscription? Function()? subscription,
-  }) {
+  TariffDataLoaded copyWith({List<TariffPlan>? plans, Subscription? Function()? subscription}) {
     return TariffDataLoaded(
       plans: plans ?? this.plans,
       subscription: subscription != null ? subscription() : this.subscription,

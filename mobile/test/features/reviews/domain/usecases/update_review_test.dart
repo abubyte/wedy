@@ -31,8 +31,9 @@ void main() {
 
   test('should update a review successfully', () async {
     // Arrange
-    when(() => mockRepository.updateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment'))
-        .thenAnswer((_) async => Right(tReview));
+    when(
+      () => mockRepository.updateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment'),
+    ).thenAnswer((_) async => Right(tReview));
 
     // Act
     final result = await useCase(reviewId: 'review1', rating: 4, comment: 'Updated comment');
@@ -49,7 +50,13 @@ void main() {
 
     // Assert
     expect(result, const Left(ValidationFailure('Review ID cannot be empty')));
-    verifyNever(() => mockRepository.updateReview(reviewId: any(named: 'reviewId'), rating: any(named: 'rating'), comment: any(named: 'comment')));
+    verifyNever(
+      () => mockRepository.updateReview(
+        reviewId: any(named: 'reviewId'),
+        rating: any(named: 'rating'),
+        comment: any(named: 'comment'),
+      ),
+    );
   });
 
   test('should return ValidationFailure when rating is less than 1', () async {
@@ -58,7 +65,13 @@ void main() {
 
     // Assert
     expect(result, const Left(ValidationFailure('Rating must be between 1 and 5')));
-    verifyNever(() => mockRepository.updateReview(reviewId: any(named: 'reviewId'), rating: any(named: 'rating'), comment: any(named: 'comment')));
+    verifyNever(
+      () => mockRepository.updateReview(
+        reviewId: any(named: 'reviewId'),
+        rating: any(named: 'rating'),
+        comment: any(named: 'comment'),
+      ),
+    );
   });
 
   test('should return ValidationFailure when rating is greater than 5', () async {
@@ -67,13 +80,20 @@ void main() {
 
     // Assert
     expect(result, const Left(ValidationFailure('Rating must be between 1 and 5')));
-    verifyNever(() => mockRepository.updateReview(reviewId: any(named: 'reviewId'), rating: any(named: 'rating'), comment: any(named: 'comment')));
+    verifyNever(
+      () => mockRepository.updateReview(
+        reviewId: any(named: 'reviewId'),
+        rating: any(named: 'rating'),
+        comment: any(named: 'comment'),
+      ),
+    );
   });
 
   test('should update review with only rating', () async {
     // Arrange
-    when(() => mockRepository.updateReview(reviewId: 'review1', rating: 4, comment: null))
-        .thenAnswer((_) async => Right(tReview));
+    when(
+      () => mockRepository.updateReview(reviewId: 'review1', rating: 4, comment: null),
+    ).thenAnswer((_) async => Right(tReview));
 
     // Act
     final result = await useCase(reviewId: 'review1', rating: 4);
@@ -85,8 +105,9 @@ void main() {
 
   test('should update review with only comment', () async {
     // Arrange
-    when(() => mockRepository.updateReview(reviewId: 'review1', rating: null, comment: 'Updated comment'))
-        .thenAnswer((_) async => Right(tReview));
+    when(
+      () => mockRepository.updateReview(reviewId: 'review1', rating: null, comment: 'Updated comment'),
+    ).thenAnswer((_) async => Right(tReview));
 
     // Act
     final result = await useCase(reviewId: 'review1', comment: 'Updated comment');
@@ -98,8 +119,9 @@ void main() {
 
   test('should return failure when repository returns failure', () async {
     // Arrange
-    when(() => mockRepository.updateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment'))
-        .thenAnswer((_) async => const Left(ServerFailure('Server error')));
+    when(
+      () => mockRepository.updateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment'),
+    ).thenAnswer((_) async => const Left(ServerFailure('Server error')));
 
     // Act
     final result = await useCase(reviewId: 'review1', rating: 4, comment: 'Updated comment');
@@ -109,4 +131,3 @@ void main() {
     verify(() => mockRepository.updateReview(reviewId: 'review1', rating: 4, comment: 'Updated comment')).called(1);
   });
 }
-
