@@ -11,13 +11,18 @@ import hmac
 import json
 import time
 from typing import Dict, Any, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import get_settings
 from app.models.payment_model import Payment, PaymentStatus, PaymentMethod, PaymentType
+from app.models.merchant_model import Merchant, MerchantSubscription, SubscriptionStatus
+from app.models.service_model import Service
+from app.models.featured_service_model import FeaturedService, FeatureType
 from app.repositories.payment_repository import PaymentRepository
 from app.services.payment_providers import PaymentProviderError
 
@@ -977,11 +982,18 @@ class PaymeMerchantAPI:
         
         await self.session.commit()
         await self.session.refresh(payment)
-        
-        # Process payment completion (create subscription, feature service, etc.)
-        # This should be done asynchronously or via background task
-        # For now, we'll mark it as completed and process later
-        
+
+        # Process payment completion - create subscription or featured service
+        try:
+            await self._process_completed_payment(payment)
+            await self.session.commit()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to process completed payment {payment.id}: {str(e)}")
+            # Don't fail the transaction - payment is already marked as completed
+            # The subscription/featured service can be created manually or via retry
+
         return {
             "transaction": str(payment.id),
             "perform_time": perform_time,
@@ -1483,3 +1495,159 @@ class PaymeMerchantAPI:
         
         logger.warning(f"No payment found with Payme transaction ID: {payme_transaction_id}")
         return None
+
+    async def _process_completed_payment(self, payment: Payment):
+        """
+        Process a completed payment to create subscription or featured service.
+
+        This is called after PerformTransaction successfully marks a payment as completed.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        payment_metadata = payment.payment_metadata or {}
+
+        if payment.payment_type == PaymentType.TARIFF_SUBSCRIPTION:
+            await self._activate_tariff_subscription(payment, payment_metadata)
+        elif payment.payment_type == PaymentType.FEATURED_SERVICE:
+            await self._activate_featured_service(payment, payment_metadata)
+        else:
+            logger.warning(f"Unknown payment type for payment {payment.id}: {payment.payment_type}")
+
+    async def _activate_tariff_subscription(self, payment: Payment, metadata: Dict[str, Any]):
+        """Activate tariff subscription after successful payment."""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        duration_months = metadata.get('month_count') or metadata.get('duration_months', 1)
+        if isinstance(duration_months, str):
+            duration_months = int(duration_months)
+
+        tariff_plan_id_str = metadata.get('tariff_id') or metadata.get('tariff_plan_id')
+
+        # Find merchant
+        merchant_stmt = select(Merchant).where(Merchant.user_id == payment.user_id)
+        merchant_result = await self.session.execute(merchant_stmt)
+        merchant = merchant_result.scalar_one_or_none()
+
+        if not merchant:
+            logger.error(f"Merchant not found for payment {payment.id}, user_id={payment.user_id}")
+            raise PaymeMerchantAPIError(-31050, "Merchant not found")
+
+        # Find tariff plan
+        if tariff_plan_id_str:
+            tariff_plan_id = UUID(str(tariff_plan_id_str))
+            plan = await self.payment_repo.get_tariff_plan_by_id(tariff_plan_id)
+        else:
+            logger.error(f"Tariff plan ID not found in payment metadata for payment {payment.id}")
+            raise PaymeMerchantAPIError(-31050, "Tariff plan ID not found")
+
+        if not plan:
+            logger.error(f"Tariff plan {tariff_plan_id_str} not found for payment {payment.id}")
+            raise PaymeMerchantAPIError(-31050, "Tariff plan not found")
+
+        # Check if subscription already exists for this payment
+        existing_sub_stmt = select(MerchantSubscription).where(
+            MerchantSubscription.payment_id == payment.id
+        )
+        existing_sub_result = await self.session.execute(existing_sub_stmt)
+        existing_subscription = existing_sub_result.scalar_one_or_none()
+
+        if existing_subscription:
+            logger.info(f"Subscription already exists for payment {payment.id}")
+            return
+
+        # Expire any existing active subscriptions
+        active_subs_stmt = select(MerchantSubscription).where(
+            MerchantSubscription.merchant_id == merchant.id,
+            MerchantSubscription.status == SubscriptionStatus.ACTIVE
+        )
+        active_subs_result = await self.session.execute(active_subs_stmt)
+        active_subscriptions = active_subs_result.scalars().all()
+
+        for sub in active_subscriptions:
+            sub.status = SubscriptionStatus.CANCELLED
+            self.session.add(sub)
+
+        # Create new subscription
+        start_date = datetime.now()
+        end_date = start_date + relativedelta(months=duration_months)
+
+        subscription = MerchantSubscription(
+            merchant_id=merchant.id,
+            tariff_plan_id=plan.id,
+            payment_id=payment.id,
+            status=SubscriptionStatus.ACTIVE,
+            start_date=start_date,
+            end_date=end_date,
+            duration_months=duration_months,
+            amount_paid=payment.amount,
+            auto_renewal=False
+        )
+
+        self.session.add(subscription)
+        await self.session.flush()
+
+        logger.info(
+            f"Activated tariff subscription for merchant {merchant.id}, "
+            f"plan={plan.name}, duration={duration_months} months, "
+            f"end_date={end_date}"
+        )
+
+    async def _activate_featured_service(self, payment: Payment, metadata: Dict[str, Any]):
+        """Activate featured service after successful payment."""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        service_id_str = metadata.get('service_id')
+        duration_days = metadata.get('days_count') or metadata.get('duration_days', 7)
+        if isinstance(duration_days, str):
+            duration_days = int(duration_days)
+
+        if not service_id_str:
+            logger.error(f"Service ID not found in payment metadata for payment {payment.id}")
+            raise PaymeMerchantAPIError(-31050, "Service ID not found")
+
+        # Find service
+        service_stmt = select(Service).where(Service.id == str(service_id_str))
+        service_result = await self.session.execute(service_stmt)
+        service = service_result.scalar_one_or_none()
+
+        if not service:
+            logger.error(f"Service {service_id_str} not found for payment {payment.id}")
+            raise PaymeMerchantAPIError(-31050, "Service not found")
+
+        # Check if featured service already exists for this payment
+        existing_fs_stmt = select(FeaturedService).where(
+            FeaturedService.payment_id == payment.id
+        )
+        existing_fs_result = await self.session.execute(existing_fs_stmt)
+        existing_featured = existing_fs_result.scalar_one_or_none()
+
+        if existing_featured:
+            logger.info(f"Featured service already exists for payment {payment.id}")
+            return
+
+        # Create featured service record
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=duration_days)
+
+        featured_service = FeaturedService(
+            service_id=service.id,
+            merchant_id=service.merchant_id,
+            payment_id=payment.id,
+            start_date=start_date,
+            end_date=end_date,
+            days_duration=duration_days,
+            amount_paid=payment.amount,
+            feature_type=FeatureType.PAID_FEATURE,
+            is_active=True
+        )
+
+        self.session.add(featured_service)
+        await self.session.flush()
+
+        logger.info(
+            f"Activated featured service for service {service.id}, "
+            f"duration={duration_days} days, end_date={end_date}"
+        )

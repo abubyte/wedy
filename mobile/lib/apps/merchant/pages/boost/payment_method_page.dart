@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wedy/apps/merchant/pages/boost/payment_success_dialog.dart';
 import 'package:wedy/core/constants/app_dimensions.dart';
 import 'package:wedy/core/theme/app_colors.dart';
 import 'package:wedy/core/theme/app_text_styles.dart';
+import 'package:wedy/features/featured_services/domain/entities/featured_service.dart';
 import 'package:wedy/features/featured_services/presentation/bloc/featured_services_bloc.dart';
 import 'package:wedy/features/featured_services/presentation/bloc/featured_services_event.dart';
 import 'package:wedy/features/featured_services/presentation/bloc/featured_services_state.dart';
 import 'package:wedy/shared/widgets/circular_button.dart';
+import 'package:wedy/shared/widgets/primary_button.dart';
 
-class PaymentMethodPage extends StatelessWidget {
+class PaymentMethodPage extends StatefulWidget {
   final String serviceId;
   final int durationDays;
   final int totalPrice;
@@ -21,9 +24,68 @@ class PaymentMethodPage extends StatelessWidget {
     required this.totalPrice,
   });
 
+  @override
+  State<PaymentMethodPage> createState() => _PaymentMethodPageState();
+}
+
+class _PaymentMethodPageState extends State<PaymentMethodPage>
+    with WidgetsBindingObserver {
+  bool _isWaitingForPayment = false;
+  bool _processingDialogShown = false;
+  Set<String> _previousFeaturedServiceIds = {};
+
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Capture current featured services state before payment
+    _captureCurrentFeaturedState();
+  }
+
+  void _captureCurrentFeaturedState() {
+    final state = context.read<FeaturedServicesBloc>().state;
+    if (state is FeaturedServicesLoaded) {
+      _previousFeaturedServiceIds = state.featuredServices
+          .where((fs) => fs.serviceId == widget.serviceId && fs.isActive)
+          .map((fs) => fs.id)
+          .toSet();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _isWaitingForPayment) {
+      // User returned to the app after payment
+      // Check featured services status
+      _checkPaymentStatus();
+    }
+  }
+
+  void _checkPaymentStatus() {
+    context.read<FeaturedServicesBloc>().add(const LoadFeaturedServicesEvent());
+  }
+
+  bool _hasNewFeaturedService(List<FeaturedService> featuredServices) {
+    // Check if there's a new active featured service for this service
+    final currentIds = featuredServices
+        .where((fs) => fs.serviceId == widget.serviceId && fs.isActive)
+        .map((fs) => fs.id)
+        .toSet();
+
+    // If there's a new ID that wasn't in the previous set, payment succeeded
+    final newIds = currentIds.difference(_previousFeaturedServiceIds);
+    return newIds.isNotEmpty;
   }
 
   @override
@@ -33,6 +95,11 @@ class PaymentMethodPage extends StatelessWidget {
         if (state is FeaturedPaymentCreated) {
           final paymentUrl = state.payment.paymentUrl;
           if (paymentUrl != null && paymentUrl.isNotEmpty) {
+            // Mark that we're waiting for payment
+            setState(() {
+              _isWaitingForPayment = true;
+            });
+
             // Show processing dialog
             _showProcessingDialog(context);
 
@@ -41,17 +108,41 @@ class PaymentMethodPage extends StatelessWidget {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             } else {
               if (context.mounted) {
-                Navigator.of(context).pop(); // Close processing dialog
+                _closeProcessingDialog(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('To\'lov sahifasini ochib bo\'lmadi'),
                     backgroundColor: AppColors.error,
                   ),
                 );
+                setState(() {
+                  _isWaitingForPayment = false;
+                });
               }
             }
           }
+        } else if (state is FeaturedServicesLoaded && _isWaitingForPayment) {
+          // Check if a NEW featured service was created after payment
+          if (_hasNewFeaturedService(state.featuredServices)) {
+            setState(() {
+              _isWaitingForPayment = false;
+            });
+            _closeProcessingDialog(context);
+            // Show success dialog
+            if (context.mounted) {
+              PaymentSuccessDialog.show(
+                context,
+                durationDays: widget.durationDays,
+              );
+            }
+          }
         } else if (state is FeaturedServicesError) {
+          if (_isWaitingForPayment) {
+            _closeProcessingDialog(context);
+            setState(() {
+              _isWaitingForPayment = false;
+            });
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -96,7 +187,7 @@ class PaymentMethodPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${_formatPrice(totalPrice)} so\'m',
+                        '${_formatPrice(widget.totalPrice)} so\'m',
                         style: AppTextStyles.headline2.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
@@ -117,7 +208,6 @@ class PaymentMethodPage extends StatelessWidget {
                   _buildPaymentMethodCard(
                     context: context,
                     title: 'Payme',
-                    logoPath: 'assets/images/payme_logo.png',
                     isLoading: isLoading,
                     onTap: () => _initiatePayment(context, 'payme'),
                   ),
@@ -125,7 +215,6 @@ class PaymentMethodPage extends StatelessWidget {
                   _buildPaymentMethodCard(
                     context: context,
                     title: 'Click',
-                    logoPath: 'assets/images/click_logo.png',
                     isLoading: isLoading,
                     onTap: () => _initiatePayment(context, 'click'),
                     enabled: false, // Click not implemented yet
@@ -142,7 +231,6 @@ class PaymentMethodPage extends StatelessWidget {
   Widget _buildPaymentMethodCard({
     required BuildContext context,
     required String title,
-    required String logoPath,
     required bool isLoading,
     required VoidCallback onTap,
     bool enabled = true,
@@ -224,24 +312,50 @@ class PaymentMethodPage extends StatelessWidget {
   void _initiatePayment(BuildContext context, String paymentMethod) {
     context.read<FeaturedServicesBloc>().add(
           CreatePaidFeaturedServiceEvent(
-            serviceId: serviceId,
-            durationDays: durationDays,
+            serviceId: widget.serviceId,
+            durationDays: widget.durationDays,
             paymentMethod: paymentMethod,
           ),
         );
   }
 
   void _showProcessingDialog(BuildContext context) {
+    if (_processingDialogShown) return;
+    _processingDialogShown = true;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const PaymentProcessingDialog(),
+      builder: (dialogContext) => _BoostPaymentProcessingDialog(
+        onCheckStatus: () {
+          _checkPaymentStatus();
+        },
+        onCancel: () {
+          Navigator.of(dialogContext).pop();
+          setState(() {
+            _isWaitingForPayment = false;
+            _processingDialogShown = false;
+          });
+        },
+      ),
     );
+  }
+
+  void _closeProcessingDialog(BuildContext context) {
+    if (_processingDialogShown && context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+      _processingDialogShown = false;
+    }
   }
 }
 
-class PaymentProcessingDialog extends StatelessWidget {
-  const PaymentProcessingDialog({super.key});
+class _BoostPaymentProcessingDialog extends StatelessWidget {
+  final VoidCallback onCheckStatus;
+  final VoidCallback onCancel;
+
+  const _BoostPaymentProcessingDialog({
+    required this.onCheckStatus,
+    required this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -251,36 +365,57 @@ class PaymentProcessingDialog extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'To\'lovingiz tasdiqlanmoqda...',
-              style: AppTextStyles.headline2.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 24,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacingXL),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'To\'lovingiz tasdiqlanmoqda...',
+                style: AppTextStyles.headline2.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 24,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppDimensions.spacingM),
-            Text(
-              'Iltimos, jarayon tugaguncha dasturni o\'chirmang.\nBiz sizning to\'lovingizni tekshirish uchun\nprovayderdan javob poymiz beramiz.',
-              style: AppTextStyles.bodyRegular.copyWith(
-                color: Colors.white70,
+              const SizedBox(height: AppDimensions.spacingM),
+              Text(
+                'To\'lovni amalga oshirgandan so\'ng\n"Tekshirish" tugmasini bosing.',
+                style: AppTextStyles.bodyRegular.copyWith(
+                  color: Colors.white70,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppDimensions.spacingXL),
-            const SizedBox(
-              width: 60,
-              height: 60,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 3,
+              const SizedBox(height: AppDimensions.spacingXL),
+              const SizedBox(
+                width: 60,
+                height: 60,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppDimensions.spacingXL * 2),
+              SizedBox(
+                width: double.infinity,
+                child: WedyPrimaryButton(
+                  label: 'Tekshirish',
+                  onPressed: onCheckStatus,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.spacingM),
+              TextButton(
+                onPressed: onCancel,
+                child: Text(
+                  'Bekor qilish',
+                  style: AppTextStyles.bodyRegular.copyWith(
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
