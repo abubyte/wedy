@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../entities/service.dart';
@@ -56,8 +58,7 @@ abstract class ServiceRepository {
   /// Upload service image
   Future<Either<Failure, String>> uploadServiceImage({
     required String serviceId,
-    required String imagePath,
-    required String fileName,
+    required File file,
     required String contentType,
     int displayOrder = 0,
   });

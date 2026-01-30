@@ -183,21 +183,19 @@ class ServiceRepositoryImpl implements ServiceRepository {
   @override
   Future<Either<Failure, String>> uploadServiceImage({
     required String serviceId,
-    required String imagePath,
-    required String fileName,
+    required File file,
     required String contentType,
     int displayOrder = 0,
   }) async {
     try {
       // Get presigned URL from backend
-      final response = await remoteDataSource.getServiceImageUploadUrl(serviceId, fileName, contentType, displayOrder);
+      final response = await remoteDataSource.getServiceImageUploadUrl(serviceId, file, displayOrder);
 
       if (response.presignedUrl == null) {
         return const Left(ServerFailure('No presigned URL received'));
       }
 
       // Upload file to S3 using presigned URL
-      final file = File(imagePath);
       if (!await file.exists()) {
         return const Left(ValidationFailure('Image file does not exist'));
       }

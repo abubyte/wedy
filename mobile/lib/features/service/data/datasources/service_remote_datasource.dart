@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:wedy/core/constants/api_constants.dart';
@@ -65,8 +67,8 @@ abstract class ServiceRemoteDataSource {
   @MultiPart()
   Future<ImageUploadResponseDto> getServiceImageUploadUrl(
     @Path('serviceId') String serviceId,
-    @Part(name: 'file_name') String fileName,
-    @Part(name: 'content_type') String contentType,
+    @Part(name: 'file') File file,
+    // @Part(name: 'content_type') String contentType,
     @Part(name: 'display_order') int displayOrder,
   );
 }

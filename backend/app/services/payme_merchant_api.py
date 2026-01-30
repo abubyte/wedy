@@ -337,8 +337,13 @@ class PaymeMerchantAPI:
                     }
                 )
             
-            # Validate phone_number format
-            normalized_phone = phone_number.replace("+998", "").replace("998", "").strip()
+            # Validate phone_number format - strip country code prefix only
+            if phone_number.startswith("+998"):
+                normalized_phone = phone_number[4:].strip()
+            elif phone_number.startswith("998"):
+                normalized_phone = phone_number[3:].strip()
+            else:
+                normalized_phone = phone_number.strip()
             if not normalized_phone or len(normalized_phone) != 9 or not normalized_phone.isdigit():
                 raise PaymeMerchantAPIError(
                     self.ERROR_ACCOUNT_ERROR_MIN,
@@ -393,7 +398,13 @@ class PaymeMerchantAPI:
             
             # Validate phone_number format (reuse validation from tariff format if not already validated)
             if not is_tariff_format:
-                normalized_phone = phone_number.replace("+998", "").replace("998", "").strip()
+                # Strip country code prefix only
+                if phone_number.startswith("+998"):
+                    normalized_phone = phone_number[4:].strip()
+                elif phone_number.startswith("998"):
+                    normalized_phone = phone_number[3:].strip()
+                else:
+                    normalized_phone = phone_number.strip()
                 if not normalized_phone or len(normalized_phone) != 9 or not normalized_phone.isdigit():
                     raise PaymeMerchantAPIError(
                         self.ERROR_ACCOUNT_ERROR_MIN,

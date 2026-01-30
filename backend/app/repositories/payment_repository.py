@@ -193,10 +193,15 @@ class PaymentRepository:
         
         import logging
         logger = logging.getLogger(__name__)
-        
-        # Normalize phone number (remove +998 prefix if present, keep only 9 digits)
-        normalized_phone = phone_number.replace("+998", "").replace("998", "").strip()
-        
+
+        # Normalize phone number (remove country code prefix only, keep 9 digits)
+        if phone_number.startswith("+998"):
+            normalized_phone = phone_number[4:].strip()
+        elif phone_number.startswith("998"):
+            normalized_phone = phone_number[3:].strip()
+        else:
+            normalized_phone = phone_number.strip()
+
         # Helper function to check if payment matches
         def payment_matches(payment: Payment) -> bool:
             metadata = payment.payment_metadata or {}
@@ -322,10 +327,15 @@ class PaymentRepository:
         
         import logging
         logger = logging.getLogger(__name__)
-        
-        # Normalize phone number (remove +998 prefix if present, keep only 9 digits)
-        normalized_phone = phone_number.replace("+998", "").replace("998", "").strip()
-        
+
+        # Normalize phone number (remove country code prefix only, keep 9 digits)
+        if phone_number.startswith("+998"):
+            normalized_phone = phone_number[4:].strip()
+        elif phone_number.startswith("998"):
+            normalized_phone = phone_number[3:].strip()
+        else:
+            normalized_phone = phone_number.strip()
+
         # Normalize service_id to string (ensure it's 9 digits)
         service_id_str = str(service_id).strip()
         

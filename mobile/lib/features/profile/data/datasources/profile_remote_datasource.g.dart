@@ -9,7 +9,11 @@ part of 'profile_remote_datasource.dart';
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element
 
 class _ProfileRemoteDataSource implements ProfileRemoteDataSource {
-  _ProfileRemoteDataSource(this._dio, {this.baseUrl, this.errorLogger});
+  _ProfileRemoteDataSource(
+    this._dio, {
+    this.baseUrl,
+    this.errorLogger,
+  });
 
   final Dio _dio;
 
@@ -23,11 +27,22 @@ class _ProfileRemoteDataSource implements ProfileRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<ProfileResponseDto>(
-      Options(method: 'GET', headers: _headers, extra: _extra)
-          .compose(_dio.options, '/api/v1/users/profile', queryParameters: queryParameters, data: _data)
-          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-    );
+    final _options = _setStreamType<ProfileResponseDto>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/users/profile',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late ProfileResponseDto _value;
     try {
@@ -40,17 +55,29 @@ class _ProfileRemoteDataSource implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<ProfileResponseDto> updateProfile(ProfileUpdateRequestDto request) async {
+  Future<ProfileResponseDto> updateProfile(
+      ProfileUpdateRequestDto request) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(request.toJson());
-    final _options = _setStreamType<ProfileResponseDto>(
-      Options(method: 'PUT', headers: _headers, extra: _extra)
-          .compose(_dio.options, '/api/v1/users/profile', queryParameters: queryParameters, data: _data)
-          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-    );
+    final _options = _setStreamType<ProfileResponseDto>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/v1/users/profile',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
     late ProfileResponseDto _value;
     try {
@@ -64,7 +91,8 @@ class _ProfileRemoteDataSource implements ProfileRemoteDataSource {
 
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
-        !(requestOptions.responseType == ResponseType.bytes || requestOptions.responseType == ResponseType.stream)) {
+        !(requestOptions.responseType == ResponseType.bytes ||
+            requestOptions.responseType == ResponseType.stream)) {
       if (T == String) {
         requestOptions.responseType = ResponseType.plain;
       } else {
@@ -74,7 +102,10 @@ class _ProfileRemoteDataSource implements ProfileRemoteDataSource {
     return requestOptions;
   }
 
-  String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
+  String _combineBaseUrls(
+    String dioBaseUrl,
+    String? baseUrl,
+  ) {
     if (baseUrl == null || baseUrl.trim().isEmpty) {
       return dioBaseUrl;
     }

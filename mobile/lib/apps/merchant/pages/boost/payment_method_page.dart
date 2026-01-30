@@ -28,6 +28,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> with WidgetsBindi
   bool _processingDialogShown = false;
   Set<String> _previousFeaturedServiceIds = {};
 
+  // Key to access processing dialog state
+  final GlobalKey<_BoostPaymentProcessingDialogState> _processingDialogKey = GlobalKey();
+
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ');
   }
@@ -59,13 +62,13 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> with WidgetsBindi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _isWaitingForPayment) {
-      // User returned to the app after payment
-      // Check featured services status
+      // User returned to the app after payment - auto check
       _checkPaymentStatus();
     }
   }
 
   void _checkPaymentStatus() {
+    _processingDialogKey.currentState?.setChecking(true);
     context.read<FeaturedServicesBloc>().add(const LoadFeaturedServicesEvent());
   }
 
@@ -79,6 +82,22 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> with WidgetsBindi
     // If there's a new ID that wasn't in the previous set, payment succeeded
     final newIds = currentIds.difference(_previousFeaturedServiceIds);
     return newIds.isNotEmpty;
+  }
+
+  void _handleFeaturedServicesCheckResult(List<FeaturedService> featuredServices) {
+    if (_hasNewFeaturedService(featuredServices)) {
+      // Success - payment completed
+      setState(() {
+        _isWaitingForPayment = false;
+      });
+      _closeProcessingDialog(context);
+      if (context.mounted) {
+        PaymentSuccessDialog.show(context, durationDays: widget.durationDays);
+      }
+    } else {
+      // Payment not completed yet - show error in dialog
+      _processingDialogKey.currentState?.showNotCompleted();
+    }
   }
 
   @override
@@ -112,27 +131,15 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> with WidgetsBindi
             }
           }
         } else if (state is FeaturedServicesLoaded && _isWaitingForPayment) {
-          // Check if a NEW featured service was created after payment
-          if (_hasNewFeaturedService(state.featuredServices)) {
-            setState(() {
-              _isWaitingForPayment = false;
-            });
-            _closeProcessingDialog(context);
-            // Show success dialog
-            if (context.mounted) {
-              PaymentSuccessDialog.show(context, durationDays: widget.durationDays);
-            }
-          }
+          _handleFeaturedServicesCheckResult(state.featuredServices);
         } else if (state is FeaturedServicesError) {
           if (_isWaitingForPayment) {
-            _closeProcessingDialog(context);
-            setState(() {
-              _isWaitingForPayment = false;
-            });
+            _processingDialogKey.currentState?.showError(state.message);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+            );
           }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message), backgroundColor: AppColors.error));
         }
       },
       builder: (context, state) {
@@ -281,9 +288,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> with WidgetsBindi
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => _BoostPaymentProcessingDialog(
-        onCheckStatus: () {
-          _checkPaymentStatus();
-        },
+        key: _processingDialogKey,
+        onCheckStatus: _checkPaymentStatus,
         onCancel: () {
           Navigator.of(dialogContext).pop();
           setState(() {
@@ -303,11 +309,46 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> with WidgetsBindi
   }
 }
 
-class _BoostPaymentProcessingDialog extends StatelessWidget {
+enum _ProcessingDialogState { waiting, checking, notCompleted, error }
+
+class _BoostPaymentProcessingDialog extends StatefulWidget {
   final VoidCallback onCheckStatus;
   final VoidCallback onCancel;
 
-  const _BoostPaymentProcessingDialog({required this.onCheckStatus, required this.onCancel});
+  const _BoostPaymentProcessingDialog({super.key, required this.onCheckStatus, required this.onCancel});
+
+  @override
+  State<_BoostPaymentProcessingDialog> createState() => _BoostPaymentProcessingDialogState();
+}
+
+class _BoostPaymentProcessingDialogState extends State<_BoostPaymentProcessingDialog> {
+  _ProcessingDialogState _state = _ProcessingDialogState.waiting;
+  String? _errorMessage;
+
+  void setChecking(bool checking) {
+    if (mounted) {
+      setState(() {
+        _state = checking ? _ProcessingDialogState.checking : _ProcessingDialogState.waiting;
+      });
+    }
+  }
+
+  void showNotCompleted() {
+    if (mounted) {
+      setState(() {
+        _state = _ProcessingDialogState.notCompleted;
+      });
+    }
+  }
+
+  void showError(String message) {
+    if (mounted) {
+      setState(() {
+        _state = _ProcessingDialogState.error;
+        _errorMessage = message;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -322,31 +363,92 @@ class _BoostPaymentProcessingDialog extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                'To\'lovingiz tasdiqlanmoqda...',
-                style: AppTextStyles.headline2.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 24),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppDimensions.spacingM),
-              Text(
-                'To\'lovni amalga oshirgandan so\'ng\n"Tekshirish" tugmasini bosing.',
-                style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppDimensions.spacingXL),
-              const SizedBox(
-                width: 60,
-                height: 60,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-              ),
+              if (_state == _ProcessingDialogState.notCompleted) ...[
+                // Not completed state
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.warning.withValues(alpha: 0.2),
+                  ),
+                  child: const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 60),
+                ),
+                const SizedBox(height: AppDimensions.spacingXL),
+                Text(
+                  'To\'lov tasdiqlanmadi',
+                  style: AppTextStyles.headline2.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 24),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppDimensions.spacingM),
+                Text(
+                  'To\'lov hali tasdiqlanmagan yoki bekor qilingan.\nQayta urinib ko\'ring yoki bekor qiling.',
+                  style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+              ] else if (_state == _ProcessingDialogState.error) ...[
+                // Error state
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.error.withValues(alpha: 0.2),
+                  ),
+                  child: const Icon(Icons.error_outline, color: AppColors.error, size: 60),
+                ),
+                const SizedBox(height: AppDimensions.spacingXL),
+                Text(
+                  'Xatolik yuz berdi',
+                  style: AppTextStyles.headline2.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 24),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppDimensions.spacingM),
+                Text(
+                  _errorMessage ?? 'Noma\'lum xatolik',
+                  style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+              ] else ...[
+                // Waiting or checking state
+                Text(
+                  _state == _ProcessingDialogState.checking ? 'Tekshirilmoqda...' : 'To\'lovingiz tasdiqlanmoqda...',
+                  style: AppTextStyles.headline2.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 24),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppDimensions.spacingM),
+                Text(
+                  'To\'lovni amalga oshirgandan so\'ng\n"Tekshirish" tugmasini bosing.',
+                  style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppDimensions.spacingXL),
+                const SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                ),
+              ],
               const SizedBox(height: AppDimensions.spacingXL * 2),
               SizedBox(
                 width: double.infinity,
-                child: WedyPrimaryButton(label: 'Tekshirish', onPressed: onCheckStatus),
+                child: WedyPrimaryButton(
+                  label: _state == _ProcessingDialogState.notCompleted || _state == _ProcessingDialogState.error
+                      ? 'Qayta tekshirish'
+                      : 'Tekshirish',
+                  onPressed: _state == _ProcessingDialogState.checking
+                      ? null
+                      : () {
+                          setState(() {
+                            _state = _ProcessingDialogState.waiting;
+                          });
+                          widget.onCheckStatus();
+                        },
+                ),
               ),
               const SizedBox(height: AppDimensions.spacingM),
               TextButton(
-                onPressed: onCancel,
+                onPressed: widget.onCancel,
                 child: Text('Bekor qilish', style: AppTextStyles.bodyRegular.copyWith(color: Colors.white70)),
               ),
             ],

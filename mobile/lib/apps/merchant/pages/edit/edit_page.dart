@@ -16,6 +16,7 @@ import 'package:wedy/features/category/domain/entities/category.dart';
 import 'package:wedy/features/category/presentation/bloc/category_bloc.dart';
 import 'package:wedy/features/category/presentation/bloc/category_event.dart';
 import 'package:wedy/features/category/presentation/bloc/category_state.dart';
+import 'package:wedy/features/profile/domain/repositories/profile_repository.dart';
 import 'package:wedy/features/service/domain/entities/service.dart';
 import 'package:wedy/features/service/domain/repositories/service_repository.dart';
 import 'package:wedy/features/service/presentation/bloc/merchant_service_bloc.dart';
@@ -61,8 +62,8 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
 
   ServiceCategory? selectedCategory;
   String? selectedRegion;
-  double? latitude;
-  double? longitude;
+  double? latitude = 39.395324;
+  double? longitude = 67.305644;
 
   // Contact management
   List<_ContactItem> phoneContacts = [];
@@ -71,6 +72,7 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
   bool get isEditMode => widget.service != null;
 
   ServiceRepository get _serviceRepository => di.getIt<ServiceRepository>();
+  ProfileRepository get _profileRepository => di.getIt<ProfileRepository>();
 
   @override
   void initState() {
@@ -460,9 +462,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
                         button: true,
                         onLocationTap: () {
                           // TODO: Implement location picker
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Lokatsiya tanlash funksiyasi tez orada qo\'shiladi')),
-                          );
+                          // ScaffoldMessenger.of(context).showSnackBar(
+                          //   const SnackBar(content: Text('Lokatsiya tanlash funksiyasi tez orada qo\'shiladi')),
+                          // );
                         },
                       ),
 
@@ -800,17 +802,9 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
 
   Future<void> _uploadImages(String serviceId) async {
     try {
-      // Upload main image first (display_order = 0)
+      // Upload Avatar
       if (pickedFile != null) {
-        final contentType = _getContentType(pickedFile!.path);
-        final fileName = pickedFile!.path.split('/').last;
-        final result = await _serviceRepository.uploadServiceImage(
-          serviceId: serviceId,
-          imagePath: pickedFile!.path,
-          fileName: fileName,
-          contentType: contentType,
-          displayOrder: 0,
-        );
+        final result = await _profileRepository.uploadAvatar(pickedFile!.path);
         result.fold((failure) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -827,13 +821,11 @@ class _MerchantEditPageState extends State<MerchantEditPage> {
       for (int i = 0; i < galleryImages.length; i++) {
         final image = galleryImages[i];
         final contentType = _getContentType(image.path);
-        final fileName = image.path.split('/').last;
         final result = await _serviceRepository.uploadServiceImage(
           serviceId: serviceId,
-          imagePath: image.path,
-          fileName: fileName,
+          file: File(image.path),
           contentType: contentType,
-          displayOrder: i + 1, // Start from 1 since main image is 0
+          displayOrder: i,
         );
         result.fold((failure) {
           if (mounted) {
