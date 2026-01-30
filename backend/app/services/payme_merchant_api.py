@@ -19,10 +19,11 @@ from sqlalchemy import select
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import get_settings
-from app.models.payment_model import Payment, PaymentStatus, PaymentMethod, PaymentType
-from app.models.merchant_model import Merchant, MerchantSubscription, SubscriptionStatus
+from app.models import FeaturedService, FeatureType
+from app.models.payment_model import Payment, PaymentStatus, PaymentMethod, PaymentType, SubscriptionStatus
+from app.models.merchant_model import Merchant
+from app.models.merchant_subscription_model import MerchantSubscription
 from app.models.service_model import Service
-from app.models.featured_service_model import FeaturedService, FeatureType
 from app.repositories.payment_repository import PaymentRepository
 from app.services.payment_providers import PaymentProviderError
 
